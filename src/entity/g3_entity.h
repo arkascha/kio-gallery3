@@ -44,7 +44,6 @@ namespace KIO
         G3Backend* const       m_backend;
       public:
         G3Entity ( const Entity::G3Type type, G3Backend* const backend );
-        ~G3Entity ( );
         inline const Entity::G3Type type ( ) const { return m_type; };
   //      QByteArray toJSON     ( ) const;
   //      Entity&    fromJSON   ( const QByteArray& json );

@@ -103,7 +103,7 @@ G3Item::G3Item ( const Entity::G3Type type, G3Backend* const backend, const QVar
   if ( parent_url.isEmpty() )
   {
     m_parent = NULL;
-    m_backend->storeItem ( this );
+    m_backend->pushItem ( this );
   }
   else
   {
@@ -112,7 +112,7 @@ G3Item::G3Item ( const Entity::G3Type type, G3Backend* const backend, const QVar
     m_parent = m_backend->item ( id );
     kDebug() << "caching item" << this->toPrintout() << "in parent item" << m_parent->toPrintout();
     m_parent->pushMember ( this );
-    m_backend->storeItem ( this );
+    m_backend->pushItem ( this );
   } // else
 } // G3Item::G3Item
 
@@ -130,13 +130,16 @@ G3Item::~G3Item()
     kDebug() << "removing item" << toPrintout() << "from parents member list";
     m_parent->popMember ( this );
   }
-  // clear all members registered inside this item
+  // delete all members registered inside this item
   QHash<g3index,G3Item*>::iterator member;
-  for ( member=m_members.begin(); member!=m_members.end(); member++ )
+  while ( ! m_members.isEmpty() )
   {
+    member = m_members.begin ( );
     kDebug() << "deleting member" << member.value()->toPrintout();
-    delete member;
+    delete member.value();
   }
+  // remove this item from the backends catalog
+  m_backend->popItem ( m_id );
 } // G3Item::~G3Item
 
 //==========
@@ -421,7 +424,7 @@ const UDSEntry G3Item::toUDSEntry ( ) const
   entry.insert( UDSEntry::UDS_MODIFICATION_TIME,  attributeMapToken("entity","updated",QVariant::Int).toInt() );
 //  entry.insert( UDSEntry::UDS_LOCAL_PATH,         m_fileUrl.path() );
 //  entry.insert( UDSEntry::UDS_TARGET_URL,         m_fileUrl.url() );
-  entry.insert( UDSEntry::UDS_LINK_DEST,          m_fileUrl.url() );
+//  entry.insert( UDSEntry::UDS_LINK_DEST,          m_fileUrl.url() );
 //  if ( ! m_attributes["entity"]Icon.isEmpty() )
 //    entry.insert( UDSEntry::UDS_ICON_NAME,          m_attributes["entity"]Icon );
 //  if ( ! m_attributes["entity"]Overlays.isEmpty() )

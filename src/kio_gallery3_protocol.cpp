@@ -284,9 +284,8 @@ void KIOGallery3Protocol::mkdir ( const KUrl& targetUrl, int permissions )
     G3Backend* backend = selectBackend ( targetUrl );
 //    KUrl    parent = target.directory();
     QString filename = targetUrl.fileName();
-    kDebug() << QString("creating album ***** %1 ***** in %2 *****").arg(filename).arg(targetUrl.directory());
     G3Item* parent   = backend->itemByPath ( targetUrl.directory() );
-    kDebug() << QString("########## creating album '%1' in item %2").arg(filename).arg(parent->toPrintout());
+    kDebug() << QString("creating new album '%1' in album '%2'").arg(filename).arg(targetUrl.directory());
     backend->createAlbum ( parent, filename );
     finished();
   }

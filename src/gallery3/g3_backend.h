@@ -54,14 +54,16 @@ namespace KIO
         G3Item*                              itemById   ( g3index id );
         G3Item*                              itemByUrl  ( const KUrl& itemUrl );
         G3Item*                              itemByPath ( const QString& path );
-        G3Item*                              itemByPath ( const QStringList& albums );
+        G3Item*                              itemByPath ( const QStringList& breadcrumbs );
         QHash<g3index,G3Item*>               members           ( g3index id );
         QHash<g3index,G3Item*>               members           ( G3Item* item );
         QList<G3Item*>                       membersByItemId   ( g3index id );
         QList<G3Item*>                       membersByItemPath ( const QString& path );
         QList<G3Item*>                       membersByItemPath ( const QStringList& breadcrumbs );
         int                                  countItems  ( );
-        void                                 storeItem   ( G3Item* item );
+        void                                 pushItem    ( G3Item* item );
+        G3Item*                              popMember   ( G3Item* item );
+        G3Item*                              popItem     ( g3index id );
         void                                 removeItem  ( G3Item* item );
         void                                 updateItem  ( G3Item* item, QHash<QString,QString>& attributes );
         G3Item* const                        createItem  ( const KTemporaryFile& file, KIO::Gallery3::G3Item* parent, KIO::Gallery3::Entity::G3Type type, const QString& name, QString title = QString() );

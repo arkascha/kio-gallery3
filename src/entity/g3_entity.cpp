@@ -38,11 +38,3 @@ G3Entity::G3Entity ( const Entity::G3Type type, G3Backend* const backend )
 {
   kDebug() << "(<type> <backend>)" << type.toString() << backend->toPrintout();
 } // G3Entity::G3Entity
-
-/**
- * Currently no cleanup to be done, since all such nodes have a passive character
- */
-G3Entity::~G3Entity()
-{
-  kDebug() << "(<>)";
-} // G3Entity::~G3Entity

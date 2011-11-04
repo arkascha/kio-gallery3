@@ -77,7 +77,10 @@ G3Backend::~G3Backend ( )
   MY_KDEBUG_BLOCK ( "<G3Backend::~G3Backend>" );
   kDebug() << "(<>)";
   // remove all items generated on-the-fly
-  kDebug() << "deleting" << m_items.count() << "members first";
+  kDebug() << "deleting member items first";
+  delete itemBase ( );
+  // remove any left-over items (stale)
+  kDebug() << m_items.count() << "stale items left, deleting them";
   QHash<g3index,G3Item*>::const_iterator item;
   for ( item=m_items.constBegin(); item!=m_items.constEnd(); item++ )
     delete item.value();
@@ -137,7 +140,8 @@ G3Item* G3Backend::itemByPath ( const QString& path )
 {
   MY_KDEBUG_BLOCK ( "<G3Backend::itemByPath>" );
   kDebug() << "(<path>)" << path;
-  return itemByPath ( path.split("/") );
+  QStringList breadcrumbs = path.split("/");
+  return itemByPath ( breadcrumbs );
 } // G3Backend::itemByPath
 
 G3Item* G3Backend::itemByPath ( const QStringList& breadcrumbs )
@@ -146,9 +150,12 @@ G3Item* G3Backend::itemByPath ( const QStringList& breadcrumbs )
   kDebug() << "(<breadcrumbs>)"<< breadcrumbs.join("|");
   // start at the 'root' album
   G3Item* item = itemBase ( );
-  // descend until candidate is found or constructed
-  foreach ( const QString& name, breadcrumbs )
-    item = item->member ( name );
+  QList<QString>::const_iterator it;
+  // descend into the album hierarchy one by one along the breadcrumbs path
+  for ( it=breadcrumbs.constBegin(); it!=breadcrumbs.constEnd(); it++)
+    // skip empty names, this might come from processing an absolute path or because of double slashes in paths
+    if ( ! it->isEmpty() )
+      item = item->member ( *it );
   kDebug() << "{<item>}" << item->toPrintout();
   return item;
 } // G3Backend::itemByPath
@@ -232,11 +239,19 @@ int G3Backend::countItems  ( )
   return m_items.count();
 } // G3Backend::countItems
 
-void G3Backend::storeItem ( G3Item* item )
+void G3Backend::pushItem ( G3Item* item )
 {
   kDebug() << "(<item>)" << item->toPrintout();
   m_items.insert ( item->id(), item );
-} // G3Backend::storeItem
+} // G3Backend::pushItem
+
+G3Item* G3Backend::popItem ( g3index id )
+{
+  kDebug() << "(<id>)" << id;
+  if ( m_items.contains(id) )
+    return m_items.take ( id );
+  throw Exception ( Error(ERR_INTERNAL), QString("attempt to remove non-existing item with id '%1'").arg(id) );
+} // G3Backend::popItem
 
 void G3Backend::removeItem ( G3Item* item )
 {
@@ -260,9 +275,10 @@ G3Item* const G3Backend::createItem  ( const KTemporaryFile& file, G3Item* paren
   if ( title.isEmpty() )
     title = name;
   QHash<QString,QString> attributes;
-  attributes.insert ( "name", name );
+  attributes.insert ( "type",  type.toString() );
+  attributes.insert ( "name",  name );
   attributes.insert ( "title", title );
-  g3index id = G3Request::g3PostItem ( this, parent->id(), attributes, type, &file );
+  g3index id = G3Request::g3PostItem ( this, parent->id(), attributes, &file );
 //  G3Item* item = exploreItem ( id );
   G3Item* item = G3Request::g3GetItem ( this, id );
   kDebug() << "created item" << item->toPrintout();
@@ -276,12 +292,13 @@ G3Item* const G3Backend::createAlbum ( G3Item* parent, const QString& name, QStr
   if ( title.isEmpty() )
     title = name;
   QHash<QString,QString> attributes;
-  attributes.insert ( "name", name );
+  attributes.insert ( "type",  "album" );
+  attributes.insert ( "name",  name );
   attributes.insert ( "title", title );
   // TODO: further attributes ? => permissions
-  g3index id   = G3Request::g3PostItem ( this, parent->id(), attributes, Entity::G3Type::ALBUM );
-//  G3Item* item = exploreItem ( id );
-  G3Item* item = G3Request::g3GetItem ( this, id );
+  g3index id   = G3Request::g3PostItem ( this, parent->id(), attributes );
+//  G3Item* item = G3Request::g3GetItem ( this, id );
+  G3Item* item = parent->member ( id );
   kDebug() << "created item" << item->toPrintout();
   return item;
 } // G3Backend::createAlbum

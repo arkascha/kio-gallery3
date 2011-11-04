@@ -20,13 +20,13 @@
 using namespace KIO;
 using namespace KIO::Gallery3;
 
-G3Request::G3Request ( G3Backend* const backend, KIO::HTTP_METHOD method, const QString& service )
+G3Request::G3Request ( G3Backend* const backend, KIO::HTTP_METHOD method, const QString& service, QIODevice* const file )
   : m_backend ( backend )
   , m_method  ( method )
   , m_service ( service )
-  , m_file    ( NULL )
   , m_payload ( NULL )
   , m_job     ( NULL )
+  , m_file    ( file )
 {
   MY_KDEBUG_BLOCK ( "<G3Request::G3Request>" );
   kDebug() << "(<backend> <method> <service>)" << backend->toPrintout() << method << service;
@@ -87,8 +87,6 @@ void G3Request::addQueryItem ( const QString& key, const QStringList& values, bo
     QVariantList items;
     foreach ( const QString& value, values )
       items << QVariant ( value );
-kDebug()<<"+++++"<<g3serialize(items)<<"+++++";
-//    addQueryItem ( key, QString("[%1]").arg(QString(g3serialize(items))) );
     addQueryItem ( key, QString(g3serialize(items)) );
   }
   kDebug() << "{<>}";
@@ -108,20 +106,22 @@ KUrl G3Request::webUrlWithQueryItems ( KUrl url, const QHash<QString,QString>& q
 QByteArray G3Request::webFormPostPayload ( const QHash<QString,QString>& query )
 {
   MY_KDEBUG_BLOCK ( "<G3Request::webFormPostUpload>" );
-  kDebug() << "(<query>)" << query;
+  kDebug() << "(<query[count]>)" << query.count();
   QHash<QString,QString>::const_iterator it;
   QStringList queryItems;
   // construct an encoded form payload
   for ( it=m_query.constBegin(); it!=m_query.constEnd(); it++ )
     queryItems << QString("%1=%2").arg(it.key()).arg(it.value());
-  kDebug() << "{<joined query items[count]>}" << queryItems.count();
-  return queryItems.join("&").toUtf8();
+  QByteArray payload = queryItems.join("&").toUtf8();
+  kDebug() << "{<payload[size]>}" << payload.size();
+kDebug() << "#+++" <<  payload  << "+++#";
+  return payload;
 } // G3Request::webFormPostPayload
 
 QByteArray G3Request::webFileFormPostPayload ( const QHash<QString,QString>& query, QIODevice* file )
 {
   MY_KDEBUG_BLOCK ( "<G3Request::webFilePostUpload>" );
-  kDebug() << "(<query> <file>)" << query;
+  kDebug() << "(<query> <file[size]>)" << query << ( file ? QString("%1").arg(file->size()) : "NULL" );
   QHash<QString,QString>::const_iterator it;
   QString     boundary;
   QStringList queryItems;
@@ -187,7 +187,10 @@ void G3Request::setup ( )
       addHeaderItem ( "X-Gallery-Request-Method", "HEAD" );
       break;
     case KIO::HTTP_POST:
-      m_job = KIO::http_post ( m_requestUrl, webFileFormPostPayload(m_query,m_file), KIO::DefaultFlags );
+      if ( m_file )
+        m_job = KIO::http_post ( m_requestUrl, webFileFormPostPayload(m_query,m_file), KIO::DefaultFlags );
+      else
+        m_job = KIO::http_post ( m_requestUrl, webFormPostPayload(m_query), KIO::DefaultFlags );
       addHeaderItem ( "content-type", "Content-Type: application/x-www-form-urlencoded" );
       addHeaderItem ( "X-Gallery-Request-Method", "POST" );
       // FIXME: below this should be something like multi part form, I guess
@@ -483,16 +486,22 @@ G3Item* G3Request::g3GetItem ( G3Backend* const backend, g3index id, const QStri
   return item;
 } // G3Request::g3GetItem
 
-g3index G3Request::g3PostItem ( G3Backend* const backend, g3index id, const QHash<QString,QString>& attributes, Entity::G3Type type, const KTemporaryFile* file )
+g3index G3Request::g3PostItem ( G3Backend* const backend, g3index id, const QHash<QString,QString>& attributes, const KTemporaryFile* file )
 {
+  // TODO: implement file to post a file as item, if file is specified (not NULL)
   MY_KDEBUG_BLOCK ( "<G3Request::g3PostItem>" );
-  kDebug() << "(<backend> <id> <attributes> <type> <file>)" << backend->toPrintout() << attributes.count() << type.toString() << file->fileName();
+  kDebug() << "(<backend> <id> <attributes[count]> <file>)" << backend->toPrintout() << id << attributes.count()
+                                                            << ( file ? file->fileName() : "NULL" );
   G3Request request ( backend, KIO::HTTP_POST, QString("item/%1").arg(id) );
-  // add attributes one-by-one
+  // add attributes as 'entity' structure
+  QHash<QString,QVariant> entity;
   QHash<QString,QString>::const_iterator it;
   for ( it=attributes.constBegin(); it!=attributes.constEnd(); it++ )
-    request.addQueryItem ( it.key(), it.value() );
-  request.addQueryItem ( "type", type, TRUE );
+    entity.insert ( it.key(), QVariant(it.value()) );
+  // specify entity description as a single query attribute
+kDebug() << "#***" << QVariant(entity) << "***#";
+kDebug() << "#***" << request.g3serialize(QVariant(entity)) << "***#";
+  request.addQueryItem ( "entity", request.g3serialize(QVariant(entity)) );
   // add file to be uploaded
   request.authenticate ( );
   request.setup        ( );
