@@ -1,0 +1,17 @@
+/* This file is part of 'kio-gallery3'
+ * Copyright (C) 2011 Christian Reiner <kio-gallery3@christian-reiner.info>
+ *
+ * $Author: arkascha $
+ * $Revision: 116 $
+ * $Date: 2011-09-10 01:40:45 +0200 (Sat, 10 Sep 2011) $
+ */
+#define ABOUT_APP_NAME                    "kio_gallery3s"
+#define ABOUT_CATALOG_NAME                "kio_gallery3s"
+#define ABOUT_PROGRAM_NAME                "KIO protocol 'gallery3s:/'"
+#define ABOUT_VERSION                     "0.1.0"
+#define ABOUT_DESCRIPTION                 "KIO slave that implements access to a remote gallery3 server"
+#define ABOUT_LICENCE_TYPE                KAboutData::License_LGPL
+#define ABOUT_COPYRIGHT                   "(C) 2011 Christian Reiner, Hamburg, Germany"
+#define ABOUT_INFORMATION                 "Coding experiment :-)"
+#define ABOUT_WEBPAGE                     "http://www.christian-reiner.info"
+#define ABOUT_EMAIL                       "kio-gallery3@christian-reiner.info"

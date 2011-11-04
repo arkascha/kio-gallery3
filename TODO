@@ -1,0 +1,9 @@
+** Features:
+
+** Implementation
+- use d-pointers for private members
+- - binary compatibility (actually irrelevant for a kio slave...)
+- - kde coding conventions (hm...)
+** Convenience:
+- offer to access the gallery3 web surface directly for certain tasks
+

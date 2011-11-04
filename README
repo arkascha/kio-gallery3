@@ -1,0 +1,33 @@
+README file for the kio-gallery3 package
+
+License: GPLv3
+Author: Christian Reiner, Hamburg, Germany
+Email: kio-clipboard@christian-reiner.info
+Web: -/-
+
+Overview:
+kio-gallery3 implements two kio-slaves, protocols for KDEs I/O system. It 
+makes the content of a remote gallery3 server available inside the local 
+file management. That means you can access all items contained in the 
+gallery entries using standard file dialogs like 'File open' or 'Save File', 
+you even can use a file browser and add or access existing entries. In general
+you can use the slaves wherever you can use an URL inside KDE to get access to
+the gallery3 content. There are no temporary file generated.
+
+Warranty: 
+This software comes with no warranties. Use it at own risk.
+kio-clipboard was developed and tested under KDE-4.6 running on a GNU/Linux
+(openSUSE) on a x86_64 platform. I hope it works under other platforms and
+environments.
+
+State:
+This is an early and definitely buggy release. 
+
+Roadmap: 
+- complete support of gallery3s API
+
+Usage:
+Just enter "gallery3:/<my.server.org>/<gallery-folder>" in the location bar of 
+for example dolphin or a "File open" dialog.
+gallery3s:/<my.server.org>/<gallery-folder> serves the same purpose but uses 
+https to access the gallery. Prefer this if you have https access. 

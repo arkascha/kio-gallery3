@@ -1,0 +1,36 @@
+OVERVIEW
+The installation is pretty easy. There is no build-time
+dependency on gallery since to us it is a remote server 
+API. If it changes, you are screwed, but this should not 
+happen, as it is official and other programs will rely 
+on it as well.
+
+REQUIREMENTS
+KDE>=4.5
+Qt4
+
+INSTALLATION FROM BINARY PACKAGE
+If you have a precompiled package matching your system
+(architecture and distribution) installation is handled
+by the standard tool that comes with the distribution.
+
+BUILD AND INSTALL INSTRUCTIONS
+# in the source directory:
+mkdir build
+cd build
+cmake -DCMAKE_INSTALL_PREFIX=`kde4-config --prefix` ..
+make
+sudo make install
+
+[sudo make uninstall]
+
+That's it.
+You might want to add shortcuts for easier access at a
+few places, for example dolphins 'places' sidebar, once 
+you have successfully connected to your gallery. 
+
+USAGE PREREQUISITES
+Obviously you do need a remote gallery3 server you have access to.
+That server must have the "rest" module enabled. This module provides
+the RESTful API used by this slave implementation. Please refer to
+the gallery3 documentation about this.
