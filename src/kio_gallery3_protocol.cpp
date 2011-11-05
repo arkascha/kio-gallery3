@@ -241,6 +241,8 @@ void KIOGallery3Protocol::listDir ( const KUrl& targetUrl )
 //      listEntries ( item->toUDSEntryList(TRUE) );
       item->toUDSEntryList(TRUE);
       listEntry ( UDSEntry(), TRUE );
+      disconnect ( item, SIGNAL(signalUDSEntry(const UDSEntry)),
+                   this, SLOT(slotListUDSEntry(const UDSEntry)) );
       finished ( );
     } // else if
     else
@@ -252,6 +254,8 @@ void KIOGallery3Protocol::listDir ( const KUrl& targetUrl )
                 this, SLOT(slotListUDSEntry(const UDSEntry)) );
       listEntries ( item->toUDSEntryList(TRUE) );
       listEntry ( UDSEntry(), TRUE );
+      disconnect ( item, SIGNAL(signalUDSEntry(const UDSEntry)),
+                   this, SLOT(slotListUDSEntry(const UDSEntry)) );
       finished ( );
     } // else
   }
