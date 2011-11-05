@@ -33,6 +33,13 @@ G3Request::G3Request ( G3Backend* const backend, KIO::HTTP_METHOD method, const 
   m_requestUrl = backend->restUrl();
   m_requestUrl.adjustPath ( KUrl::AddTrailingSlash );
   m_requestUrl.addPath ( m_service );
+  // an (cached) authentication key as defined by the G3 API
+  addHeaderItem ( "customHTTPHeader", QString("X-Gallery-Request-Key: %1" ).arg(g3RequestKey()) );
+  // an agent string we can recognize
+  addHeaderItem ( "UserAgent", QString("Mozilla/5.0 (X11; Linux x86_64) (KIO-gallery3) KDE/%1.%2.%3")
+  // NOTE: opensuse uses a complete release string instead of the version for KDE_VERSION and KDE::versionString()
+  //       so we construct a clean version string by hand:
+                .arg(KDE::versionMajor()).arg(KDE::versionMinor()).arg(KDE::versionRelease()));
   kDebug() << "{<>}";
 } // G3Request::G3Request
 
@@ -40,10 +47,15 @@ void G3Request::addHeaderItem ( const QString& key, const QString& value )
 {
   MY_KDEBUG_BLOCK ( "<G3Request::addHeaderItem>" );
   kDebug() << "(<key> <value>)" << key << value;
+  // add value to an existing header if one already exists, do NOT overwrite the existing one
+  // we need this for the customHTTPHeaders as required by the G3 API
+  QString content;
   if ( m_header.contains(key) )
-    m_header.remove ( key ); // TODO: throw an error instead ?!?
+    content = QString("%1\r\n%2").arg(m_header[key]).arg(value.trimmed());
+  else
+    content = value;
   // TODO: some plausibility checks might be good here...
-  m_header.insert ( key, value );
+  m_header.insert ( key, content );
   kDebug() << "{<>}";
 } // G3Request::addHeaderItem
 
@@ -114,7 +126,6 @@ QByteArray G3Request::webFormPostPayload ( const QHash<QString,QString>& query )
     queryItems << QString("%1=%2").arg(it.key()).arg(it.value());
   QByteArray payload = queryItems.join("&").toUtf8();
   kDebug() << "{<payload[size]>}" << payload.size();
-kDebug() << "#+++" <<  payload  << "+++#";
   return payload;
 } // G3Request::webFormPostPayload
 
@@ -123,11 +134,10 @@ QByteArray G3Request::webFileFormPostPayload ( const QHash<QString,QString>& que
   MY_KDEBUG_BLOCK ( "<G3Request::webFilePostUpload>" );
   kDebug() << "(<query> <file[size]>)" << query << ( file ? QString("%1").arg(file->size()) : "NULL" );
   QHash<QString,QString>::const_iterator it;
-  QString     boundary;
   QStringList queryItems;
   QByteArray  postData;
   // construct a multi part form reply as payload
-  boundary = "----------" + KRandom::randomString(42 + 13).toAscii();
+  m_boundary = "----------" + KRandom::randomString(42 + 13).toAscii();
   // add query attributes one-by-one
   postData = webFormPostPayload ( query );
 /*  
@@ -150,20 +160,19 @@ QByteArray G3Request::webFileFormPostPayload ( const QHash<QString,QString>& que
 
 //==========
 
-void G3Request::authenticate ( )
+const QString G3Request::g3RequestKey ( )
 {
-  MY_KDEBUG_BLOCK ( "<G3Request::authenticate>" );
+  MY_KDEBUG_BLOCK ( "<G3Request::g3RequestKey>" );
   kDebug() << "(<>)";
   // TODO: add cached key (from AuthInfo), unless "is login" or "not cached"
   // TODO: somewhere else: upon "auth denied" remove key from cache and try again here
   // FIXME: THIS IS TEMPORARY: instead the key must be retrieved from either a config file or by an explicit login
-  addHeaderItem ( "X-Gallery-Request-Key", "efc9547401bdd05625bee9dc49f3c52b" );
+  return "efc9547401bdd05625bee9dc49f3c52b";
   /*
 bool SlaveBase::openPasswordDialog  ( KIO::AuthInfo &   info,
                                       const QString &   errorMsg = QString() )
    */
-  kDebug() << "{<>}";
-}
+} // G3Request::g3RequestKey
 
 void G3Request::setup ( )
 {
@@ -174,32 +183,37 @@ void G3Request::setup ( )
   {
     case KIO::HTTP_DELETE:
       m_job = KIO::http_post ( m_requestUrl, QByteArray(), KIO::DefaultFlags );
-      addHeaderItem ( "content-type", "Content-Type: application/x-www-form-urlencoded" );
-      addHeaderItem ( "X-Gallery-Request-Method", "DELETE" );
+      addHeaderItem ( "content-type",     "Content-Type: application/x-www-form-urlencoded" );
+      addHeaderItem ( "customHTTPHeader", "X-Gallery-Request-Method: delete" );
 // FIXME: required ??      addHeaderItem ( "Content-Type", "application/x-www-form-urlencoded" );
       break;
     case KIO::HTTP_GET:
       m_job = KIO::get ( webUrlWithQueryItems(m_requestUrl,m_query), KIO::Reload, KIO::DefaultFlags );
-      addHeaderItem ( "X-Gallery-Request-Method", "GET" );
+      addHeaderItem ( "customHTTPHeader", "X-Gallery-Request-Method: get" );
       break;
     case KIO::HTTP_HEAD:
       m_job = KIO::get ( webUrlWithQueryItems(m_requestUrl,m_query), KIO::Reload, KIO::DefaultFlags );
-      addHeaderItem ( "X-Gallery-Request-Method", "HEAD" );
+      addHeaderItem ( "customHTTPHeader", "X-Gallery-Request-Method: head" );
       break;
     case KIO::HTTP_POST:
       if ( m_file )
+      {
         m_job = KIO::http_post ( m_requestUrl, webFileFormPostPayload(m_query,m_file), KIO::DefaultFlags );
+        addHeaderItem ( "content-type", QString("Content-Type: multipart/form-data; boundary=%1").arg(m_boundary) );
+      }
       else
+      {
         m_job = KIO::http_post ( m_requestUrl, webFormPostPayload(m_query), KIO::DefaultFlags );
-      addHeaderItem ( "content-type", "Content-Type: application/x-www-form-urlencoded" );
-      addHeaderItem ( "X-Gallery-Request-Method", "POST" );
+        addHeaderItem ( "content-type", "Content-Type: application/x-www-form-urlencoded" );
+      }
+      addHeaderItem ( "customHTTPHeader", "X-Gallery-Request-Method: post" );
       // FIXME: below this should be something like multi part form, I guess
 //      addHeaderItem ( "content-type", "Content-Type: application/x-www-form-urlencoded" );
       break;
     case KIO::HTTP_PUT:
       m_job = KIO::http_post ( m_requestUrl, webFormPostPayload(m_query), KIO::DefaultFlags );
       addHeaderItem ( "content-type", "Content-Type: application/x-www-form-urlencoded" );
-      addHeaderItem ( "X-Gallery-Request-Method", "PUT" );
+      addHeaderItem ( "customHTTPHeader", "X-Gallery-Request-Method: put" );
       break;
   } // switch request method
   // add header items if specified
@@ -214,10 +228,10 @@ void G3Request::process ( )
   MY_KDEBUG_BLOCK ( "<G3Request::process>" );
   kDebug() << "(<>)";
   // run the job
+  kDebug() << "sending request to url" << m_job->url();
   if ( ! NetAccess::synchronousRun ( m_job, 0, &m_payload, &m_finalUrl, &m_meta ) )
     throw Exception ( Error(ERR_SLAVE_DEFINED),
                       QString("request failed: %2 [ %1 ]").arg(m_job->error()).arg(m_job->errorString()) );
-  kDebug() << "sending request to url" << m_job->url();
   // check for success on protocol level
   if ( m_job->error() )
     throw Exception ( Error(ERR_SLAVE_DEFINED),
@@ -225,9 +239,11 @@ void G3Request::process ( )
   switch ( QVariant(m_meta["responsecode"]).toInt() )
   {
     case 0:   break; // no error
-    case 200: break; // http code for : all fine
-    case 403: throw Exception ( Error(ERR_ACCESS_DENIED),         QString("403: No Authorization") );
-    case 404: throw Exception ( Error(ERR_SERVICE_NOT_AVAILABLE), QString("404: Not Found") );
+    case 200: kDebug() << QString("HTTP %1 OK").arg(QVariant(m_meta["responsecode"]).toInt());       break;
+    case 201: kDebug() << QString("HTTP %1 Created").arg(QVariant(m_meta["responsecode"]).toInt());  break;
+    case 202: kDebug() << QString("HTTP %1 Accepted").arg(QVariant(m_meta["responsecode"]).toInt()); break;
+    case 403: throw Exception ( Error(ERR_ACCESS_DENIED),         QString("HTTP 403: No Authorization") );
+    case 404: throw Exception ( Error(ERR_SERVICE_NOT_AVAILABLE), QString("HTTP 404: Not Found") );
     default:  throw Exception ( Error(ERR_SLAVE_DEFINED),         QString("Unexcepted http error %1").arg(QVariant(m_meta["responsecode"]).toInt()) );
   } // switch
   kDebug() << "{<>}";
@@ -238,8 +254,8 @@ void G3Request::evaluate ( )
   MY_KDEBUG_BLOCK ( "<G3Request::evaluate>" );
   kDebug() << "(<>)";
   // check for success on content level (headers and so on)
-  if ( "200"!=m_meta["responsecode"] )
-    throw Exception ( Error(ERR_SLAVE_DEFINED),QString("unexpected content type in response: %1").arg(m_meta["content-type"]) );
+  if ( "2"!=m_meta["responsecode"].at(0) ) // 2XX is ok in general
+    throw Exception ( Error(ERR_SLAVE_DEFINED),QString("unexpected response code in response: %1").arg(m_meta["responsecode"]) );
   kDebug() << QString ("request processed [ headers size: %2 / payload size: %1]")
                       .arg(m_meta.size())
                       .arg(m_payload.size());
@@ -247,7 +263,11 @@ void G3Request::evaluate ( )
     throw Exception ( Error(ERR_SLAVE_DEFINED),QString("unexpected content type in response: %1").arg(m_meta["content-type"]) );
   kDebug() << QString("response has content type '%1'").arg(m_meta["content-type"]);
   // SUCCESS, convert result content (payload) into a usable object structure
-  m_result = g3parse ( m_payload );
+  // NOTE: there is a bug in the G3 API implementation, it returns 'null' instead of an empty json structure in certain cases (DELETE)
+  if ( "null"==m_payload )
+    m_result = QVariant();
+  else
+    m_result = g3parse ( m_payload );
   kDebug() << "{<>}";
 } // G3Request::process
 
@@ -412,7 +432,6 @@ QList<G3Item*> G3Request::g3GetItems ( G3Backend* const backend, const QStringLi
     G3Request request ( backend, KIO::HTTP_GET, "items" );
     request.addQueryItem ( "urls", urls_chunk );
     request.addQueryItem ( "type", type );
-    request.authenticate ( );
     request.setup        ( );
     request.process      ( );
     request.evaluate     ( );
@@ -437,7 +456,6 @@ QList<g3index> G3Request::g3GetAncestors ( G3Backend* const backend, G3Item* ite
   kDebug() << "(<backend> <item>)" << backend->toPrintout() << item->toPrintout();
   G3Request request ( backend, KIO::HTTP_GET, "items" );
   request.addQueryItem ( "ancestors_for", item->restUrl().url() );
-  request.authenticate ( );
   request.setup        ( );
   request.process      ( );
   request.evaluate     ( );
@@ -477,7 +495,6 @@ G3Item* G3Request::g3GetItem ( G3Backend* const backend, g3index id, const QStri
   request.addQueryItem ( "scope", scope );
   request.addQueryItem ( "name",  name, TRUE );
   request.addQueryItem ( "type",  type, TRUE );
-  request.authenticate ( );
   request.setup        ( );
   request.process      ( );
   request.evaluate     ( );
@@ -486,7 +503,7 @@ G3Item* G3Request::g3GetItem ( G3Backend* const backend, g3index id, const QStri
   return item;
 } // G3Request::g3GetItem
 
-g3index G3Request::g3PostItem ( G3Backend* const backend, g3index id, const QHash<QString,QString>& attributes, const KTemporaryFile* file )
+void G3Request::g3PostItem ( G3Backend* const backend, g3index id, const QHash<QString,QString>& attributes, const KTemporaryFile* file )
 {
   // TODO: implement file to post a file as item, if file is specified (not NULL)
   MY_KDEBUG_BLOCK ( "<G3Request::g3PostItem>" );
@@ -494,22 +511,16 @@ g3index G3Request::g3PostItem ( G3Backend* const backend, g3index id, const QHas
                                                             << ( file ? file->fileName() : "NULL" );
   G3Request request ( backend, KIO::HTTP_POST, QString("item/%1").arg(id) );
   // add attributes as 'entity' structure
-  QHash<QString,QVariant> entity;
+  QMap<QString,QVariant> entity; // QMap, since QJson silently fails to encode a QHash !
   QHash<QString,QString>::const_iterator it;
   for ( it=attributes.constBegin(); it!=attributes.constEnd(); it++ )
     entity.insert ( it.key(), QVariant(it.value()) );
-  // specify entity description as a single query attribute
-kDebug() << "#***" << QVariant(entity) << "***#";
-kDebug() << "#***" << request.g3serialize(QVariant(entity)) << "***#";
+  // specify entity description as a single, serialized query attribute
   request.addQueryItem ( "entity", request.g3serialize(QVariant(entity)) );
   // add file to be uploaded
-  request.authenticate ( );
   request.setup        ( );
   request.process      ( );
   request.evaluate     ( );
-  g3index index = request.toItemId ( );
-  kDebug() << "{<item[id]>}" << index;
-  return index;
 } // G3Request::g3PostItem
 
 g3index G3Request::g3PutItem ( G3Backend* const backend, g3index id, const QHash<QString,QString>& attributes, Entity::G3Type type )
@@ -522,7 +533,6 @@ g3index G3Request::g3PutItem ( G3Backend* const backend, g3index id, const QHash
   for ( it=attributes.constBegin(); it!=attributes.constEnd(); it++ )
     request.addQueryItem ( it.key(), it.value() );
   request.addQueryItem ( "type", type, TRUE );
-  request.authenticate ( );
   request.setup        ( );
   request.process      ( );
   request.evaluate     ( );
@@ -536,7 +546,6 @@ void G3Request::g3DelItem ( G3Backend* const backend, g3index id )
   MY_KDEBUG_BLOCK ( "<G3Request::g3DelItem>" );
   kDebug() << "(<backend> <id>)" << backend->toPrintout() << id;
   G3Request request ( backend, KIO::HTTP_DELETE, QString("item/%1").arg(id) );
-  request.authenticate ( );
   request.setup        ( );
   request.process      ( );
   request.evaluate     ( );
@@ -550,7 +559,6 @@ g3index G3Request::g3SetItem ( G3Backend* const backend, g3index id, const QStri
   G3Request request ( backend, KIO::HTTP_POST, QString("item/%1").arg(id) );
   request.addQueryItem ( "name",  name, TRUE );
   request.addQueryItem ( "type",  type, TRUE );
-  request.authenticate ( );
   request.setup        ( );
   request.process      ( );
   request.evaluate     ( );

@@ -61,6 +61,7 @@ namespace KIO
         inline const KUrl           fileUrl  ( ) const { return m_fileUrl; };
         inline const KUrl           thumbUrl ( ) const { return m_thumbUrl; };
         QStringList            path              ( ) const;
+        G3Item*                parent            ( ) const;
         G3Item*                member            ( const QString& name );
         G3Item*                member            ( g3index id );
         QHash<g3index,G3Item*> members           ( );

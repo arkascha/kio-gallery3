@@ -383,6 +383,12 @@ QStringList G3Item::path ( ) const
   return QStringList();
 } // G3Item::path
 
+G3Item* G3Item::parent ( ) const
+{
+  kDebug() << "(<>)";
+  return m_parent;
+} // G3Item::parent
+
 //==========
 
 const G3Item& G3Item::operator<< ( G3Item& member )
@@ -413,7 +419,6 @@ const UDSEntry G3Item::toUDSEntry ( ) const
   kDebug() << "(<this>)" << toPrintout();
   UDSEntry entry;
   entry.insert( UDSEntry::UDS_FILE_TYPE,          m_type.toUDSFileType() );
-//  entry.insert( UDSEntry::UDS_NAME,               QString("%1").arg(m_id) );
   entry.insert( UDSEntry::UDS_NAME,               QString("%1").arg(m_name) );
 //  entry.insert( UDSEntry::UDS_DISPLAY_NAME,       QString("[%1] %2").arg(m_id).arg(attributeMapToken("entity","title",QVariant::String).toString()) );
   entry.insert( UDSEntry::UDS_MIME_TYPE,          m_mimetype->name() );

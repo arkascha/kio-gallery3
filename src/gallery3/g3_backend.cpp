@@ -258,7 +258,16 @@ void G3Backend::removeItem ( G3Item* item )
   MY_KDEBUG_BLOCK ( "<G3Backend::removeItem>" );
   kDebug() << "(<item>)" << item->toPrintout();
   G3Request::g3DelItem ( this, item->id() );
-  delete item;
+  G3Item* parent = item->parent();
+  if ( parent )
+  {
+    // we delete the parent folder to create a fresh state
+    QStringList breadcrumbs = parent->path();
+    delete parent;
+    // now try to get the fresh item, this will re-construct the parent on-the-fly
+    parent = itemByPath ( breadcrumbs );
+    kDebug() << "deleted item in album" << parent->toPrintout();
+  }
 } // G3Backend::removeItem
 
 void G3Backend::updateItem ( G3Item* item, QHash<QString,QString>& attributes )
@@ -278,9 +287,12 @@ G3Item* const G3Backend::createItem  ( const KTemporaryFile& file, G3Item* paren
   attributes.insert ( "type",  type.toString() );
   attributes.insert ( "name",  name );
   attributes.insert ( "title", title );
-  g3index id = G3Request::g3PostItem ( this, parent->id(), attributes, &file );
-//  G3Item* item = exploreItem ( id );
-  G3Item* item = G3Request::g3GetItem ( this, id );
+  G3Request::g3PostItem ( this, parent->id(), attributes, &file );
+  // we delete the parent folder to create a fresh start including parent and new member
+  QStringList breadcrumbs = parent->path() << name;
+  delete parent;
+  // now try to get the fresh item, this will re-construct the parent on-the-fly
+  G3Item* item = itemByPath ( breadcrumbs );
   kDebug() << "created item" << item->toPrintout();
   return item;
 } // G3Backend::createItem
@@ -292,13 +304,18 @@ G3Item* const G3Backend::createAlbum ( G3Item* parent, const QString& name, QStr
   if ( title.isEmpty() )
     title = name;
   QHash<QString,QString> attributes;
-  attributes.insert ( "type",  "album" );
+//  attributes.insert ( "type",  "album" );
+  Entity::G3Type type(Entity::G3Type::ALBUM);
+  attributes.insert ( "type",  type.toString() );
   attributes.insert ( "name",  name );
   attributes.insert ( "title", title );
   // TODO: further attributes ? => permissions
-  g3index id   = G3Request::g3PostItem ( this, parent->id(), attributes );
-//  G3Item* item = G3Request::g3GetItem ( this, id );
-  G3Item* item = parent->member ( id );
+  G3Request::g3PostItem ( this, parent->id(), attributes );
+  // we delete the parent folder to create a fresh start including parent and new member
+  QStringList breadcrumbs = parent->path() << name;
+  delete parent;
+  // now try to get the fresh item, this will re-construct the parent on-the-fly
+  G3Item* item = itemByPath ( breadcrumbs );
   kDebug() << "created item" << item->toPrintout();
   return item;
 } // G3Backend::createAlbum
