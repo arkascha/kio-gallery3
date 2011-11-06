@@ -349,24 +349,30 @@ void KIOGallery3Protocol::rename ( const KUrl& srcUrl, const KUrl& destUrl, KIO:
   kDebug() << "(<src> <dest> <flags>)" << srcUrl.prettyUrl() << destUrl.prettyUrl();
   try
   {
+    // we support only few types of "renaming" / "moving", deny the rest
     if ( srcUrl.scheme()!=destUrl.scheme() )
-    {
-      kDebug() << QString("moving of entities between different protocol schemes not supported (%1/%2)")
-                        .arg(srcUrl.scheme()).arg(destUrl.scheme());
-      throw Exception ( Error(ERR_UNSUPPORTED_ACTION),
-                        QString("moving of entities between different protocol schemes not supported (%1=>%2)").arg(srcUrl.scheme()).arg(destUrl.scheme()) );
-    }
+      throw Exception ( Error(ERR_UNSUPPORTED_ACTION), QString("moving of entities between different protocol schemes not supported") );
+    if ( srcUrl.host()!=destUrl.host() )
+      throw Exception ( Error(ERR_UNSUPPORTED_ACTION), QString("moving of entities between different gallery hosts not supported") );
+    if (   (srcUrl.directory()!=destUrl.directory())
+        && (srcUrl.isParentOf(destUrl)||destUrl.isParentOf(srcUrl)) )
+      throw Exception ( Error(ERR_UNSUPPORTED_ACTION), QString("moving of entities between different galleries not supported") );
+    G3Backend* backend = selectBackend ( srcUrl );
+    G3Item* item   = backend->itemByUrl ( srcUrl );
+    QHash<QString,QString> attributes;
+    // the items parent is meant to be changed, when the paths differ ("move")
     if ( srcUrl.directory()!=destUrl.directory() )
     {
-      kDebug() << QString("moving of entities between different albums not supported (%1/%2)")
-                        .arg(srcUrl.directory()).arg(destUrl.directory());
-      throw Exception ( Error(ERR_UNSUPPORTED_ACTION),
-                        QString("moving of entities between different albums supported") );
+      G3Item* parent = backend->itemByPath ( destUrl.directory() );
+      kDebug() << "moving item" << item->toPrintout() << "to new parent" << parent->toPrintout();
+      attributes.insert ( "parent", parent->restUrl().url() );
+    } // if
+    // the items name is meant to be changed, if the filenames differ ("rename")
+    if (  srcUrl.fileName()!=destUrl.fileName()  )
+    {
+      attributes.insert ( "name", destUrl.fileName() );
+      kDebug() << "updating item name of" << item->toPrintout() << "to" << attributes["name"];
     }
-    G3Backend* backend = selectBackend ( srcUrl );
-    G3Item* item = backend->itemByUrl ( srcUrl );
-    QHash<QString,QString> attributes;
-    attributes.insert ( "name", destUrl.fileName() );
     backend->updateItem ( item, attributes );
     finished ( );
   }

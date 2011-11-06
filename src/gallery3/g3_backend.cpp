@@ -270,16 +270,26 @@ void G3Backend::removeItem ( G3Item* item )
   }
 } // G3Backend::removeItem
 
-void G3Backend::updateItem ( G3Item* item, const QHash<QString,QString>& attributes )
+G3Item* const G3Backend::updateItem ( G3Item* item, const QHash<QString,QString>& attributes )
 {
   MY_KDEBUG_BLOCK ( "<G3Backend::updateItem>" );
   kDebug() << "(<item> <attributes[keys]>)" << item->toPrintout() << QStringList(attributes.keys()).join(",");
-//  G3Request::g3PutItem ( this, item->id(), item->toAttributes() );
   G3Request::g3PutItem ( this, item->id(), attributes );
-  g3index id = item->id();
-  delete item;
-  item = itemById ( id );
-  kDebug() << "updated item" << item->toPrintout ( );
+  // refresh old parent item
+  G3Item* parent = item->parent ( );
+  QStringList breadcrumbs = parent->path();
+  delete parent;
+  parent = itemByPath ( breadcrumbs );
+  // refresh new parent item, if this was a move
+  if ( attributes.contains("parent") )
+  {
+    g3index id = QVariant(KUrl(attributes["parent"]).fileName()).toInt();
+    parent = itemById ( id );
+    QStringList breadcrumbs = parent->path();
+    delete parent;
+    parent = itemByPath ( breadcrumbs );
+  } // if
+  return item;
 } // G3Backend::updateItem
 
 G3Item* const G3Backend::createItem  ( G3Item* parent, const QString& name, const Entity::G3File* const file )
