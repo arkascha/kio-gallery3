@@ -103,8 +103,7 @@ void G3Request::addQueryItem ( const QString& key, const QStringList& values, bo
 KUrl G3Request::webUrlWithQueryItems ( KUrl url, const QHash<QString,QString>& query )
 {
   kDebug() << "(<url> <query [count]>)" << url.prettyUrl() << query.count();
-  QHash<QString,QString>::const_iterator it;
-    for ( it=m_query.constBegin(); it!=m_query.constEnd(); it++ )
+    for ( QHash<QString,QString>::const_iterator it=m_query.constBegin(); it!=m_query.constEnd(); it++ )
       url.addQueryItem ( it.key(), it.value() );
   kDebug() << "{<url>}" << url.prettyUrl();
   return url;
@@ -113,10 +112,9 @@ KUrl G3Request::webUrlWithQueryItems ( KUrl url, const QHash<QString,QString>& q
 QByteArray G3Request::webFormPostPayload ( const QHash<QString,QString>& query )
 {
   kDebug() << "(<query[count]>)" << query.count();
-  QHash<QString,QString>::const_iterator it;
   QStringList queryItems;
   // construct an encoded form payload
-  for ( it=m_query.constBegin(); it!=m_query.constEnd(); it++ )
+  for ( QHash<QString,QString>::const_iterator it=m_query.constBegin(); it!=m_query.constEnd(); it++ )
     queryItems << QString("%1=%2").arg(it.key()).arg(it.value());
   QByteArray buffer;
   buffer = queryItems.join("&").toAscii();
@@ -311,7 +309,7 @@ QList<G3Item*> G3Request::toItems ( )
 g3index G3Request::toItemId ( QVariant& entry )
 {
   MY_KDEBUG_BLOCK ( "<G3Request::toItemId>" );
-  kDebug() << "(<>)";
+  kDebug() << "(<entry>)";
   if ( ! entry.canConvert(QVariant::Map) )
     throw Exception ( Error(ERR_SLAVE_DEFINED),
                       QString("gallery response did not hold a valid item description") );
@@ -331,7 +329,7 @@ g3index G3Request::toItemId ( QVariant& entry )
       throw Exception ( Error(ERR_INTERNAL), QString("gallery response did not hold a valid item description") );
   } // if
   else
-    throw Exception ( Error(ERR_INTERNAL), QString("gallery response did not hold a valid item description") );
+    throw Exception ( Error(ERR_INTERNAL), QString("gallery response did not hold valid return content") );
 } // G3Request::toItemId
 
 QList<g3index> G3Request::toItemIds ( )
@@ -508,33 +506,29 @@ void G3Request::g3PostItem ( G3Backend* const backend, g3index id, const QHash<Q
   G3Request request ( backend, KIO::HTTP_POST, QString("item/%1").arg(id), file );
   // add attributes as 'entity' structure
   QMap<QString,QVariant> entity; // QMap, since QJson silently fails to encode a QHash !
-  QHash<QString,QString>::const_iterator it;
-  for ( it=attributes.constBegin(); it!=attributes.constEnd(); it++ )
+  for ( QHash<QString,QString>::const_iterator it=attributes.constBegin(); it!=attributes.constEnd(); it++ )
     entity.insert ( it.key(), QVariant(it.value()) );
   // specify entity description as a single, serialized query attribute
   request.addQueryItem ( "entity", request.g3serialize(QVariant(entity)) );
-  // add file to be uploaded
   request.setup        ( );
   request.process      ( );
   request.evaluate     ( );
 } // G3Request::g3PostItem
 
-g3index G3Request::g3PutItem ( G3Backend* const backend, g3index id, const QHash<QString,QString>& attributes, Entity::G3Type type )
+void G3Request::g3PutItem ( G3Backend* const backend, g3index id, const QHash<QString,QString>& attributes )
 {
   MY_KDEBUG_BLOCK ( "<G3Request::g3PutItem>" );
-  kDebug() << "(<backend> <id> <attributes> <type>)" << backend->toPrintout() << attributes.count() << type.toString();
+  kDebug() << "(<backend> <id> <attributes[keys]> <type>)" << backend->toPrintout() << attributes.keys();
   G3Request request ( backend, KIO::HTTP_PUT, QString("item/%1").arg(id) );
-  // add attributes one-by-one
-  QHash<QString,QString>::const_iterator it;
-  for ( it=attributes.constBegin(); it!=attributes.constEnd(); it++ )
-    request.addQueryItem ( it.key(), it.value() );
-  request.addQueryItem ( "type", type, TRUE );
+  // add attributes as 'entity' structure
+  QMap<QString,QVariant> entity; // QMap, since QJson silently fails to encode a QHash !
+  for ( QHash<QString,QString>::const_iterator it=attributes.constBegin(); it!=attributes.constEnd(); it++ )
+    entity.insert ( it.key(), it.value() );
+  // specify entity description as a single, serialized query attribute
+  request.addQueryItem ( "entity", request.g3serialize(QVariant(entity)) );
   request.setup        ( );
   request.process      ( );
   request.evaluate     ( );
-  g3index index = request.toItemId ( );
-  kDebug() << "{<item[id]>}" << index;
-  return index;
 } // G3Request::g3PutItem
 
 void G3Request::g3DelItem ( G3Backend* const backend, g3index id )

@@ -270,11 +270,16 @@ void G3Backend::removeItem ( G3Item* item )
   }
 } // G3Backend::removeItem
 
-void G3Backend::updateItem ( G3Item* item, QHash<QString,QString>& attributes )
+void G3Backend::updateItem ( G3Item* item, const QHash<QString,QString>& attributes )
 {
   MY_KDEBUG_BLOCK ( "<G3Backend::updateItem>" );
-  kDebug() << "(<item> <attributes>)" << item->toPrintout() << QStringList(attributes.keys()).join(",");
-  G3Request::g3PutItem ( this, item->id(), item->toAttributes(), item->type() );
+  kDebug() << "(<item> <attributes[keys]>)" << item->toPrintout() << QStringList(attributes.keys()).join(",");
+//  G3Request::g3PutItem ( this, item->id(), item->toAttributes() );
+  G3Request::g3PutItem ( this, item->id(), attributes );
+  g3index id = item->id();
+  delete item;
+  item = itemById ( id );
+  kDebug() << "updated item" << item->toPrintout ( );
 } // G3Backend::updateItem
 
 G3Item* const G3Backend::createItem  ( G3Item* parent, const QString& name, const Entity::G3File* const file )

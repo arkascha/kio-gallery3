@@ -356,6 +356,13 @@ void KIOGallery3Protocol::rename ( const KUrl& srcUrl, const KUrl& destUrl, KIO:
       throw Exception ( Error(ERR_UNSUPPORTED_ACTION),
                         QString("moving of entities between different protocol schemes not supported (%1=>%2)").arg(srcUrl.scheme()).arg(destUrl.scheme()) );
     }
+    if ( srcUrl.directory()!=destUrl.directory() )
+    {
+      kDebug() << QString("moving of entities between different albums not supported (%1/%2)")
+                        .arg(srcUrl.directory()).arg(destUrl.directory());
+      throw Exception ( Error(ERR_UNSUPPORTED_ACTION),
+                        QString("moving of entities between different albums supported") );
+    }
     G3Backend* backend = selectBackend ( srcUrl );
     G3Item* item = backend->itemByUrl ( srcUrl );
     QHash<QString,QString> attributes;

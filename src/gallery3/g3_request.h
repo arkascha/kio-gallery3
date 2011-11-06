@@ -91,7 +91,7 @@ namespace KIO
         static g3index        g3GetAncestor  ( G3Backend* const backend, G3Item* item );
         static G3Item*        g3GetItem      ( G3Backend* const backend, g3index id, const QString& scope="direct", const QString& name="", bool random=FALSE, Entity::G3Type type=Entity::G3Type::NONE );
         static void           g3PostItem     ( G3Backend* const backend, g3index id, const QHash<QString,QString>& attributes, const Entity::G3File* const file=NULL );
-        static g3index        g3PutItem      ( G3Backend* const backend, g3index id, const QHash<QString,QString>& attributes, Entity::G3Type type );
+        static void           g3PutItem      ( G3Backend* const backend, g3index id, const QHash<QString,QString>& attributes );
         static void           g3DelItem      ( G3Backend* const backend, g3index id );
         static g3index        g3SetItem      ( G3Backend* const backend, g3index id, const QString& name="", Entity::G3Type type=Entity::G3Type::NONE, const QByteArray& file=0 );
     }; // class G3Request
