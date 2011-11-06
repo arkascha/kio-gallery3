@@ -13,6 +13,7 @@
 #include <QHash>
 #include <QDataStream>
 #include <QFile>
+#include <KMimeType>
 #include <kio/authinfo.h>
 #include <kio/udsentry.h>
 
@@ -35,28 +36,46 @@ namespace KIO
         private:
           QHash<int,QString> m_name_map;
           QHash<int,int>     m_node_map;
+          QHash<QString,int> m_mime_map;
         protected:
           int                m_value;
         public:
           enum { NONE, ALBUM, MOVIE, PHOTO, TAG, COMMENT };
-          inline G3Type ( int value )           { setup(); m_value = value; };
-          inline G3Type ( const char* name )    { setup(); m_value = m_name_map.key(name); };
-          inline G3Type ( const QString& name ) { setup(); m_value = m_name_map.key(name); };
+          inline G3Type ( int value )                  { setup(); m_value = value; };
+          inline G3Type ( const char* name )           { setup(); m_value = m_name_map.key(name); };
+          inline G3Type ( const QString& name )        { setup(); m_value = m_name_map.key(name); };
+          inline G3Type ( const KMimeType::Ptr& mime ) { setup(); m_value = m_mime_map.value(mime->name().toLower()); };
           inline G3Type ( )                     { setup(); };
           inline void setup ( )
           {
-            m_name_map.insert ( G3Type::NONE,    QString("") );
-            m_name_map.insert ( G3Type::ALBUM,   QString("album") );
-            m_name_map.insert ( G3Type::MOVIE,   QString("movie") );
-            m_name_map.insert ( G3Type::PHOTO,   QString("photo") );
-            m_name_map.insert ( G3Type::TAG,     QString("tag") );
-            m_name_map.insert ( G3Type::COMMENT, QString("tag") );
+            m_name_map.insert ( G3Type::NONE,    "" );
+            m_name_map.insert ( G3Type::ALBUM,   "album" );
+            m_name_map.insert ( G3Type::MOVIE,   "movie" );
+            m_name_map.insert ( G3Type::PHOTO,   "photo" );
+            m_name_map.insert ( G3Type::TAG,     "tag") ;
+            m_name_map.insert ( G3Type::COMMENT, "comment") ;
             m_node_map.insert ( G3Type::NONE,    0 );
             m_node_map.insert ( G3Type::ALBUM,   S_IFDIR );
             m_node_map.insert ( G3Type::MOVIE,   S_IFREG );
             m_node_map.insert ( G3Type::PHOTO,   S_IFREG );
             m_node_map.insert ( G3Type::TAG,     S_IFREG );
             m_node_map.insert ( G3Type::COMMENT, S_IFREG );
+            m_mime_map.insert ( "inode/directory",    G3Type::ALBUM );
+            m_mime_map.insert ( "image/jpeg",         G3Type::PHOTO );
+            m_mime_map.insert ( "image/tiff",         G3Type::PHOTO );
+            m_mime_map.insert ( "image/bmp",          G3Type::PHOTO );
+            m_mime_map.insert ( "image/gif",          G3Type::PHOTO );
+            m_mime_map.insert ( "image/png",          G3Type::PHOTO );
+            m_mime_map.insert ( "video/avi",          G3Type::MOVIE );
+            m_mime_map.insert ( "video/divx",         G3Type::MOVIE );
+            m_mime_map.insert ( "video/mpeg",         G3Type::MOVIE );
+            m_mime_map.insert ( "video/mp4",          G3Type::MOVIE );
+            m_mime_map.insert ( "video/ogg",          G3Type::MOVIE );
+            m_mime_map.insert ( "video/webm",         G3Type::MOVIE );
+            m_mime_map.insert ( "video/x-ms-asf",     G3Type::MOVIE );
+            m_mime_map.insert ( "video/x-ms-wmv",     G3Type::MOVIE );
+            m_mime_map.insert ( "video/x-ms-video",   G3Type::MOVIE );
+            m_mime_map.insert ( "video/x-theora+ogg", G3Type::MOVIE );
           }; // constructor
           inline int           operator[]    ( const char* value )   const { return m_name_map.key(value); };
           inline const QString operator[]    ( int         key   )   const { return m_name_map.value(key); };
@@ -68,7 +87,7 @@ namespace KIO
           inline bool          operator!=    ( const G3Type& other ) const { return m_value!=other.m_value; };
           inline bool          operator!=    (       G3Type& other ) const { return m_value!=other.m_value; };
           inline int           operator=     ( int value )                 { m_value=value;  return value; };
-          inline int           operator=     ( const QString& name)        { m_value = m_name_map.key(name); return m_value; };
+          inline int           operator=     ( const QString& name)        { m_value=m_name_map.key(name); return m_value; };
       }; // class G3Type
 
       QDataStream & operator<< ( QDataStream & stream, const G3Type & type );

@@ -10,7 +10,6 @@
 #include <unistd.h>
 #include <KUrl>
 #include <KMimeType>
-#include <kmimetype.h>
 #include <klocalizedstring.h>
 #include <kio/netaccess.h>
 #include <kio/job.h>
@@ -290,7 +289,7 @@ void KIOGallery3Protocol::mkdir ( const KUrl& targetUrl, int permissions )
     QString filename = targetUrl.fileName();
     G3Item* parent   = backend->itemByPath ( targetUrl.directory() );
     kDebug() << QString("creating new album '%1' in album '%2'").arg(filename).arg(targetUrl.directory());
-    backend->createAlbum ( parent, filename );
+    backend->createItem ( parent, filename );
     finished();
   }
   catch ( Exception &e ) { error( e.getCode(), e.getText() ); }
@@ -305,7 +304,6 @@ void KIOGallery3Protocol::put ( const KUrl& targetUrl, int permissions, KIO::Job
   try
   {
     // strategy: save data stream to temp file and http-post that
-    int            ret_val;
     QByteArray     buffer;
     KTemporaryFile file;
 //    if ( ! file.open(QIODevice::WriteOnly) )
@@ -313,14 +311,17 @@ void KIOGallery3Protocol::put ( const KUrl& targetUrl, int permissions, KIO::Job
       throw Exception ( Error(ERR_COULD_NOT_WRITE),
                         QString("failed to generate temporary file '%1'").arg(file.fileName()) );
     kDebug() << "using temporary file" << file.fileName() << "to upload content";
+    int read_count, write_count;
     do
     {
       dataReq();
-      int ret_val = readData ( buffer );
-      if  ( ret_val<0 )
-        throw Exception ( Error(ERR_COULD_NOT_READ), targetUrl.prettyUrl() ); // FIXME: show source file instead of target file
-      file.write ( buffer );
-    } while ( ret_val!=0 ); // a return value of 0 (zero) means: no more data
+      buffer.clear ( );
+      read_count  = readData ( buffer );
+      write_count = file.write ( buffer );
+      if  ( read_count<0 || write_count<0)
+        throw Exception ( Error(ERR_SLAVE_DEFINED),
+                          QString("failed to buffer data in temporary file").arg(targetUrl.prettyUrl()) );
+    } while ( read_count>0 ); // a return value of 0 (zero) means: no more data
     file.close ( );
     // upload stream as new file to remote gallery
     G3Backend* backend = selectBackend ( targetUrl );
@@ -331,18 +332,11 @@ void KIOGallery3Protocol::put ( const KUrl& targetUrl, int permissions, KIO::Job
                         QString("failure while handling temporary file '%1'").arg(file.fileName()) );
     KMimeType::Ptr mimetype = KMimeType::findByPath ( source );
     QString        filename = targetUrl.fileName ( );
-    G3Item* parent = backend->itemByPath ( targetUrl.path() );
-    Entity::G3Type filetype;
-    if ( mimetype->is("image") )
-      filetype = Entity::G3Type::PHOTO;
-    else if ( mimetype->is("video") )
-      filetype = Entity::G3Type::MOVIE;
-    else
-      throw Exception ( Error(ERR_SLAVE_DEFINED),
-                        QString("unsupported file type '%1' ( %2 )").arg(mimetype->name()).arg(mimetype->comment()) );
+    G3Item* parent = backend->itemByPath ( targetUrl.directory() );
     // the backend part handles the upload request
-    backend->createItem ( file, parent, filetype, filename );
-
+    Entity::G3File g3file ( filename, mimetype, source );
+    backend->createItem ( parent, filename, &g3file );
+    // cleanup
     file.deleteLater ( );
     finished ( );
   }

@@ -13,7 +13,7 @@
 #include <QByteArray>
 #include <QHash>
 #include <QVariant>
-//#include <QVariantMap>
+#include <QBuffer>
 #include <KUrl>
 #include <KTemporaryFile>
 #include <kio/http.h>
@@ -23,6 +23,7 @@
 #include "json/g3_json.h"
 #include "gallery3/g3_backend.h"
 #include "entity/g3_type.h"
+#include "entity/g3_file.h"
 #include "entity/g3_item.h"
 #include "entity/g3_collection.h"
 
@@ -47,25 +48,27 @@ namespace KIO
       , public G3JsonSerializer
     {
       private:
-         G3Backend* const      m_backend;
-        const KIO::HTTP_METHOD m_method;
-        const QString          m_service;
-        KUrl                   m_requestUrl;
-        KUrl                   m_finalUrl;
-        QHash<QString,QString> m_header;   // request header items
-        QHash<QString,QString> m_query;    // request query items
-        QIODevice* const       m_file;     // request upload file
-        KIO::TransferJob*      m_job;
-        QMap<QString,QString>  m_meta;     // result meta data
-        QByteArray             m_payload;  // result payload
-        QString                m_boundary; // multi-part boundary
-        QVariant               m_result;
-        KUrl          webUrlWithQueryItems   ( KUrl url, const QHash<QString,QString>& query );
-        QByteArray    webFormPostPayload     ( const QHash<QString,QString>& query );
-        QByteArray    webFileFormPostPayload ( const QHash<QString,QString>& query, QIODevice* file );
+        G3Backend* const            m_backend;
+        const KIO::HTTP_METHOD      m_method;
+        const QString               m_service;
+        const Entity::G3File* const m_file;     // request upload file
+        KUrl                        m_requestUrl;
+        KUrl                        m_finalUrl;
+        KIO::TransferJob*           m_job;
+        // to be sent
+        QHash<QString,QString>      m_header;   // request header items
+        QHash<QString,QString>      m_query;    // request query items
+        QString                     m_boundary; // multi-part boundary
+        // to be receiced
+        QMap<QString,QString>       m_meta;     // result meta data
+        QByteArray                  m_payload;  // result payload
+        QVariant                    m_result;
+        KUrl       webUrlWithQueryItems   ( KUrl url, const QHash<QString,QString>& query );
+        QByteArray webFormPostPayload     ( const QHash<QString,QString>& query );
+        QByteArray webFileFormPostPayload ( const QHash<QString,QString>& query, const Entity::G3File* const file );
         const QString g3RequestKey           ( );
       protected:
-        G3Request ( G3Backend* const backend, KIO::HTTP_METHOD method, const QString& service, QIODevice* const file=NULL );
+        G3Request ( G3Backend* const backend, KIO::HTTP_METHOD method, const QString& service, const Entity::G3File* const file=NULL );
         void           addHeaderItem ( const QString& key, const QString& value );
         void           addQueryItem  ( const QString& key, const QString& value, bool skipIfEmpty=FALSE );
         void           addQueryItem  ( const QString& key, Entity::G3Type value, bool skipIfEmpty=FALSE );
@@ -87,7 +90,7 @@ namespace KIO
         static QList<g3index> g3GetAncestors ( G3Backend* const backend, G3Item* item );
         static g3index        g3GetAncestor  ( G3Backend* const backend, G3Item* item );
         static G3Item*        g3GetItem      ( G3Backend* const backend, g3index id, const QString& scope="direct", const QString& name="", bool random=FALSE, Entity::G3Type type=Entity::G3Type::NONE );
-        static void           g3PostItem     ( G3Backend* const backend, g3index id, const QHash<QString,QString>& attributes, const KTemporaryFile* file=NULL );
+        static void           g3PostItem     ( G3Backend* const backend, g3index id, const QHash<QString,QString>& attributes, const Entity::G3File* const file=NULL );
         static g3index        g3PutItem      ( G3Backend* const backend, g3index id, const QHash<QString,QString>& attributes, Entity::G3Type type );
         static void           g3DelItem      ( G3Backend* const backend, g3index id );
         static g3index        g3SetItem      ( G3Backend* const backend, g3index id, const QString& name="", Entity::G3Type type=Entity::G3Type::NONE, const QByteArray& file=0 );

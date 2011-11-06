@@ -20,19 +20,19 @@
 using namespace KIO;
 using namespace KIO::Gallery3;
 
-G3Request::G3Request ( G3Backend* const backend, KIO::HTTP_METHOD method, const QString& service, QIODevice* const file )
+G3Request::G3Request ( G3Backend* const backend, KIO::HTTP_METHOD method, const QString& service, const Entity::G3File* const file )
   : m_backend ( backend )
   , m_method  ( method )
   , m_service ( service )
+  , m_file    ( file )
   , m_payload ( NULL )
   , m_job     ( NULL )
-  , m_file    ( file )
 {
-  MY_KDEBUG_BLOCK ( "<G3Request::G3Request>" );
-  kDebug() << "(<backend> <method> <service>)" << backend->toPrintout() << method << service;
+  kDebug() << "(<backend> <method> <service> <file[name]>)" << backend->toPrintout() << method << service << ( file ? file->filename() : "-/-" );
   m_requestUrl = backend->restUrl();
   m_requestUrl.adjustPath ( KUrl::AddTrailingSlash );
   m_requestUrl.addPath ( m_service );
+  m_boundary = KRandom::randomString(42 + 13).toAscii();
   // an (cached) authentication key as defined by the G3 API
   addHeaderItem ( "customHTTPHeader", QString("X-Gallery-Request-Key: %1" ).arg(g3RequestKey()) );
   // an agent string we can recognize
@@ -45,7 +45,6 @@ G3Request::G3Request ( G3Backend* const backend, KIO::HTTP_METHOD method, const 
 
 void G3Request::addHeaderItem ( const QString& key, const QString& value )
 {
-  MY_KDEBUG_BLOCK ( "<G3Request::addHeaderItem>" );
   kDebug() << "(<key> <value>)" << key << value;
   // add value to an existing header if one already exists, do NOT overwrite the existing one
   // we need this for the customHTTPHeaders as required by the G3 API
@@ -61,7 +60,6 @@ void G3Request::addHeaderItem ( const QString& key, const QString& value )
 
 void G3Request::addQueryItem ( const QString& key, const QString& value, bool skipIfEmpty )
 {
-  MY_KDEBUG_BLOCK ( "<G3Request::addQueryItem>" );
   kDebug() << "(<key> <value> <bool>)" << key << value << skipIfEmpty;
   if ( m_query.contains(key) )
     m_query.remove ( key ); // TODO: throw an error instead ?!?
@@ -74,7 +72,6 @@ void G3Request::addQueryItem ( const QString& key, const QString& value, bool sk
 
 void G3Request::addQueryItem ( const QString& key, Entity::G3Type value, bool skipIfEmpty )
 {
-  MY_KDEBUG_BLOCK ( "<G3Request::addQueryItem>" );
   kDebug() << "(<key> <value> <bool>)" << key << value.toString() << skipIfEmpty;
   if ( m_query.contains(key) )
     m_query.remove ( key ); // TODO: throw an error instead ?!?
@@ -90,7 +87,6 @@ void G3Request::addQueryItem ( const QString& key, Entity::G3Type value, bool sk
 
 void G3Request::addQueryItem ( const QString& key, const QStringList& values, bool skipIfEmpty )
 {
-  MY_KDEBUG_BLOCK ( "<G3Request::addQueryItem>" );
   kDebug() << "(<key> <values [count]> <bool>)" << key << values.count() << skipIfEmpty;
   if ( 0==values.count() )
     kDebug() << "skipping query item holding an empty list of values";
@@ -106,7 +102,6 @@ void G3Request::addQueryItem ( const QString& key, const QStringList& values, bo
 
 KUrl G3Request::webUrlWithQueryItems ( KUrl url, const QHash<QString,QString>& query )
 {
-  MY_KDEBUG_BLOCK ( "<G3Request::webUrlWithQueryItems>" );
   kDebug() << "(<url> <query [count]>)" << url.prettyUrl() << query.count();
   QHash<QString,QString>::const_iterator it;
     for ( it=m_query.constBegin(); it!=m_query.constEnd(); it++ )
@@ -117,52 +112,53 @@ KUrl G3Request::webUrlWithQueryItems ( KUrl url, const QHash<QString,QString>& q
 
 QByteArray G3Request::webFormPostPayload ( const QHash<QString,QString>& query )
 {
-  MY_KDEBUG_BLOCK ( "<G3Request::webFormPostUpload>" );
   kDebug() << "(<query[count]>)" << query.count();
   QHash<QString,QString>::const_iterator it;
   QStringList queryItems;
   // construct an encoded form payload
   for ( it=m_query.constBegin(); it!=m_query.constEnd(); it++ )
     queryItems << QString("%1=%2").arg(it.key()).arg(it.value());
-  QByteArray payload = queryItems.join("&").toUtf8();
-  kDebug() << "{<payload[size]>}" << payload.size();
-  return payload;
+  QByteArray buffer;
+  buffer = queryItems.join("&").toAscii();
+  kDebug() << "{<buffer[size]>}" << buffer.size();
+  return buffer;
 } // G3Request::webFormPostPayload
 
-QByteArray G3Request::webFileFormPostPayload ( const QHash<QString,QString>& query, QIODevice* file )
+QByteArray G3Request::webFileFormPostPayload ( const QHash<QString,QString>& query, const Entity::G3File* const file )
 {
-  MY_KDEBUG_BLOCK ( "<G3Request::webFilePostUpload>" );
-  kDebug() << "(<query> <file[size]>)" << query << ( file ? QString("%1").arg(file->size()) : "NULL" );
-  QHash<QString,QString>::const_iterator it;
-  QStringList queryItems;
-  QByteArray  postData;
-  // construct a multi part form reply as payload
-  m_boundary = "----------" + KRandom::randomString(42 + 13).toAscii();
-  // add query attributes one-by-one
-  postData = webFormPostPayload ( query );
-/*  
-      for ( it=m_query.constBegin(); it!=m_query.constEnd(); it++ )
-      {
-        postData << QString("--%1\r\nContent-Disposition: form-data; name=\"%2\"\r\n\r\n%3\r\n")
-                            .arg(boundary).arg(it.key()).arg(it.value());
-      } // for
-*/
-  // add file to be uploaded as part of the form
-/*
-      postData << QString("--%1\r\nContent-Disposition: form-data; name=\"%2\";filename=\"%3\"\r\nContent-Type: %4\r\n\r\n")
-                         .arg(boundary).arg("name").arg("filename").arg(mimetype.name().toUtf8());
-      postData << file_content;
-      postData << "\r\n";
-*/
-  kDebug() << "{<postData[size]>}" << postData.size();
-  return postData;
+  kDebug() << "(<query> <file[name]>)" << query << ( file ? file->filename() : "-/-" );
+  // write the form data
+  QFile binary ( file->filepath() );
+  binary.open ( QIODevice::ReadOnly );
+  QByteArray buffer;
+  // one part for each query items
+  for ( QHash<QString,QString>::const_iterator it=m_query.constBegin(); it!=m_query.constEnd(); it++ )
+  {
+    buffer.append ( QString("--%1\r\n").arg(m_boundary).toAscii() );
+    buffer.append ( QString("Content-Disposition: form-data; name=\"%1\"\r\n").arg(it.key()).toAscii() );
+    buffer.append ( QString("Content-Type: text/plain; charset=UTF-8\r\n").toAscii() );
+    buffer.append ( QString("Content-Transfer-Encoding: 8bit\r\n\r\n").toAscii() );
+    buffer.append ( it.value().toAscii() );
+  } // for
+  // the file to be uploaded
+  buffer.append ( QString("\r\n--%1\r\n").arg(m_boundary).toAscii() );
+  buffer.append ( QString("Content-Disposition: form-data; name=\"file\"; filename=\"%1\"\r\n").arg(file->filename()).toAscii() );
+//  buffer.append ( QString("Content-Type: application/octet-stream\r\n").toAscii() );
+  buffer.append ( QString("Content-Type: %1\r\n\r\n").arg(file->mimetype()->name()).toAscii() );
+//  buffer.append ( QString("Content-Type: %1\r\n").arg(file->mimetype()->name()).toAscii() );
+//  buffer.append ( QString("Content-Transfer-Encoding: binary\r\n\r\n").toAscii() );
+  buffer.append ( binary.readAll() );
+  // terminating boundary marker (note the trailing "--")
+  buffer.append ( QString("\r\n--%1--").arg(m_boundary).toAscii() );
+  binary.close ( );
+  kDebug() << "{<buffer[size]>}" << buffer.size();
+  return buffer;
 } // G3Request::webFileFormPostPayload
 
 //==========
 
 const QString G3Request::g3RequestKey ( )
 {
-  MY_KDEBUG_BLOCK ( "<G3Request::g3RequestKey>" );
   kDebug() << "(<>)";
   // TODO: add cached key (from AuthInfo), unless "is login" or "not cached"
   // TODO: somewhere else: upon "auth denied" remove key from cache and try again here
@@ -207,8 +203,6 @@ void G3Request::setup ( )
         addHeaderItem ( "content-type", "Content-Type: application/x-www-form-urlencoded" );
       }
       addHeaderItem ( "customHTTPHeader", "X-Gallery-Request-Method: post" );
-      // FIXME: below this should be something like multi part form, I guess
-//      addHeaderItem ( "content-type", "Content-Type: application/x-www-form-urlencoded" );
       break;
     case KIO::HTTP_PUT:
       m_job = KIO::http_post ( m_requestUrl, webFormPostPayload(m_query), KIO::DefaultFlags );
@@ -242,9 +236,11 @@ void G3Request::process ( )
     case 200: kDebug() << QString("HTTP %1 OK").arg(QVariant(m_meta["responsecode"]).toInt());       break;
     case 201: kDebug() << QString("HTTP %1 Created").arg(QVariant(m_meta["responsecode"]).toInt());  break;
     case 202: kDebug() << QString("HTTP %1 Accepted").arg(QVariant(m_meta["responsecode"]).toInt()); break;
+    case 400: throw Exception ( Error(ERR_ACCESS_DENIED),         QString("HTTP 400: Bad Request") );
+    case 401: throw Exception ( Error(ERR_ACCESS_DENIED),         QString("HTTP 401: Unauthorized") );
     case 403: throw Exception ( Error(ERR_ACCESS_DENIED),         QString("HTTP 403: No Authorization") );
     case 404: throw Exception ( Error(ERR_SERVICE_NOT_AVAILABLE), QString("HTTP 404: Not Found") );
-    default:  throw Exception ( Error(ERR_SLAVE_DEFINED),         QString("Unexcepted http error %1").arg(QVariant(m_meta["responsecode"]).toInt()) );
+    default:  throw Exception ( Error(ERR_SLAVE_DEFINED),         QString("Unexpected http error %1").arg(QVariant(m_meta["responsecode"]).toInt()) );
   } // switch
   kDebug() << "{<>}";
 } // G3Request::process
@@ -503,13 +499,13 @@ G3Item* G3Request::g3GetItem ( G3Backend* const backend, g3index id, const QStri
   return item;
 } // G3Request::g3GetItem
 
-void G3Request::g3PostItem ( G3Backend* const backend, g3index id, const QHash<QString,QString>& attributes, const KTemporaryFile* file )
+void G3Request::g3PostItem ( G3Backend* const backend, g3index id, const QHash<QString,QString>& attributes, const Entity::G3File* file )
 {
   // TODO: implement file to post a file as item, if file is specified (not NULL)
   MY_KDEBUG_BLOCK ( "<G3Request::g3PostItem>" );
   kDebug() << "(<backend> <id> <attributes[count]> <file>)" << backend->toPrintout() << id << attributes.count()
-                                                            << ( file ? file->fileName() : "NULL" );
-  G3Request request ( backend, KIO::HTTP_POST, QString("item/%1").arg(id) );
+                                                            << ( file ? file->filename() : "-/-" );
+  G3Request request ( backend, KIO::HTTP_POST, QString("item/%1").arg(id), file );
   // add attributes as 'entity' structure
   QMap<QString,QVariant> entity; // QMap, since QJson silently fails to encode a QHash !
   QHash<QString,QString>::const_iterator it;

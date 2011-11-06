@@ -277,17 +277,26 @@ void G3Backend::updateItem ( G3Item* item, QHash<QString,QString>& attributes )
   G3Request::g3PutItem ( this, item->id(), item->toAttributes(), item->type() );
 } // G3Backend::updateItem
 
-G3Item* const G3Backend::createItem  ( const KTemporaryFile& file, G3Item* parent, Entity::G3Type type, const QString& name, QString title )
+G3Item* const G3Backend::createItem  ( G3Item* parent, const QString& name, const Entity::G3File* const file )
 {
   MY_KDEBUG_BLOCK ( "<G3Backend::createItem>" );
-  kDebug() << "(<file> <parent> <type> <name> <title>)" << "-/-" << parent->toPrintout() << type.toString() << name << title;
-  if ( title.isEmpty() )
-    title = name;
+  kDebug() << "(<parent> <name> <file[name]>)" << parent->toPrintout() << name << ( file ? file->filename() : "-/-" );
+  // setup the attributes that describe to new entity
   QHash<QString,QString> attributes;
-  attributes.insert ( "type",  type.toString() );
-  attributes.insert ( "name",  name );
-  attributes.insert ( "title", title );
-  G3Request::g3PostItem ( this, parent->id(), attributes, &file );
+  attributes.insert ( "name",      name );
+  attributes.insert ( "title",     name.left(name.lastIndexOf(".")) ); // strip "file name extension", if contained
+  if ( file )
+  {
+    attributes.insert ( "type",      Entity::G3Type(file->mimetype()).toString() );
+    attributes.insert ( "mime_type", file->mimetype()->name() );
+  }
+  else
+  {
+    attributes.insert ( "type",      Entity::G3Type(Entity::G3Type::ALBUM).toString() );
+    attributes.insert ( "mime_type", "inode/directory" );
+  }
+  // send request
+  G3Request::g3PostItem ( this, parent->id(), attributes, file );
   // we delete the parent folder to create a fresh start including parent and new member
   QStringList breadcrumbs = parent->path() << name;
   delete parent;
@@ -296,26 +305,3 @@ G3Item* const G3Backend::createItem  ( const KTemporaryFile& file, G3Item* paren
   kDebug() << "created item" << item->toPrintout();
   return item;
 } // G3Backend::createItem
-
-G3Item* const G3Backend::createAlbum ( G3Item* parent, const QString& name, QString title )
-{
-  MY_KDEBUG_BLOCK ( "<G3Backend::createAlbum>" );
-  kDebug() << "(<parent> <name> <title>)" << parent->toPrintout() << name << title;
-  if ( title.isEmpty() )
-    title = name;
-  QHash<QString,QString> attributes;
-//  attributes.insert ( "type",  "album" );
-  Entity::G3Type type(Entity::G3Type::ALBUM);
-  attributes.insert ( "type",  type.toString() );
-  attributes.insert ( "name",  name );
-  attributes.insert ( "title", title );
-  // TODO: further attributes ? => permissions
-  G3Request::g3PostItem ( this, parent->id(), attributes );
-  // we delete the parent folder to create a fresh start including parent and new member
-  QStringList breadcrumbs = parent->path() << name;
-  delete parent;
-  // now try to get the fresh item, this will re-construct the parent on-the-fly
-  G3Item* item = itemByPath ( breadcrumbs );
-  kDebug() << "created item" << item->toPrintout();
-  return item;
-} // G3Backend::createAlbum

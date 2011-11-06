@@ -13,6 +13,7 @@
 #include <ktemporaryfile.h>
 #include "utility/defines.h"
 #include "gallery3/g3_request.h"
+#include "entity/g3_file.h"
 #include "entity/g3_item.h"
 
 namespace KIO
@@ -66,8 +67,7 @@ namespace KIO
         G3Item*                              popItem     ( g3index id );
         void                                 removeItem  ( G3Item* item );
         void                                 updateItem  ( G3Item* item, QHash<QString,QString>& attributes );
-        G3Item* const                        createItem  ( const KTemporaryFile& file, KIO::Gallery3::G3Item* parent, KIO::Gallery3::Entity::G3Type type, const QString& name, QString title = QString() );
-        G3Item* const                        createAlbum ( G3Item* parent, const QString& name, QString title=QString() );
+        G3Item* const                        createItem  ( G3Item* parent, const QString& name, const Entity::G3File* const file=NULL );
         // TODO: updateItem ( ... );
     }; // class G3Backend
 
