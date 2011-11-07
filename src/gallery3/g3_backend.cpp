@@ -16,8 +16,11 @@ using namespace KIO;
 using namespace KIO::Gallery3;
 
 /**
- * const KUrl G3Backend::detectBase ( const KUrl& url )
+ * G3Backend* const G3Backend::detectBase ( const KUrl& url )
  *
+ * param: const KUrl& url (url of requested base inside the galleries hierarchy)
+ * returns: pointer to a validated and unique backend object
+ * description:
  * detects and returns the position (url) of the G3-API based on any given
  * strategy: the REST API must be some base folder of the requested url
  *           so we test each breadcrump one by one (shortening the url) until we find the service
@@ -62,6 +65,13 @@ G3Backend* const G3Backend::instantiate ( QHash<QString,G3Backend*>& backends, K
                     QString("No usable G3-API service found") );
 } // G3Backend::instantiate
 
+/**
+ * G3Backend::G3Backend
+ *
+ * param: const KUrl& g3Url (url of the galleries web root)
+ * description:
+ * stores the derived REST API url and handles the requested protocol (http or https)
+ */
 G3Backend::G3Backend ( const KUrl& g3Url )
   : m_base_url   ( g3Url.url(KUrl::RemoveTrailingSlash) )
 {
@@ -72,6 +82,12 @@ G3Backend::G3Backend ( const KUrl& g3Url )
   kDebug() << "{<base> <rest>}" << m_base_url.prettyUrl() << m_rest_url.prettyUrl();
 }
 
+/**
+ * G3Backend::~G3Backend
+ *
+ * description:
+ * recursively deletes all registered items associated to this backend by deleting the base item
+ */
 G3Backend::~G3Backend ( )
 {
   MY_KDEBUG_BLOCK ( "<G3Backend::~G3Backend>" );
@@ -88,6 +104,9 @@ G3Backend::~G3Backend ( )
 
 //==========
 
+/**
+ * const UDSEntry G3Backend::toUDSEntry
+ */
 const UDSEntry G3Backend::toUDSEntry ( )
 {
   MY_KDEBUG_BLOCK ( "<G3Backend::toUDSEntry>" );
@@ -95,6 +114,9 @@ const UDSEntry G3Backend::toUDSEntry ( )
   return itemBase()->toUDSEntry();
 } // G3Backend::toUDSEntry
 
+/**
+ * const UDSEntryList G3Backend::toUDSEntryList
+ */
 const UDSEntryList G3Backend::toUDSEntryList ( )
 {
   MY_KDEBUG_BLOCK ( "<G3Backend::toUDSEntryList>" );
@@ -104,6 +126,13 @@ const UDSEntryList G3Backend::toUDSEntryList ( )
   return list;
 } // G3Backend::toUDSEntryList
 
+/**
+ * G3Backend::toPrintout
+ *
+ * returns: const QString (string description of the backend)
+ * description:
+ * a human readable description of the backend, mostly for debugging & logging purposes
+ */
 const QString G3Backend::toPrintout ( ) const
 {
   return QString("G3Backend [%1 items] (%2)").arg(m_items.count()).arg(m_base_url.prettyUrl());
@@ -111,6 +140,14 @@ const QString G3Backend::toPrintout ( ) const
 
 //==========
 
+/**
+ * G3Item* G3Backend::itemBase
+ *
+ * returns: G3Item* (the base (root) item of the assiciated gallery)
+ * description:
+ * each gallery has only one and exactly one base item
+ * this item acts as root of the items hierarchy
+ */
 G3Item* G3Backend::itemBase ( )
 {
   MY_KDEBUG_BLOCK ( "<G3Backend::itemBase>" );
@@ -118,6 +155,16 @@ G3Item* G3Backend::itemBase ( )
   return itemById ( 1 );
 } // G3Backend::itemBase
 
+/**
+ * G3Item* G3Backend::itemById ( g3index id )
+ *
+ * param: g3index (numeric item id)
+ * returns: G3Item* (pointer to the item associated with the given id)
+ * description:
+ * the method blindly returns an existing, previously registered item
+ * in case no such item exists it starts an attempt to retrieve the item
+ * in that case the item is automatically registered and integrated into the items hierarchy
+ */
 G3Item* G3Backend::itemById ( g3index id )
 {
   MY_KDEBUG_BLOCK ( "<G3Backend::itemById>" );
@@ -128,6 +175,16 @@ G3Item* G3Backend::itemById ( g3index id )
   return item ( id );
 } // G3Backend::itemById
 
+/**
+ * G3Item* G3Backend::itemByUrl ( const KUrl& itemUrl )
+ *
+ * param: const KUrl& (local item url inside the local folder hierarchy)
+ * returns: G3Item* (pointer to the item associated with the given url)
+ * description:
+ * will walk through the folder hierarchy as presented by the set of registered items
+ * in case a subpath of the given url does not map onto previously registered items
+ * those items will be retrieved, registered and integrated into the local hierarchy
+ */
 G3Item* G3Backend::itemByUrl ( const KUrl& itemUrl )
 {
   MY_KDEBUG_BLOCK ( "<G3Backend::itemByUrl>" );
@@ -136,6 +193,16 @@ G3Item* G3Backend::itemByUrl ( const KUrl& itemUrl )
   return itemByPath ( itemPath );
 } // G3Backend::itemByUrl
 
+/**
+ * G3Item* G3Backend::itemByPath ( const QString& path )
+ *
+ * param: const QString& (local item path inside the local folder hierarchy)
+ * returns: G3Item* (pointer to the item associated with the given url)
+ * description:
+ * will walk through the folder hierarchy as presented by the set of registered items
+ * in case a subpath of the given url does not map onto previously registered items
+ * those items will be retrieved, registered and integrated into the local hierarchy
+ */
 G3Item* G3Backend::itemByPath ( const QString& path )
 {
   MY_KDEBUG_BLOCK ( "<G3Backend::itemByPath>" );
@@ -144,6 +211,16 @@ G3Item* G3Backend::itemByPath ( const QString& path )
   return itemByPath ( breadcrumbs );
 } // G3Backend::itemByPath
 
+/**
+ * G3Item* G3Backend::itemByPath ( const QStringList& breadcrumbs )
+ *
+ * param: const QStringList& (local item path as breadcrumbs inside the local folder hierarchy)
+ * returns: G3Item* (pointer to the item associated with the given url)
+ * description:
+ * will walk through the folder hierarchy as presented by the set of registered items
+ * in case a subpath of the given url does not map onto previously registered items
+ * those items will be retrieved, registered and integrated into the local hierarchy
+ */
 G3Item* G3Backend::itemByPath ( const QStringList& breadcrumbs )
 {
   MY_KDEBUG_BLOCK ( "<G3Backend::itemByPath>" );
@@ -160,6 +237,16 @@ G3Item* G3Backend::itemByPath ( const QStringList& breadcrumbs )
   return item;
 } // G3Backend::itemByPath
 
+/**
+ * QList<G3Item*> G3Backend::membersByItemId ( g3index id )
+ *
+ * param: g3index (numeric item id)
+ * returns: QList<G3Item*> (list of pointers to registered member item objects)
+ * description:
+ * will return all members of a given parent item by looking at the 'members' attribute inside the item description
+ * any members registered that are not listed in the attribute are deleted
+ * any members not (yet) registered but listed in the attribute are retrieved, registered and integrated into the item hierarchy
+ */
 QList<G3Item*> G3Backend::membersByItemId ( g3index id )
 {
   MY_KDEBUG_BLOCK ( "<G3Backend::membersByItemId>" );
@@ -176,6 +263,18 @@ QList<G3Item*> G3Backend::membersByItemId ( g3index id )
   return items;
 } // G3Backend::membersByItemId
 
+/**
+ * QList<G3Item*> G3Backend::membersByItemPath ( const QString& path )
+ *
+ * param: const QString& (path of item in local folder hierarchy)
+ * returns: QList<G3Item*> (list of pointers to registered member item objects)
+ * description:
+ * will return all members of a parent item by looking at the 'members' attribute inside the item description
+ * the parent item is identified by its path inside the local folder hierary
+ * any missing subfolders leading to the parent item will be retrieved, registered and integrated ino the item hierarchy
+ * any members registered that are not listed in the attribute are deleted
+ * any members not (yet) registered but listed in the attribute are retrieved, registered and integrated into the item hierarchy
+ */
 QList<G3Item*> G3Backend::membersByItemPath ( const QString& path )
 {
   MY_KDEBUG_BLOCK ( "<G3Backend::membersByItemPath>" );
@@ -186,6 +285,18 @@ QList<G3Item*> G3Backend::membersByItemPath ( const QString& path )
     return membersByItemPath ( path.split("/") );
 } // G3Backend::membersByItemPath
 
+/**
+ * QList<G3Item*> G3Backend::membersByItemPath ( const QStringList& breadcrumbs )
+ *
+ * param: const QStringList& (path of item as breadcrumbs in local folder hierarchy)
+ * returns: QList<G3Item*> (list of pointers to registered member item objects)
+ * description:
+ * will return all members of a parent item by looking at the 'members' attribute inside the item description
+ * the parent item is identified by its path inside the local folder hierary
+ * any missing subfolders leading to the parent item will be retrieved, registered and integrated ino the item hierarchy
+ * any members registered that are not listed in the attribute are deleted
+ * any members not (yet) registered but listed in the attribute are retrieved, registered and integrated into the item hierarchy
+ */
 QList<G3Item*> G3Backend::membersByItemPath ( const QStringList& breadcrumbs )
 {
   MY_KDEBUG_BLOCK ( "<G3Backend::membersByItemPath>" );
@@ -204,11 +315,19 @@ QList<G3Item*> G3Backend::membersByItemPath ( const QStringList& breadcrumbs )
 
 //==========
 
+/**
+ * G3Item* G3Backend::item ( g3index id )
+ *
+ * param: g3index (numeric item id)
+ * returns: G3Item* (pointer to the associated item object)
+ * description:
+ * accepts and returns a previously registered item matching the id or attemots to retrieve it
+ * a retrieved item will be registered and integrated in to the local item hierarchy
+ */
 G3Item* G3Backend::item ( g3index id )
 {
   MY_KDEBUG_BLOCK ( "<G3Backend::item>" );
   kDebug() << "(<id>)" << id;
-kDebug() << "XOXOX" << m_items.keys()  << "XOXOX";
   if ( m_items.contains(id) )
     return m_items[id];
   // item not found, retrieve it from the remote gallery
@@ -217,6 +336,14 @@ kDebug() << "XOXOX" << m_items.keys()  << "XOXOX";
   return item;
 } // G3Backend::item
 
+/**
+ * QHash<g3index,G3Item*> G3Backend::members ( g3index id )
+ *
+ * param: g3index (numeric item id)
+ * returns: QHash<g3index,G3Item*> (hash of pointers to items by their id)
+ * description:
+ * consults a given item and requests the list of member items inside that item
+ */
 QHash<g3index,G3Item*> G3Backend::members ( g3index id )
 {
   MY_KDEBUG_BLOCK ( "<G3Backend::members>" );
@@ -224,6 +351,14 @@ QHash<g3index,G3Item*> G3Backend::members ( g3index id )
   itemById(id)->members ( );
 } // G3Backend::members
 
+/**
+ * QHash<g3index,G3Item*> G3Backend::members ( G3Item* item )
+ *
+ * param: G3Item* (pointer to an item object)
+ * returns: QHash<g3index,G3Item*> (hash of pointers to items by their id)
+ * description:
+ * consults a given item and requests the list of member items inside that item
+ */
 QHash<g3index,G3Item*> G3Backend::members ( G3Item* item )
 {
   MY_KDEBUG_BLOCK ( "<G3Backend::members>" );
@@ -233,18 +368,42 @@ QHash<g3index,G3Item*> G3Backend::members ( G3Item* item )
 
 //==========
 
+/**
+ * int G3Backend::countItems  ( )
+ *
+ * returns: int (number of known (currently registered) items associated with this backend)
+ * description:
+ * mainly for debugging / logging purposes
+ */
 int G3Backend::countItems  ( )
 {
   kDebug() << "(<>)";
   return m_items.count();
 } // G3Backend::countItems
 
+/**
+ * void G3Backend::pushItem ( G3Item* item )
+ *
+ * param: G3Item* (pointer to an item object)
+ * description:
+ * registeres a given item inside its associated backend
+ * note that the backend only holds an unordered list of items, not a hierarchy
+ */
 void G3Backend::pushItem ( G3Item* item )
 {
   kDebug() << "(<item>)" << item->toPrintout();
   m_items.insert ( item->id(), item );
 } // G3Backend::pushItem
 
+/**
+ * G3Item* G3Backend::popItem ( g3index id )
+ *
+ * param: g3index (numeric item id)
+ * returns: G3Item* (pointer to the item holding the given id)
+ * description:
+ * deregisteres an existing item from its associated backend and returns a pointer to it
+ * note that this does not delete the item object nor does it remove it from the items hierarchy
+ */
 G3Item* G3Backend::popItem ( g3index id )
 {
   kDebug() << "(<id>)" << id;
@@ -253,6 +412,14 @@ G3Item* G3Backend::popItem ( g3index id )
   throw Exception ( Error(ERR_INTERNAL), QString("attempt to remove non-existing item with id '%1'").arg(id) );
 } // G3Backend::popItem
 
+/**
+ * void G3Backend::removeItem ( G3Item* item )
+ *
+ * param: G3Item* (pointer to item object)
+ * description:
+ * deregisteres a given item from its associated backend and deletes the object
+ * note that this includes the removal from the items hierarchy
+ */
 void G3Backend::removeItem ( G3Item* item )
 {
   MY_KDEBUG_BLOCK ( "<G3Backend::removeItem>" );
@@ -270,6 +437,16 @@ void G3Backend::removeItem ( G3Item* item )
   }
 } // G3Backend::removeItem
 
+/**
+ * G3Item* const G3Backend::updateItem ( G3Item* item, const QHash<QString,QString>& attributes )
+ *
+ * param: G3Item* (pointer to item object)
+ * param: const QHash<QString,QString>& (list of altered item attributes)
+ * returns: G3Item* (pointer to updated item object)
+ * description:
+ * updates an existing item on the remote server side by altering some of its attributes
+ * note that this list might include the parent item, so in fact it can move the item inside the hierarchy
+ */
 G3Item* const G3Backend::updateItem ( G3Item* item, const QHash<QString,QString>& attributes )
 {
   MY_KDEBUG_BLOCK ( "<G3Backend::updateItem>" );
@@ -292,6 +469,18 @@ G3Item* const G3Backend::updateItem ( G3Item* item, const QHash<QString,QString>
   return item;
 } // G3Backend::updateItem
 
+/**
+ * G3Item* const G3Backend::createItem  ( G3Item* parent, const QString& name, const Entity::G3File* const file )
+ *
+ * param: G3Item* parent (pointer to item object)
+ * param: const QString& name (readable name the item is created as)
+ * param: Entity::G3File* file (pointer to a G3File describing a file to be uploaded)
+ * returns: G3Item* (pointer to created item object)
+ * description:
+ * creates an item inside the remote gallery system, be it an album, a photo or a movie
+ * this creation consists of the node created, some attributes for its description and
+ * in a local file in case of a photo or movie item
+ */
 G3Item* const G3Backend::createItem  ( G3Item* parent, const QString& name, const Entity::G3File* const file )
 {
   MY_KDEBUG_BLOCK ( "<G3Backend::createItem>" );
