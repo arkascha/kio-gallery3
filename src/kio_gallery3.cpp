@@ -10,10 +10,12 @@
 #include <unistd.h>
 
 #include <QCoreApplication>
+#include <KApplication>
 #include <kcomponentdata.h>
 #include <kaboutdata.h>
 #include "utility/defines.h"
 #include "utility/debug.h"
+#include "utility/exception.h"
 #include "kio_gallery3_protocol.h"
 #include "about_gallery3.data"
 
@@ -32,7 +34,9 @@ int kdemain( int argc, char **argv )
                          ABOUT_EMAIL );
   KComponentData componentData ( aboutData );
 
-  QCoreApplication app( argc, argv );
+  // we use a KApplication here cause the background http jobs we start must be able to popup message boxes
+//  QCoreApplication app( argc, argv );
+  KApplication app( NULL, argc, argv, "kio-gallery3", TRUE );
 
   if (argc != 4)
   {
@@ -41,8 +45,15 @@ int kdemain( int argc, char **argv )
   }
 
   kDebug() << QString("started kio slave '%1' with PID %2").arg(argv[0]).arg(getpid());
-  KIO::Gallery3::KIOGallery3Protocol slave(argv[2], argv[3]);
-  slave.dispatchLoop();
+  try
+  {
+    KIO::Gallery3::KIOGallery3Protocol slave(argv[2], argv[3]);
+    slave.dispatchLoop();
+  }
+  catch ( KIO::Gallery3::Exception e )
+  {
+    exit ( e.getCode() );
+  } // catch
 
   kDebug() << QString("stopped kio slave '%1' with PID %2").arg(argv[0]).arg(getpid());
   return ( 0 );

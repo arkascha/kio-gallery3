@@ -221,7 +221,7 @@ void G3Request::process ( )
   kDebug() << "(<>)";
   // run the job
   kDebug() << "sending request to url" << m_job->url();
-  if ( ! NetAccess::synchronousRun ( m_job, 0, &m_payload, &m_finalUrl, &m_meta ) )
+  if ( ! NetAccess::synchronousRun ( m_job, NULL, &m_payload, &m_finalUrl, &m_meta ) )
     throw Exception ( Error(ERR_SLAVE_DEFINED),
                       QString("request failed: %2 [ %1 ]").arg(m_job->error()).arg(m_job->errorString()) );
   // check for success on protocol level
