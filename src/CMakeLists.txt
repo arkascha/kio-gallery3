@@ -5,7 +5,6 @@ add_definitions     ( ${QT_DEFINITIONS} ${KDE4_DEFINITIONS} )
 
 set ( SRCS json/g3_json.cpp
            entity/g3_entity.cpp
-           entity/g3_collection.cpp
            entity/g3_item.cpp
            gallery3/g3_backend.cpp
            gallery3/g3_request.cpp

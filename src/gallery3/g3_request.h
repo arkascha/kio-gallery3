@@ -25,7 +25,6 @@
 #include "entity/g3_type.h"
 #include "entity/g3_file.h"
 #include "entity/g3_item.h"
-#include "entity/g3_collection.h"
 
 namespace KIO
 {
