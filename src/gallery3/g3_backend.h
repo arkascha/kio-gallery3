@@ -33,23 +33,26 @@ namespace KIO
      * When the slace addresses more than a single such system several backends are created automatically. 
      */
     class G3Backend
+      : public QObject
     {
-      public:
-        static G3Backend* const instantiate ( QHash<QString,G3Backend*>& backends, const KUrl g3Url );
+      Q_OBJECT
       private:
-        const KUrl             m_base_url;
-        KUrl                   m_rest_url;
+        AuthInfo               m_credentials;
+        const KUrl             m_baseUrl;
+        KUrl                   m_restUrl;
         QHash<g3index,G3Item*> m_items;
       protected:
       public:
-        G3Backend ( const KUrl& g3Url );
+        static G3Backend* const instantiate ( QObject* parent, QHash<QString,G3Backend*>& backends, const KUrl g3Url );
+        G3Backend ( QObject* parent, const KUrl& g3Url );
         ~G3Backend ( );
         const UDSEntry                       toUDSEntry     ( );
         const UDSEntryList                   toUDSEntryList ( );
         const QString                        toPrintout     ( ) const;
-        inline const KUrl&                   baseUrl ( ) const { return m_base_url; };
-        inline const KUrl&                   restUrl ( ) const { return m_rest_url; };
-        inline const QHash<g3index,G3Item*>& items   ( ) const { return m_items; };
+        inline AuthInfo&                     credentials ( )       { return m_credentials; }
+        inline const KUrl&                   baseUrl     ( ) const { return m_baseUrl; };
+        inline const KUrl&                   restUrl     ( ) const { return m_restUrl; };
+        inline const QHash<g3index,G3Item*>& items       ( ) const { return m_items;    };
         G3Item*                              item       ( g3index id );
         G3Item*                              itemBase   ( );
         G3Item*                              itemById   ( g3index id );
@@ -61,13 +64,15 @@ namespace KIO
         QList<G3Item*>                       membersByItemId   ( g3index id );
         QList<G3Item*>                       membersByItemPath ( const QString& path );
         QList<G3Item*>                       membersByItemPath ( const QStringList& breadcrumbs );
+        void                                 pushJob     ( TransferJob* job );
+        TransferJob*                         popJob      ( TransferJob* job );
         int                                  countItems  ( );
         void                                 pushItem    ( G3Item* item );
-        G3Item*                              popMember   ( G3Item* item );
         G3Item*                              popItem     ( g3index id );
         void                                 removeItem  ( G3Item* item );
         G3Item* const                        updateItem  ( G3Item* item, const QHash<QString,QString>& attributes );
         G3Item* const                        createItem  ( G3Item* parent, const QString& name, const Entity::G3File* const file=NULL );
+        bool                                 login       ( AuthInfo& credentials );
         // TODO: updateItem ( ... );
     }; // class G3Backend
 

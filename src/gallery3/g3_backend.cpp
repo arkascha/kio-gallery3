@@ -28,7 +28,7 @@ using namespace KIO::Gallery3;
  * 1.) our slave might be re-used to access more than one single gallery
  * 2.) there might be more than one gallery sharing the same start url
  */
-G3Backend* const G3Backend::instantiate ( QHash<QString,G3Backend*>& backends, KUrl g3Url )
+G3Backend* const G3Backend::instantiate ( QObject* parent, QHash<QString,G3Backend*>& backends, KUrl g3Url )
 {
   MY_KDEBUG_BLOCK ( "<G3Backend::instantiate>" );
   kDebug() << "(<url>)" << g3Url.prettyUrl();
@@ -47,7 +47,7 @@ G3Backend* const G3Backend::instantiate ( QHash<QString,G3Backend*>& backends, K
   // try all sub-urls downwards in an iterative manner until we either find an existing API or we have to give up
   do
   {
-    backend = new G3Backend ( g3Url );
+    backend = new G3Backend ( parent, g3Url );
     if ( G3Request::g3Check ( backend ) )
     {
       kDebug() << QString("detected existing G3-API url '%1', created fresh backend").arg(backend->restUrl().prettyUrl());
@@ -72,14 +72,33 @@ G3Backend* const G3Backend::instantiate ( QHash<QString,G3Backend*>& backends, K
  * description:
  * stores the derived REST API url and handles the requested protocol (http or https)
  */
-G3Backend::G3Backend ( const KUrl& g3Url )
-  : m_base_url   ( g3Url.url(KUrl::RemoveTrailingSlash) )
+G3Backend::G3Backend ( QObject* parent, const KUrl& g3Url )
+  : QObject   ( parent )
+  , m_baseUrl ( g3Url.url(KUrl::RemoveTrailingSlash) )
 {
   MY_KDEBUG_BLOCK ( "<G3Backend::G3Backend>" );
-  m_rest_url = m_base_url;
-  m_rest_url.setProtocol ( ("gallery3s"==m_base_url.protocol()) ? "https":"http" );
-  m_rest_url.addPath     ( "rest" );
-  kDebug() << "{<base> <rest>}" << m_base_url.prettyUrl() << m_rest_url.prettyUrl();
+  m_restUrl = m_baseUrl;
+  m_restUrl.setProtocol ( ("gallery3s"==m_baseUrl.protocol()) ? "https":"http" );
+  // authentication credentials dont make sense since the REST API does not use http basic authentication
+  m_restUrl.setUser     ( QString() );
+  m_restUrl.setPass     ( QString() );
+  m_restUrl.addPath     ( "rest" );
+  kDebug() << "{<base> <rest>}" << m_baseUrl.prettyUrl() << m_restUrl.prettyUrl();
+  // prepare AuthInfo for later authentication against the remote gallery3 system
+  m_credentials.caption      = "Authentication required";
+  m_credentials.prompt       = "Authentication required";
+  m_credentials.comment      = QString("Gallery3 at host '%1'").arg(m_baseUrl.host());
+  m_credentials.commentLabel = "Login:";
+//  m_credentials.keepPassword = TRUE;
+  m_credentials.keepPassword = FALSE;
+  m_credentials.verifyPath   = TRUE;
+  m_credentials.url          = m_baseUrl;
+  m_credentials.password     = m_baseUrl.password ( ); // might be empty
+  if ( ! m_baseUrl.userName().isEmpty() )
+  {
+    m_credentials.username = m_baseUrl.userName();
+    m_credentials.readOnly = TRUE;
+  }
 }
 
 /**
@@ -92,9 +111,9 @@ G3Backend::~G3Backend ( )
 {
   MY_KDEBUG_BLOCK ( "<G3Backend::~G3Backend>" );
   kDebug() << "(<>)";
-  // remove all items generated on-the-fly
-  kDebug() << "deleting member items first";
-  delete itemBase ( );
+  // remove all items generated on-the-fly if the base item exists at all
+  if ( m_items.contains(1) )
+    delete itemBase ( );
   // remove any left-over items (stale)
   kDebug() << m_items.count() << "stale items left, deleting them";
   QHash<g3index,G3Item*>::const_iterator item;
@@ -135,7 +154,7 @@ const UDSEntryList G3Backend::toUDSEntryList ( )
  */
 const QString G3Backend::toPrintout ( ) const
 {
-  return QString("G3Backend [%1 items] (%2)").arg(m_items.count()).arg(m_base_url.prettyUrl());
+  return QString("G3Backend [%1 items] (%2)").arg(m_items.count()).arg(m_baseUrl.prettyUrl());
 } // G3Backend::toPrintout
 
 //==========
@@ -189,7 +208,7 @@ G3Item* G3Backend::itemByUrl ( const KUrl& itemUrl )
 {
   MY_KDEBUG_BLOCK ( "<G3Backend::itemByUrl>" );
   kDebug() << "(<url>)" << itemUrl.prettyUrl();
-  const QString itemPath = KUrl::relativeUrl ( m_base_url, itemUrl );
+  const QString itemPath = KUrl::relativeUrl ( m_baseUrl, itemUrl );
   return itemByPath ( itemPath );
 } // G3Backend::itemByUrl
 
@@ -302,7 +321,7 @@ QList<G3Item*> G3Backend::membersByItemPath ( const QStringList& breadcrumbs )
   MY_KDEBUG_BLOCK ( "<G3Backend::membersByItemPath>" );
   kDebug() << "(<breadcrumbs>)" << breadcrumbs.join("|");
   G3Item* parent = itemByPath ( breadcrumbs );
-  QList<G3Item*> items = G3Request::g3GetItems ( this, QStringList(QString("%1/item/%2").arg(m_rest_url.url()).arg(parent->id())) );
+  QList<G3Item*> items = G3Request::g3GetItems ( this, QStringList(QString("%1/item/%2").arg(m_restUrl.url()).arg(parent->id())) );
   // process url list, generate items and sort them into this backends item cache
   foreach ( G3Item* item, items )
   {
@@ -509,3 +528,11 @@ G3Item* const G3Backend::createItem  ( G3Item* parent, const QString& name, cons
   kDebug() << "created item" << item->toPrintout();
   return item;
 } // G3Backend::createItem
+
+bool G3Backend::login ( AuthInfo& credentials )
+{
+  kDebug() << "(<credentials>)" << credentials.caption;
+  return G3Request::g3Login ( this, credentials );
+} // G3Request::g3RemoteAccessKey
+
+#include "gallery3/g3_backend.moc"

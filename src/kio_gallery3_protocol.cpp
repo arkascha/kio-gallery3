@@ -25,30 +25,50 @@
 using namespace KIO;
 using namespace KIO::Gallery3;
 
-int KIOGallery3Protocol::countBackends ( )
+/**
+ * void KIOGallery3Protocol::selectConnection ( const QString& host, g3index port, const QString& user, const QString& pass )
+ *
+ * param: const QString& host ( host to connect to )
+ * param: g3index port ( tcp port to connect to )
+ * param: const QString& user ( user to authenticate as )
+ * param: const QString& pass ( password to authenticate with )
+ * description:
+ * accepts the connection details from the controlling slave interface and stores them in a persistant manner
+ */
+void KIOGallery3Protocol::selectConnection ( const QString& host, qint16 port, const QString& user, const QString& pass )
 {
-  kDebug() << "(<>)";
-  return m_backends.count ( );
-} // KIOGallery3Protocol::countBackends
-
-void KIOGallery3Protocol::selectConnection ( const QString& host, g3index port, const QString& user, const QString& pass )
-{
-  kDebug() << "(<host> <port> <user> <pass>)" << host << port << user << "<hidden password>";
+  kDebug() << "(<host> <port> <user> <pass>)" << host << port << user << ( pass.isEmpty() ? "" : "<hidden password>" );
   m_connection.host = host;
   m_connection.port = port;
   m_connection.user = user;
   m_connection.pass = pass;
 } // KIOGallery3Protocol::selectConnection
 
+/**
+ * G3Backend* KIOGallery3Protocol::selectBackend ( const KUrl& targetUrl )
+ *
+ * param: const KUrl& targetUrl ( requested url )
+ * returns: G3Backend* ( existing or freshly created backend associated with the given targetUrl )
+ * description:
+ * standardizes the given target url to form a clean and reliable base url used to identify the associated backend to used
+ * note that a change of the user name (authentication) creates a different url and by this a different backend
+ * this is desired, the tree of items might look completely different so we want to create a fresh backend
+ */
 G3Backend* KIOGallery3Protocol::selectBackend ( const KUrl& targetUrl )
 {
   MY_KDEBUG_BLOCK ( "<KIOGallery3Protocol::selectBackend>" );
   kDebug() << "(<url>)" << targetUrl.prettyUrl();
   // enhance the url with the current (updated) connection details
-  KUrl itemUrl = KUrl ( QString("%1://%2%3").arg(targetUrl.scheme()).arg(m_connection.host).arg(targetUrl.path()) );
+  KUrl itemUrl;
+  itemUrl = KUrl ( QString("%1://%2%3%4%5")
+                          .arg( targetUrl.scheme() )
+                          .arg( m_connection.user.isEmpty() ? "" : QString("%1@").arg(m_connection.user) )
+                          .arg( m_connection.host )
+                          .arg( 0==m_connection.port ? "" : QString(":%1").arg(m_connection.port) )
+                          .arg( targetUrl.path() ) );
   itemUrl.adjustPath ( KUrl::RemoveTrailingSlash );
   kDebug() << "corrected url:" << itemUrl.prettyUrl();
-  G3Backend* backend = G3Backend::instantiate ( m_backends, itemUrl );
+  G3Backend* backend = G3Backend::instantiate ( this, m_backends, itemUrl );
   return backend;
 } // KIOGallery3Protocol::selectBackend
 
@@ -122,6 +142,62 @@ KIOGallery3Protocol::~KIOGallery3Protocol ( )
 
 //======================
 
+void KIOGallery3Protocol::slotRequestAuthInfo ( G3Backend* backend, AuthInfo& credentials )
+{
+  MY_KDEBUG_BLOCK ( "<KIOGallery3Protocol::slotRequestAuthInfo>" );
+  kDebug() << "(<AuthInfo>)" << credentials.url << credentials.caption << credentials.comment;
+  // check if there is a matching entry in the cache
+  AuthInfo cached = credentials;
+  if (   checkCachedAuthentication(cached)
+      && ( cached.username==credentials.username ) )
+  {
+    kDebug() << "re-using cached credentials";
+    credentials = cached;
+  }
+  else
+  {
+    kDebug() << "asking user for authentication credentials";
+    // request credentails from user
+    if ( openPasswordDialog(credentials) )
+    {
+      kDebug() << "user provided authentication credentials";
+      if ( backend->login ( credentials ) )
+      {
+        kDebug() << "authentiaction succeeded";
+        if (credentials.keepPassword)
+        {
+          kDebug() << "caching credentials";
+          cacheAuthentication(credentials);
+        }
+      }
+      else
+      {
+        kDebug() << "authentiaction failed";
+      }
+    }
+    else
+    {
+      kDebug() << "user cancelled authentication";
+    }
+  }
+} // KIOGallery3Protocol::slotRequireAuthInfo
+
+void KIOGallery3Protocol::slotMessageBox ( int& result, SlaveBase::MessageBoxType type, const QString &text, const QString &caption, const QString &buttonYes, const QString &buttonNo )
+{
+  result = messageBox ( type, text, caption, buttonYes, buttonNo );
+  if ( 0==result )
+    throw Exception ( Error(ERR_INTERNAL), QString("Communication error during user feedback") );
+  kDebug() << text << caption << ">>" << result;
+} // KIOGallery3Protocol::slotMessageBox
+
+void KIOGallery3Protocol::slotMessageBox ( int& result, const QString &text, SlaveBase::MessageBoxType type, const QString &caption, const QString &buttonYes, const QString &buttonNo, const QString &dontAskAgainName )
+{
+  result = messageBox ( text, type, caption, buttonYes, buttonNo, dontAskAgainName );
+  if ( 0==result )
+    throw Exception ( Error(ERR_INTERNAL), QString("Communication error during user feedback") );
+  kDebug() << text << caption << ">>" << result << dontAskAgainName;
+} // KIOGallery3Protocol::slotMessageBox
+
 void KIOGallery3Protocol::slotListUDSEntries ( const UDSEntryList entries )
 {
   kDebug() << "(<UDSEntries[count]>)" << entries.count();
@@ -146,7 +222,7 @@ void KIOGallery3Protocol::slotStatUDSEntry ( const UDSEntry entry )
 void KIOGallery3Protocol::setHost ( const QString& host, g3index port, const QString& user, const QString& pass )
 {
   MY_KDEBUG_BLOCK ( "KIOGallery3Protocol::setHost" );
-  kDebug() << "(<host> <port> <user> <pass>)" << host << port << user << "<hidden password>";
+  kDebug() << "(<host> <port> <user> <pass>)" << host << port << user << ( pass.isEmpty() ? "" : "<hidden password>" );
   selectConnection ( host, port, user, pass );
 } // KIOGallery3Protocol::setHost
 
@@ -177,7 +253,11 @@ void KIOGallery3Protocol::del ( const KUrl& targetUrl, bool isfile )
     backend->removeItem ( item );
     finished();
   }
-  catch ( Exception &e ) { error( e.getCode(), e.getText() ); }
+  catch ( Exception &e )
+  {
+    messageBox ( SlaveBase::Information, "removal of item failed", "Failure" );
+    error( e.getCode(), e.getText() );
+  }
 } // KIOGallery3Protocol::del
 
 /**
@@ -311,7 +391,7 @@ void KIOGallery3Protocol::put ( const KUrl& targetUrl, int permissions, KIO::Job
       throw Exception ( Error(ERR_COULD_NOT_WRITE),
                         QString("failed to generate temporary file '%1'").arg(file.fileName()) );
     kDebug() << "using temporary file" << file.fileName() << "to upload content";
-    int read_count, write_count;
+    int read_count=0, write_count=0;
     do
     {
       dataReq();

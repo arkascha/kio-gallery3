@@ -25,6 +25,7 @@
 #include "entity/g3_type.h"
 #include "entity/g3_file.h"
 #include "entity/g3_item.h"
+#include <kio/slavebase.h>
 
 namespace KIO
 {
@@ -43,9 +44,11 @@ namespace KIO
      * usability in form of a function-call-interface.
      */
     class G3Request
-      : public G3JsonParser
+      : public QObject
+      , public G3JsonParser
       , public G3JsonSerializer
     {
+      Q_OBJECT
       private:
         G3Backend* const            m_backend;
         const KIO::HTTP_METHOD      m_method;
@@ -58,32 +61,40 @@ namespace KIO
         QHash<QString,QString>      m_header;   // request header items
         QHash<QString,QString>      m_query;    // request query items
         QString                     m_boundary; // multi-part boundary
-        // to be receiced
+        // to be received
+        int                         m_status;   // http status code
         QMap<QString,QString>       m_meta;     // result meta data
         QByteArray                  m_payload;  // result payload
         QVariant                    m_result;
         KUrl       webUrlWithQueryItems   ( KUrl url, const QHash<QString,QString>& query );
         QByteArray webFormPostPayload     ( const QHash<QString,QString>& query );
         QByteArray webFileFormPostPayload ( const QHash<QString,QString>& query, const Entity::G3File* const file );
-        const QString g3RequestKey           ( );
       protected:
         G3Request ( G3Backend* const backend, KIO::HTTP_METHOD method, const QString& service, const Entity::G3File* const file=NULL );
-        void           addHeaderItem ( const QString& key, const QString& value );
-        void           addQueryItem  ( const QString& key, const QString& value, bool skipIfEmpty=FALSE );
-        void           addQueryItem  ( const QString& key, Entity::G3Type value, bool skipIfEmpty=FALSE );
-        void           addQueryItem  ( const QString& key, const QStringList& values, bool skipIfEmpty=FALSE );
-        void           setup         ( );
-        void           process       ( );
-        void           evaluate      ( );
-        G3Item*        toItem        ( QVariant& entry );
-        QList<G3Item*> toItems       ( );
-        g3index        toItemId      ( QVariant& entry );
-        QList<g3index> toItemIds     ( );
-        inline G3Item* toItem        ( ) { return toItem(m_result); };
-        inline g3index toItemId      ( ) { return toItemId(m_result); };
+        ~G3Request ( );
+        int            httpStatusCode ( );
+        bool           retryWithChangedCredentials ( );
+        void           addHeaderItem  ( const QString& key, const QString& value );
+        void           addQueryItem   ( const QString& key, const QString& value, bool skipIfEmpty=FALSE );
+        void           addQueryItem   ( const QString& key, Entity::G3Type value, bool skipIfEmpty=FALSE );
+        void           addQueryItem   ( const QString& key, const QStringList& values, bool skipIfEmpty=FALSE );
+        void           setup          ( );
+        void           process        ( );
+        void           evaluate       ( );
+        QString        toString       ( );
+        G3Item*        toItem         ( QVariant& entry );
+        QList<G3Item*> toItems        ( );
+        g3index        toItemId       ( QVariant& entry );
+        QList<g3index> toItemIds      ( );
+        inline G3Item* toItem         ( ) { return toItem(m_result); };
+        inline g3index toItemId       ( ) { return toItemId(m_result); };
+      signals:
+        void signalRequestAuthInfo ( G3Backend* backend, AuthInfo& credentials );
+        void signalMessageBox      ( int& result, SlaveBase::MessageBoxType type, const QString &text, const QString &caption=QString(), const QString &buttonYes=i18n("&Yes"), const QString &buttonNo=i18n("&No") );
+        void signalMessageBox      ( int& result, const QString &text, SlaveBase::MessageBoxType type, const QString &caption=QString(), const QString &buttonYes=i18n("&Yes"), const QString &buttonNo=i18n("&No"), const QString &dontAskAgainName=QString() );
       public:
         static bool           g3Check        ( G3Backend* const backend );
-        static void           g3Login        ( G3Backend* const backend, const AuthInfo& credentials );
+        static bool           g3Login        ( G3Backend* const backend, AuthInfo& credentials );
         static QList<G3Item*> g3GetItems     ( G3Backend* const backend, const QStringList& urls, Entity::G3Type type=Entity::G3Type::NONE );
         static QList<G3Item*> g3GetItems     ( G3Backend* const backend, g3index id, Entity::G3Type type=Entity::G3Type::NONE );
         static QList<g3index> g3GetAncestors ( G3Backend* const backend, G3Item* item );

@@ -41,9 +41,8 @@ namespace KIO
         } m_connection;
       protected:
         QHash<QString,G3Backend*> m_backends;
-        void               selectConnection ( const QString& host, g3index port, const QString& user, const QString& pass );
+        void               selectConnection ( const QString& host, qint16 port, const QString& user, const QString& pass );
         G3Backend*         selectBackend    ( const KUrl& base );
-        int                countBackends    ( );
         G3Item*            itemBase         ( const KUrl& itemUrl );
         G3Item*            itemByUrl        ( const KUrl& itemUrl );
         QList<G3Item*>     itemsByUrl       ( const KUrl& itemUrl );
@@ -52,9 +51,12 @@ namespace KIO
         KIOGallery3Protocol ( const QByteArray &pool, const QByteArray &app, QObject* parent=0 );
         virtual ~KIOGallery3Protocol();
       public slots:
-        void slotListUDSEntries ( const UDSEntryList entries );
-        void slotListUDSEntry   ( const UDSEntry entry );
-        void slotStatUDSEntry   ( const UDSEntry entry );
+        void slotRequestAuthInfo ( G3Backend* backend, AuthInfo& credentials );
+        void slotMessageBox      ( int& result, MessageBoxType type, const QString &text, const QString &caption=QString(), const QString &buttonYes=i18n("&Yes"), const QString &buttonNo=i18n("&No") );
+        void slotMessageBox      ( int& result, const QString &text, MessageBoxType type, const QString &caption=QString(), const QString &buttonYes=i18n("&Yes"), const QString &buttonNo=i18n("&No"), const QString &dontAskAgainName=QString() );
+        void slotListUDSEntries  ( const UDSEntryList entries );
+        void slotListUDSEntry    ( const UDSEntry entry );
+        void slotStatUDSEntry    ( const UDSEntry entry );
       public:
         void setHost  ( const QString& host, g3index port, const QString& user, const QString& pass );
         void copy     ( const KUrl& src, const KUrl& dest, int permissions, JobFlags flags );
