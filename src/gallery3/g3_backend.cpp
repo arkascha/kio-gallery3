@@ -87,10 +87,10 @@ G3Backend::G3Backend ( QObject* parent, const KUrl& g3Url )
   // prepare AuthInfo for later authentication against the remote gallery3 system
   m_credentials.caption      = "Authentication required";
   m_credentials.prompt       = "Authentication required";
-  m_credentials.comment      = QString("Gallery3 at host '%1'").arg(m_baseUrl.host());
   m_credentials.commentLabel = "Login:";
-//  m_credentials.keepPassword = TRUE;
-  m_credentials.keepPassword = FALSE;
+  m_credentials.comment      = QString("Gallery3 at host '%1'").arg(m_baseUrl.host());
+  m_credentials.realmValue   = QString("Gallery3 at host '%1'").arg(m_baseUrl.host());;
+  m_credentials.keepPassword = TRUE;
   m_credentials.verifyPath   = TRUE;
   m_credentials.url          = m_baseUrl;
   m_credentials.password     = m_baseUrl.password ( ); // might be empty

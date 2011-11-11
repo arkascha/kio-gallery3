@@ -51,7 +51,7 @@ namespace KIO
         KIOGallery3Protocol ( const QByteArray &pool, const QByteArray &app, QObject* parent=0 );
         virtual ~KIOGallery3Protocol();
       public slots:
-        void slotRequestAuthInfo ( G3Backend* backend, AuthInfo& credentials );
+        void slotRequestAuthInfo ( G3Backend* backend, AuthInfo& credentials, int attempt );
         void slotMessageBox      ( int& result, MessageBoxType type, const QString &text, const QString &caption=QString(), const QString &buttonYes=i18n("&Yes"), const QString &buttonNo=i18n("&No") );
         void slotMessageBox      ( int& result, const QString &text, MessageBoxType type, const QString &caption=QString(), const QString &buttonYes=i18n("&Yes"), const QString &buttonNo=i18n("&No"), const QString &dontAskAgainName=QString() );
         void slotListUDSEntries  ( const UDSEntryList entries );

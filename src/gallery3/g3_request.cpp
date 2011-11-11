@@ -55,8 +55,8 @@ G3Request::G3Request ( G3Backend* const backend, KIO::HTTP_METHOD method, const 
                 .arg(KDE::versionMajor()).arg(KDE::versionMinor()).arg(KDE::versionRelease()));
   kDebug() << "{<>}";
   // prepare authentication requests
-  connect ( this,              SIGNAL(signalRequestAuthInfo(G3Backend*,AuthInfo&)),
-            backend->parent(), SLOT(slotRequestAuthInfo(G3Backend*,AuthInfo&)) );
+  connect ( this,              SIGNAL(signalRequestAuthInfo(G3Backend*,AuthInfo&,int)),
+            backend->parent(), SLOT(slotRequestAuthInfo(G3Backend*,AuthInfo&,int)) );
 } // G3Request::G3Request
 
 
@@ -66,7 +66,8 @@ G3Request::~G3Request ( )
   if ( m_job )
   {
     kDebug() << "deleting background job";
-    delete m_job;
+    // FIXME: deleting the job after it has been executed reproduceably crashes the slave with a segfault
+    // delete m_job;
   }
 } // G3Request::~G3Request
 
@@ -96,10 +97,10 @@ int G3Request::httpStatusCode ( )
 } // G3Request::httpStatusCode
 
 
-bool G3Request::retryWithChangedCredentials ( )
+bool G3Request::retryWithChangedCredentials ( int attempt )
 {
   kDebug();
-  emit signalRequestAuthInfo ( m_backend, m_backend->credentials() );
+  emit signalRequestAuthInfo ( m_backend, m_backend->credentials(), attempt );
   kDebug() << ( m_backend->credentials().isModified() ? "credentials changed" : "credentials unchanged" );
   return m_backend->credentials().isModified();
 } // G3Request::retryWithChangedCredentials
@@ -368,6 +369,7 @@ void G3Request::process ( )
   // prepare handling of authentication info
   // run the job
   kDebug() << "sending request to url" << m_job->url().prettyUrl();
+  int attempt = 0;
   do
   {
     // if status is 403 this is a retry after a failed attempt
@@ -390,7 +392,8 @@ void G3Request::process ( )
     m_status = httpStatusCode();
   } while (    (m_job->url().fileName()!="rest") // exception: g3Check: looking for REST API
             && (403==m_status)                   // repeat only in this case
-            && retryWithChangedCredentials() );  // retry makes sense if credentials have changed
+//            && retryWithChangedCredentials(++attempt) );  // retry makes sense if credentials have changed
+            && retryWithChangedCredentials(attempt) );  // retry makes sense if credentials have changed
   kDebug() << "{<>}"; 
 } // G3Request::process
 

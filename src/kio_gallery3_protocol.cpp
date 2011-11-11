@@ -142,44 +142,55 @@ KIOGallery3Protocol::~KIOGallery3Protocol ( )
 
 //======================
 
-void KIOGallery3Protocol::slotRequestAuthInfo ( G3Backend* backend, AuthInfo& credentials )
+void KIOGallery3Protocol::slotRequestAuthInfo ( G3Backend* backend, AuthInfo& credentials, int attempt )
 {
   MY_KDEBUG_BLOCK ( "<KIOGallery3Protocol::slotRequestAuthInfo>" );
   kDebug() << "(<AuthInfo>)" << credentials.url << credentials.caption << credentials.comment;
   // check if there is a matching entry in the cache
   AuthInfo cached = credentials;
-  if (   checkCachedAuthentication(cached)
-      && ( cached.username==credentials.username ) )
+kDebug() << "\r\nbefore:\r\n" << cached.caption<<"\r\n"<<cached.commentLabel<<"\r\n"<<cached.digestInfo<<"\r\n"<<cached.keepPassword<<"\r\n"<<cached.password<<"\r\n"<<cached.prompt<<"\r\n"<<cached.prompt<<"\r\n"<<cached.readOnly<<"\r\n"<<cached.realmValue<<"\r\n"<<cached.url<<"\r\n"<<cached.username<<"\r\n"<<cached.verifyPath;
+  // NOTE: there are a few different situations we have to take into account...
+
+  if ( 1==attempt && ! credentials.username.isEmpty() && ! credentials.password.isEmpty() )
   {
-    kDebug() << "re-using cached credentials";
-    credentials = cached;
+    if ( checkCachedAuthentication(credentials) )
+    return;
   }
-  else
+  else if (   ( 1==attempt && checkCachedAuthentication(cached) )
+           && ( cached.username==credentials.username ) )
   {
-    kDebug() << "asking user for authentication credentials";
-    // request credentails from user
-    if ( openPasswordDialog(credentials) )
+    kDebug() << "attempt" << attempt << ": re-using cached credentials";
+    credentials.password   = cached.password;
+    credentials.digestInfo = cached.digestInfo;
+    if ( ! credentials.digestInfo.isEmpty() )
+      return;
+  }
+
+  // no way, we have to proceed interactively
+  kDebug() << "asking user for authentication credentials";
+  QString message = QString();
+  while ( openPasswordDialog(credentials, message) )
+  {
+    kDebug() << "attempt" << attempt << "user provided authentication credentials";
+    credentials.digestInfo = "";
+    if (backend->login ( credentials ) )
     {
-      kDebug() << "user provided authentication credentials";
-      if ( backend->login ( credentials ) )
+      kDebug() << "authentiaction succeeded";
+      if (credentials.keepPassword)
       {
-        kDebug() << "authentiaction succeeded";
-        if (credentials.keepPassword)
-        {
-          kDebug() << "caching credentials";
-          cacheAuthentication(credentials);
-        }
+        kDebug() << "caching credentials";
+        cacheAuthentication(credentials);
       }
-      else
-      {
-        kDebug() << "authentiaction failed";
-      }
+      return;
     }
     else
     {
-      kDebug() << "user cancelled authentication";
+      kDebug() << "authentiaction failed, retrying";
+      message = "Authentication failed";
     }
-  }
+  } // while
+  kDebug() << "user cancelled authentication";
+  throw Exception ( Error(ERR_ABORTED), QString("Authentication cancelled to '%1'").arg(credentials.url.prettyUrl()) );
 } // KIOGallery3Protocol::slotRequireAuthInfo
 
 void KIOGallery3Protocol::slotMessageBox ( int& result, SlaveBase::MessageBoxType type, const QString &text, const QString &caption, const QString &buttonYes, const QString &buttonNo )
@@ -223,7 +234,15 @@ void KIOGallery3Protocol::setHost ( const QString& host, g3index port, const QSt
 {
   MY_KDEBUG_BLOCK ( "KIOGallery3Protocol::setHost" );
   kDebug() << "(<host> <port> <user> <pass>)" << host << port << user << ( pass.isEmpty() ? "" : "<hidden password>" );
-  selectConnection ( host, port, user, pass );
+  try
+  {
+    selectConnection ( host, port, user, pass );
+  }
+  catch ( Exception &e )
+  {
+    messageBox ( Information, QString("Error %1:\n %2").arg(e.getCode()).arg(e.getText()), "Failure" );
+    error( e.getCode(), e.getText() );
+  }
 } // KIOGallery3Protocol::setHost
 
 void KIOGallery3Protocol::copy ( const KUrl& src, const KUrl& dest, int permissions, JobFlags flags )
@@ -235,7 +254,11 @@ void KIOGallery3Protocol::copy ( const KUrl& src, const KUrl& dest, int permissi
     throw Exception ( Error(ERR_UNSUPPORTED_ACTION),
                       QString("copy action not supported") );
   }
-  catch ( Exception &e ) { error( e.getCode(), e.getText() ); }
+  catch ( Exception &e )
+  {
+    messageBox ( Information, QString("Error %1:\n %2").arg(e.getCode()).arg(e.getText()), "Failure" );
+    error( e.getCode(), e.getText() );
+  }
 } // KIOGallery3Protocol::copy
 
 /**
@@ -290,7 +313,11 @@ void KIOGallery3Protocol::get ( const KUrl& targetUrl )
         finished ( );
     } // switch type
   }
-  catch ( Exception &e ) { error( e.getCode(), e.getText() ); }
+  catch ( Exception &e )
+  {
+    messageBox ( Information, QString("Error %1:\n %2").arg(e.getCode()).arg(e.getText()), "Failure" );
+    error( e.getCode(), e.getText() );
+  }
 } // KIOGallery3Protocol::get
 
 /**
@@ -338,7 +365,11 @@ void KIOGallery3Protocol::listDir ( const KUrl& targetUrl )
       finished ( );
     } // else
   }
-  catch ( Exception &e ) { error( e.getCode(), e.getText() ); }
+  catch ( Exception &e )
+  {
+    messageBox ( Information, QString("Error %1:\n %2").arg(e.getCode()).arg(e.getText()), "Failure" );
+    error( e.getCode(), e.getText() );
+  }
 } // KIOGallery3Protocol::listDir
 
 /**
@@ -353,7 +384,11 @@ void KIOGallery3Protocol::mimetype ( const KUrl& targetUrl )
     mimeType ( item->mimetype()->name() );
     finished();
   }
-  catch ( Exception &e ) { error( e.getCode(), e.getText() ); }
+  catch ( Exception &e )
+  {
+    messageBox ( Information, QString("Error %1:\n %2").arg(e.getCode()).arg(e.getText()), "Failure" );
+    error( e.getCode(), e.getText() );
+  }
 } // KIOGallery3Protocol::mimetype
 
 /**
@@ -372,7 +407,11 @@ void KIOGallery3Protocol::mkdir ( const KUrl& targetUrl, int permissions )
     backend->createItem ( parent, filename );
     finished();
   }
-  catch ( Exception &e ) { error( e.getCode(), e.getText() ); }
+  catch ( Exception &e )
+  {
+    messageBox ( Information, QString("Error %1:\n %2").arg(e.getCode()).arg(e.getText()), "Failure" );
+    error( e.getCode(), e.getText() );
+  }
 } // KIOGallery3Protocol::mkdir
 
 /**
@@ -420,7 +459,11 @@ void KIOGallery3Protocol::put ( const KUrl& targetUrl, int permissions, KIO::Job
     file.deleteLater ( );
     finished ( );
   }
-  catch ( Exception &e ) { error ( e.getCode(), e.getText() ); }
+  catch ( Exception &e )
+  {
+    messageBox ( Information, QString("Error %1:\n %2").arg(e.getCode()).arg(e.getText()), "Failure" );
+    error( e.getCode(), e.getText() );
+  }
 } // KIOGallery3Protocol::put
 
 void KIOGallery3Protocol::rename ( const KUrl& srcUrl, const KUrl& destUrl, KIO::JobFlags flags )
@@ -456,7 +499,11 @@ void KIOGallery3Protocol::rename ( const KUrl& srcUrl, const KUrl& destUrl, KIO:
     backend->updateItem ( item, attributes );
     finished ( );
   }
-  catch ( Exception &e ) { error ( e.getCode(), e.getText() ); }
+  catch ( Exception &e )
+  {
+    messageBox ( Information, QString("Error %1:\n %2").arg(e.getCode()).arg(e.getText()), "Failure" );
+    error( e.getCode(), e.getText() );
+  }
 } // KIOGallery3Protocol::rename
 
 /**
@@ -491,7 +538,11 @@ void KIOGallery3Protocol::stat ( const KUrl& targetUrl )
       finished ( );
     }
   }
-  catch ( Exception &e ) { error( e.getCode(), e.getText() ); }
+  catch ( Exception &e )
+  {
+    messageBox ( Information, QString("Error %1:\n %2").arg(e.getCode()).arg(e.getText()), "Failure" );
+    error( e.getCode(), e.getText() );
+  }
 } // KIOGallery3Protocol::stat
 
 /**
@@ -507,7 +558,11 @@ void KIOGallery3Protocol::symlink ( const QString& target, const KUrl& dest, KIO
     throw Exception ( Error(ERR_UNSUPPORTED_ACTION),
                         QString("sorry, currently not implemented...") );
   }
-  catch ( Exception &e ) { error( e.getCode(), e.getText() ); }
+  catch ( Exception &e )
+  {
+    messageBox ( Information, QString("Error %1:\n %2").arg(e.getCode()).arg(e.getText()), "Failure" );
+    error( e.getCode(), e.getText() );
+  }
 } // KIOGallery3Protocol::symlink
 
 void KIOGallery3Protocol::special ( const QByteArray& data )
@@ -526,7 +581,11 @@ Reimplemented in FileProtocol, and HTTPProtocol.
     throw Exception ( Error(ERR_UNSUPPORTED_ACTION),
                         QString("sorry, currently not implemented...") );
   }
-  catch ( Exception &e ) { error( e.getCode(), e.getText() ); }
+  catch ( Exception &e )
+  {
+    messageBox ( Information, QString("Error %1:\n %2").arg(e.getCode()).arg(e.getText()), "Failure" );
+    error( e.getCode(), e.getText() );
+  }
 } // KIOGallery3Protocol::special
 
 #include "kio_gallery3_protocol.moc"

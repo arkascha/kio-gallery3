@@ -56,6 +56,7 @@ namespace KIO
         const Entity::G3File* const m_file;     // request upload file
         KUrl                        m_requestUrl;
         KUrl                        m_finalUrl;
+        // FIXME: maybe we have to use QSharedPointer here... calling delete on m_job in the descructor often causes a segfault...
         KIO::TransferJob*           m_job;
         // to be sent
         QHash<QString,QString>      m_header;   // request header items
@@ -73,7 +74,7 @@ namespace KIO
         G3Request ( G3Backend* const backend, KIO::HTTP_METHOD method, const QString& service, const Entity::G3File* const file=NULL );
         ~G3Request ( );
         int            httpStatusCode ( );
-        bool           retryWithChangedCredentials ( );
+        bool           retryWithChangedCredentials ( int attempt = 0 );
         void           addHeaderItem  ( const QString& key, const QString& value );
         void           addQueryItem   ( const QString& key, const QString& value, bool skipIfEmpty=FALSE );
         void           addQueryItem   ( const QString& key, Entity::G3Type value, bool skipIfEmpty=FALSE );
@@ -89,7 +90,7 @@ namespace KIO
         inline G3Item* toItem         ( ) { return toItem(m_result); };
         inline g3index toItemId       ( ) { return toItemId(m_result); };
       signals:
-        void signalRequestAuthInfo ( G3Backend* backend, AuthInfo& credentials );
+        void signalRequestAuthInfo ( G3Backend* backend, AuthInfo& credentials, int attempt );
         void signalMessageBox      ( int& result, SlaveBase::MessageBoxType type, const QString &text, const QString &caption=QString(), const QString &buttonYes=i18n("&Yes"), const QString &buttonNo=i18n("&No") );
         void signalMessageBox      ( int& result, const QString &text, SlaveBase::MessageBoxType type, const QString &caption=QString(), const QString &buttonYes=i18n("&Yes"), const QString &buttonNo=i18n("&No"), const QString &dontAskAgainName=QString() );
       public:
