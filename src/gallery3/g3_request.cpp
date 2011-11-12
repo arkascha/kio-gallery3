@@ -219,10 +219,10 @@ void G3Request::addQueryItem ( const QString& key, const QStringList& values, bo
  */
 KUrl G3Request::webUrlWithQueryItems ( KUrl url, const QHash<QString,QString>& query )
 {
-  kDebug() << "(<url> <query [count]>)" << url.prettyUrl() << query.count();
+  kDebug() << "(<url> <query [count]>)" << url << query.count();
     for ( QHash<QString,QString>::const_iterator it=m_query.constBegin(); it!=m_query.constEnd(); it++ )
       url.addQueryItem ( it.key(), it.value() );
-  kDebug() << "{<url>}" << url.prettyUrl();
+  kDebug() << "{<url>}" << url;
   return url;
 } // G3Request::webUrlWithQueryItems
 
@@ -368,7 +368,7 @@ void G3Request::process ( )
   kDebug() << "(<>)";
   // prepare handling of authentication info
   // run the job
-  kDebug() << "sending request to url" << m_job->url().prettyUrl();
+  kDebug() << "sending request to url" << m_job->url();
   int attempt = 0;
   do
   {

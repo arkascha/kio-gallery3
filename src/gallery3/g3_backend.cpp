@@ -31,7 +31,7 @@ using namespace KIO::Gallery3;
 G3Backend* const G3Backend::instantiate ( QObject* parent, QHash<QString,G3Backend*>& backends, KUrl g3Url )
 {
   MY_KDEBUG_BLOCK ( "<G3Backend::instantiate>" );
-  kDebug() << "(<url>)" << g3Url.prettyUrl();
+  kDebug() << "(<url>)" << g3Url;
   G3Backend* backend;
   // try if any existing backend is assiciated with a sub-URL of the requested one
   QHash<QString,G3Backend*>::const_iterator it;
@@ -55,7 +55,7 @@ G3Backend* const G3Backend::instantiate ( QObject* parent, QHash<QString,G3Backe
       return backend;
     }
     // no success, iterate 'downwards'
-    kDebug() << "no G3-API available at url" << g3Url.prettyUrl();
+    kDebug() << "no G3-API available at url" << g3Url;
     delete backend;
     g3Url.setPath ( g3Url.directory() );
   }
@@ -83,7 +83,7 @@ G3Backend::G3Backend ( QObject* parent, const KUrl& g3Url )
   m_restUrl.setUser     ( QString() );
   m_restUrl.setPass     ( QString() );
   m_restUrl.addPath     ( "rest" );
-  kDebug() << "{<base> <rest>}" << m_baseUrl.prettyUrl() << m_restUrl.prettyUrl();
+  kDebug() << "{<base> <rest>}" << m_baseUrl << m_restUrl;
   // prepare AuthInfo for later authentication against the remote gallery3 system
   m_credentials.caption      = QLatin1String("Authentication required");
   m_credentials.prompt       = QLatin1String("Authentication required");
@@ -207,7 +207,7 @@ G3Item* G3Backend::itemById ( g3index id )
 G3Item* G3Backend::itemByUrl ( const KUrl& itemUrl )
 {
   MY_KDEBUG_BLOCK ( "<G3Backend::itemByUrl>" );
-  kDebug() << "(<url>)" << itemUrl.prettyUrl();
+  kDebug() << "(<url>)" << itemUrl;
   const QString itemPath = KUrl::relativeUrl ( m_baseUrl, itemUrl );
   return itemByPath ( itemPath );
 } // G3Backend::itemByUrl

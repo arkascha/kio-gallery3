@@ -57,7 +57,7 @@ void KIOGallery3Protocol::selectConnection ( const QString& host, qint16 port, c
 G3Backend* KIOGallery3Protocol::selectBackend ( const KUrl& targetUrl )
 {
   MY_KDEBUG_BLOCK ( "<KIOGallery3Protocol::selectBackend>" );
-  kDebug() << "(<url>)" << targetUrl.prettyUrl();
+  kDebug() << "(<url>)" << targetUrl;
   // enhance the url with the current (updated) connection details
   KUrl itemUrl;
   itemUrl = KUrl ( QString("%1://%2%3%4%5")
@@ -67,7 +67,7 @@ G3Backend* KIOGallery3Protocol::selectBackend ( const KUrl& targetUrl )
                           .arg( 0==m_connection.port ? "" : QString(":%1").arg(m_connection.port) )
                           .arg( targetUrl.path() ) );
   itemUrl.adjustPath ( KUrl::RemoveTrailingSlash );
-  kDebug() << "corrected url:" << itemUrl.prettyUrl();
+  kDebug() << "corrected url:" << itemUrl;
   G3Backend* backend = G3Backend::instantiate ( this, m_backends, itemUrl );
   return backend;
 } // KIOGallery3Protocol::selectBackend
@@ -75,7 +75,7 @@ G3Backend* KIOGallery3Protocol::selectBackend ( const KUrl& targetUrl )
 G3Item* KIOGallery3Protocol::itemBase ( const KUrl& itemUrl )
 {
   MY_KDEBUG_BLOCK ( "<KIOGallery3Protocol::itemBase>" );
-  kDebug() << "(<url>)" << itemUrl.prettyUrl();
+  kDebug() << "(<url>)" << itemUrl;
   G3Backend* backend = selectBackend ( itemUrl );
   return backend->itemBase ( );
 } // KIOGallery3Protocol::itemBase
@@ -83,7 +83,7 @@ G3Item* KIOGallery3Protocol::itemBase ( const KUrl& itemUrl )
 G3Item* KIOGallery3Protocol::itemByUrl ( const KUrl& itemUrl )
 {
   MY_KDEBUG_BLOCK ( "<KIOGallery3Protocol::itemByUrl>" );
-  kDebug() << "(<url>)" << itemUrl.prettyUrl();
+  kDebug() << "(<url>)" << itemUrl;
   G3Backend* backend = selectBackend ( itemUrl );
   QString path = KUrl::relativeUrl ( backend->baseUrl(), itemUrl );
   return backend->itemByPath ( path );
@@ -92,7 +92,7 @@ G3Item* KIOGallery3Protocol::itemByUrl ( const KUrl& itemUrl )
 QList<G3Item*> KIOGallery3Protocol::itemsByUrl ( const KUrl& itemUrl )
 {
   MY_KDEBUG_BLOCK ( "<KIOGallery3Protocol::itemsByUrl>" );
-  kDebug() << "(<url>)" << itemUrl.prettyUrl();
+  kDebug() << "(<url>)" << itemUrl;
   G3Backend* backend = selectBackend ( itemUrl );
   QString path = KUrl::relativeUrl ( backend->baseUrl(), itemUrl );
   return backend->membersByItemPath ( path );
@@ -247,7 +247,7 @@ void KIOGallery3Protocol::setHost ( const QString& host, g3index port, const QSt
 void KIOGallery3Protocol::copy ( const KUrl& src, const KUrl& dest, int permissions, JobFlags flags )
 {
   MY_KDEBUG_BLOCK ( "KIOGallery3Protocol::copy" );
-  kDebug() << "(<src url> <dest url> <permissions> <flags>)" << src.prettyUrl() << dest.prettyUrl() << permissions << flags;
+  kDebug() << "(<src url> <dest url> <permissions> <flags>)" << src << dest << permissions << flags;
   try
   {
     throw Exception ( Error(ERR_UNSUPPORTED_ACTION),
@@ -266,7 +266,7 @@ void KIOGallery3Protocol::del ( const KUrl& targetUrl, bool isfile )
 {
   // note: isfile signals if a directory or a file is meant to be deleted
   MY_KDEBUG_BLOCK ( "KIOGallery3Protocol::del" );
-  kDebug() << "(<url> <isfile>)" << targetUrl.prettyUrl ( ) << isfile;
+  kDebug() << "(<url> <isfile>)" << targetUrl << isfile;
   try
   {
     // remove item from remote gallery3
@@ -287,7 +287,7 @@ void KIOGallery3Protocol::del ( const KUrl& targetUrl, bool isfile )
 void KIOGallery3Protocol::get ( const KUrl& targetUrl )
 {
   MY_KDEBUG_BLOCK ( "KIOGallery3Protocol::get" );
-  kDebug() << "(<url>)" << targetUrl.prettyUrl ( ) ;
+  kDebug() << "(<url>)" << targetUrl;
   try
   {
     G3Item* item = itemByUrl ( targetUrl );
@@ -302,12 +302,12 @@ void KIOGallery3Protocol::get ( const KUrl& targetUrl )
                           QString("no way to 'get' a folder entry...") );
       case Entity::G3Type::PHOTO:
       case Entity::G3Type::MOVIE:
-        kDebug() << "redirecting to:" << item->fileUrl().prettyUrl ( );
+        kDebug() << "redirecting to:" << item->fileUrl();
         redirection ( item->fileUrl() );
         finished ( );
       case Entity::G3Type::TAG:
       case Entity::G3Type::COMMENT:
-        kDebug() << "redirecting to:" << item->webUrl().prettyUrl ( );
+        kDebug() << "redirecting to:" << item->webUrl();
         redirection ( item->webUrl() );
         finished ( );
     } // switch type
@@ -325,14 +325,14 @@ void KIOGallery3Protocol::get ( const KUrl& targetUrl )
 void KIOGallery3Protocol::listDir ( const KUrl& targetUrl )
 {
   MY_KDEBUG_BLOCK ( "KIOGallery3Protocol::listDir" );
-  kDebug() << "(<url>)" << targetUrl.prettyUrl ( ) << targetUrl.scheme() << targetUrl.host() << targetUrl.path();
+  kDebug() << "(<url>)" << targetUrl << targetUrl.scheme() << targetUrl.host() << targetUrl.path();
   try
   {
     if ( targetUrl.path().isEmpty() )
     {
       KUrl redirectUrl = targetUrl;
       redirectUrl.adjustPath ( KUrl::AddTrailingSlash );
-      kDebug() << "redirecting to" << redirectUrl.prettyUrl();
+      kDebug() << "redirecting to" << redirectUrl;
       redirection ( redirectUrl );
       finished ( );
     } // if
@@ -376,7 +376,7 @@ void KIOGallery3Protocol::listDir ( const KUrl& targetUrl )
 void KIOGallery3Protocol::mimetype ( const KUrl& targetUrl )
 {
   MY_KDEBUG_BLOCK ( "KIOGallery3Protocol::mimetype" );
-  kDebug() << "(<url>)" << targetUrl.prettyUrl ( );
+  kDebug() << "(<url>)" << targetUrl;
   try
   {
     G3Item* item = itemByUrl ( targetUrl );
@@ -395,7 +395,7 @@ void KIOGallery3Protocol::mimetype ( const KUrl& targetUrl )
 void KIOGallery3Protocol::mkdir ( const KUrl& targetUrl, int permissions )
 {
   MY_KDEBUG_BLOCK ( "KIOGallery3Protocol::mkdir" );
-  kDebug() << "(<url> <permissions>)" << targetUrl.prettyUrl ( ) << permissions;
+  kDebug() << "(<url> <permissions>)" << targetUrl << permissions;
   try
   {
     G3Backend* backend = selectBackend ( targetUrl );
@@ -418,7 +418,7 @@ void KIOGallery3Protocol::mkdir ( const KUrl& targetUrl, int permissions )
 void KIOGallery3Protocol::put ( const KUrl& targetUrl, int permissions, KIO::JobFlags flags )
 {
   MY_KDEBUG_BLOCK ( "KIOGallery3Protocol::put" );
-  kDebug() << "(<url, <permissions> <flags>)" << targetUrl.prettyUrl ( ) << permissions << flags;
+  kDebug() << "(<url, <permissions> <flags>)" << targetUrl << permissions << flags;
   try
   {
     // strategy: save data stream to temp file and http-post that
@@ -468,7 +468,7 @@ void KIOGallery3Protocol::put ( const KUrl& targetUrl, int permissions, KIO::Job
 void KIOGallery3Protocol::rename ( const KUrl& srcUrl, const KUrl& destUrl, KIO::JobFlags flags )
 {
   MY_KDEBUG_BLOCK ( "KIOGallery3Protocol::rename" );
-  kDebug() << "(<src> <dest> <flags>)" << srcUrl.prettyUrl() << destUrl.prettyUrl();
+  kDebug() << "(<src> <dest> <flags>)" << srcUrl << destUrl;
   try
   {
     // we support only few types of "renaming" / "moving", deny the rest
@@ -510,14 +510,14 @@ void KIOGallery3Protocol::rename ( const KUrl& srcUrl, const KUrl& destUrl, KIO:
 void KIOGallery3Protocol::stat ( const KUrl& targetUrl )
 {
   MY_KDEBUG_BLOCK ( "KIOGallery3Protocol::stat" );
-  kDebug() << "(<url>)" << targetUrl.prettyUrl ( );
+  kDebug() << "(<url>)" << targetUrl;
   try
   {
     if ( targetUrl.path().isEmpty() )
     {
       KUrl _new_url = targetUrl;
       _new_url.setPath("/");
-      kDebug() << "redirecting to:" << _new_url.prettyUrl ( );
+      kDebug() << "redirecting to:" << _new_url;
       redirection ( _new_url );
       finished ( );
       return;
@@ -551,7 +551,7 @@ void KIOGallery3Protocol::stat ( const KUrl& targetUrl )
 void KIOGallery3Protocol::symlink ( const QString& target, const KUrl& dest, KIO::JobFlags flags )
 {
   MY_KDEBUG_BLOCK ( "KIOGallery3Protocol::symlink" );
-  kDebug() << "(<target> <dest> <flags>)" << target << dest.prettyUrl() << flags;
+  kDebug() << "(<target> <dest> <flags>)" << target << dest << flags;
   try
   {
     throw Exception ( Error(ERR_UNSUPPORTED_ACTION),
