@@ -71,7 +71,7 @@ namespace KIO
         QByteArray webFormPostPayload     ( const QHash<QString,QString>& query );
         QByteArray webFileFormPostPayload ( const QHash<QString,QString>& query, const Entity::G3File* const file );
       protected:
-        G3Request ( G3Backend* const backend, KIO::HTTP_METHOD method, const QString& service, const Entity::G3File* const file=NULL );
+        G3Request ( G3Backend* const backend, KIO::HTTP_METHOD method, const QString& service=QLatin1String(""), const Entity::G3File* const file=NULL );
         ~G3Request ( );
         int            httpStatusCode ( );
         bool           retryWithChangedCredentials ( int attempt = 0 );
@@ -100,11 +100,11 @@ namespace KIO
         static QList<G3Item*> g3GetItems     ( G3Backend* const backend, g3index id, Entity::G3Type type=Entity::G3Type::NONE );
         static QList<g3index> g3GetAncestors ( G3Backend* const backend, G3Item* item );
         static g3index        g3GetAncestor  ( G3Backend* const backend, G3Item* item );
-        static G3Item*        g3GetItem      ( G3Backend* const backend, g3index id, const QString& scope="direct", const QString& name="", bool random=FALSE, Entity::G3Type type=Entity::G3Type::NONE );
+        static G3Item*        g3GetItem      ( G3Backend* const backend, g3index id, const QString& scope=QLatin1String("direct"), const QString& name=QLatin1String(""), bool random=FALSE, Entity::G3Type type=Entity::G3Type::NONE );
         static void           g3PostItem     ( G3Backend* const backend, g3index id, const QHash<QString,QString>& attributes, const Entity::G3File* const file=NULL );
         static void           g3PutItem      ( G3Backend* const backend, g3index id, const QHash<QString,QString>& attributes );
         static void           g3DelItem      ( G3Backend* const backend, g3index id );
-        static g3index        g3SetItem      ( G3Backend* const backend, g3index id, const QString& name="", Entity::G3Type type=Entity::G3Type::NONE, const QByteArray& file=0 );
+        static g3index        g3SetItem      ( G3Backend* const backend, g3index id, const QString& name=QLatin1String(""), Entity::G3Type type=Entity::G3Type::NONE, const QByteArray& file=0 );
     }; // class G3Request
 
   } // namespace Gallery3

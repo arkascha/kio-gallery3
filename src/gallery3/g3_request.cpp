@@ -49,10 +49,10 @@ G3Request::G3Request ( G3Backend* const backend, KIO::HTTP_METHOD method, const 
   m_requestUrl.addPath ( m_service );
   m_boundary = KRandom::randomString(42+13).toAscii();
   // an agent string we can recognize
-  addHeaderItem ( "UserAgent", QString("Mozilla/5.0 (X11; Linux x86_64) (KIO-gallery3) KDE/%1.%2.%3")
+  addHeaderItem ( QLatin1String("User-Agent"), QString("kio-gallery3 (X11; Linux x86_64) KDE/%1.%2.%3")
   // NOTE: opensuse uses a complete release string instead of the version for KDE_VERSION and KDE::versionString()
   //       so we construct a clean version string by hand:
-                .arg(KDE::versionMajor()).arg(KDE::versionMinor()).arg(KDE::versionRelease()));
+                .arg(KDE::versionMajor()).arg(KDE::versionMinor()).arg(KDE::versionRelease()) );
   kDebug() << "{<>}";
   // prepare authentication requests
   connect ( this,              SIGNAL(signalRequestAuthInfo(G3Backend*,AuthInfo&,int)),
@@ -85,10 +85,10 @@ G3Request::~G3Request ( )
  */
 int G3Request::httpStatusCode ( )
 {
-  QVariant httpStatusCode = QVariant(m_meta["responsecode"]);
+  QVariant httpStatusCode = QVariant(m_meta[QLatin1String("responsecode")]);
   if ( httpStatusCode.canConvert(QVariant::Int) )
   {
-    int httpStatus = QVariant(m_meta["responsecode"]).toInt();
+    int httpStatus = QVariant(m_meta[QLatin1String("responsecode")]).toInt();
     kDebug() << httpStatus;
     return httpStatus;
   }
@@ -310,41 +310,41 @@ void G3Request::setup ( )
   // G3 uses 'RemoteAccesKeys' for authentication purposes (see API documentation)
   // this key is locally stored by this slave, we specify it if it exists
   if ( ! m_backend->credentials().digestInfo.isEmpty() )
-    addHeaderItem ( "customHTTPHeader", QString("X-Gallery-Request-Key: %1" ).arg(m_backend->credentials().digestInfo) );
+    addHeaderItem ( QLatin1String("customHTTPHeader"), QString("X-Gallery-Request-Key: %1" ).arg(m_backend->credentials().digestInfo) );
   // setup the actual http job
   switch ( m_method )
   {
     case KIO::HTTP_DELETE:
       m_job = KIO::http_post ( m_requestUrl, QByteArray(), KIO::DefaultFlags );
-      addHeaderItem ( "content-type",     "Content-Type: application/x-www-form-urlencoded" );
-      addHeaderItem ( "customHTTPHeader", "X-Gallery-Request-Method: delete" );
+      addHeaderItem ( QLatin1String("content-type"),     QLatin1String("Content-Type: application/x-www-form-urlencoded") );
+      addHeaderItem ( QLatin1String("customHTTPHeader"), QLatin1String("X-Gallery-Request-Method: delete") );
       break;
     case KIO::HTTP_GET:
       m_job = KIO::get ( webUrlWithQueryItems(m_requestUrl,m_query), KIO::Reload, KIO::DefaultFlags );
-      addHeaderItem ( "customHTTPHeader", "X-Gallery-Request-Method: get" );
+      addHeaderItem ( QLatin1String("customHTTPHeader"), QLatin1String("X-Gallery-Request-Method: get") );
       break;
     case KIO::HTTP_HEAD:
 //      m_job = KIO::get ( webUrlWithQueryItems(m_requestUrl,m_query), KIO::Reload, KIO::DefaultFlags );
       m_job = KIO::mimetype ( webUrlWithQueryItems(m_requestUrl,m_query), KIO::DefaultFlags );
-      addHeaderItem ( "customHTTPHeader", "X-Gallery-Request-Method: head" );
+      addHeaderItem ( QLatin1String("customHTTPHeader"), QLatin1String("X-Gallery-Request-Method: head") );
       break;
     case KIO::HTTP_POST:
       if ( m_file )
       {
         m_job = KIO::http_post ( m_requestUrl, webFileFormPostPayload(m_query,m_file), KIO::DefaultFlags );
-        addHeaderItem ( "content-type", QString("Content-Type: multipart/form-data; boundary=%1").arg(m_boundary) );
+        addHeaderItem ( QLatin1String("content-type"), QString("Content-Type: multipart/form-data; boundary=%1").arg(m_boundary) );
       }
       else
       {
         m_job = KIO::http_post ( m_requestUrl, webFormPostPayload(m_query), KIO::DefaultFlags );
-        addHeaderItem ( "content-type", "Content-Type: application/x-www-form-urlencoded" );
+        addHeaderItem ( QLatin1String("content-type"), QLatin1String("Content-Type: application/x-www-form-urlencoded") );
       }
-      addHeaderItem ( "customHTTPHeader", "X-Gallery-Request-Method: post" );
+      addHeaderItem ( QLatin1String("customHTTPHeader"), QLatin1String("X-Gallery-Request-Method: post") );
       break;
     case KIO::HTTP_PUT:
       m_job = KIO::http_post ( m_requestUrl, webFormPostPayload(m_query), KIO::DefaultFlags );
-      addHeaderItem ( "content-type", "Content-Type: application/x-www-form-urlencoded" );
-      addHeaderItem ( "customHTTPHeader", "X-Gallery-Request-Method: put" );
+      addHeaderItem ( QLatin1String("content-type"), QLatin1String("Content-Type: application/x-www-form-urlencoded") );
+      addHeaderItem ( QLatin1String("customHTTPHeader"), QLatin1String("X-Gallery-Request-Method: put") );
       break;
   } // switch request method
   // add header items if specified
@@ -380,7 +380,6 @@ void G3Request::process ( )
       kDebug() << "resetting job for a new trial";
       setup ( );
     }
-    kDebug() << "and... ACTION !";
     if ( ! NetAccess::synchronousRun ( m_job, NULL, &m_payload, &m_finalUrl, &m_meta ) )
       throw Exception ( Error(ERR_SLAVE_DEFINED),
                         QString("request failed: %2 [ %1 ]").arg(m_job->error()).arg(m_job->errorString()) );
@@ -390,7 +389,7 @@ void G3Request::process ( )
                         QString("Unexcepted processing error %1: %2").arg(m_job->error()).arg(m_job->errorString()) );
     // extract and store http status code from reply
     m_status = httpStatusCode();
-  } while (    (m_job->url().fileName()!="rest") // exception: g3Check: looking for REST API
+  } while (    (m_job->url().fileName()!=QLatin1String("rest")) // exception: g3Check: looking for REST API
             && (403==m_status)                   // repeat only in this case
 //            && retryWithChangedCredentials(++attempt) );  // retry makes sense if credentials have changed
             && retryWithChangedCredentials(attempt) );  // retry makes sense if credentials have changed
@@ -413,25 +412,25 @@ void G3Request::evaluate ( )
   switch ( m_status )
   {
     case 0:   break; // no error
-    case 200: kDebug() << QString("HTTP %1 OK"                           ).arg(QVariant(m_meta["responsecode"]).toInt()); break;
-    case 201: kDebug() << QString("HTTP %1 Created"                      ).arg(QVariant(m_meta["responsecode"]).toInt()); break;
-    case 202: kDebug() << QString("HTTP %1 Accepted"                     ).arg(QVariant(m_meta["responsecode"]).toInt()); break;
-    case 203: kDebug() << QString("HTTP %1 Non-Authoritative Information").arg(QVariant(m_meta["responsecode"]).toInt()); break;
-    case 204: kDebug() << QString("HTTP %1 No Content"                   ).arg(QVariant(m_meta["responsecode"]).toInt()); break;
-    case 205: kDebug() << QString("HTTP %1 Reset Content"                ).arg(QVariant(m_meta["responsecode"]).toInt()); break;
-    case 206: kDebug() << QString("HTTP %1 Partial Content"              ).arg(QVariant(m_meta["responsecode"]).toInt()); break;
+    case 200: kDebug() << QString("HTTP %1 OK"                           ).arg(QVariant(m_meta[QLatin1String("responsecode")]).toInt()); break;
+    case 201: kDebug() << QString("HTTP %1 Created"                      ).arg(QVariant(m_meta[QLatin1String("responsecode")]).toInt()); break;
+    case 202: kDebug() << QString("HTTP %1 Accepted"                     ).arg(QVariant(m_meta[QLatin1String("responsecode")]).toInt()); break;
+    case 203: kDebug() << QString("HTTP %1 Non-Authoritative Information").arg(QVariant(m_meta[QLatin1String("responsecode")]).toInt()); break;
+    case 204: kDebug() << QString("HTTP %1 No Content"                   ).arg(QVariant(m_meta[QLatin1String("responsecode")]).toInt()); break;
+    case 205: kDebug() << QString("HTTP %1 Reset Content"                ).arg(QVariant(m_meta[QLatin1String("responsecode")]).toInt()); break;
+    case 206: kDebug() << QString("HTTP %1 Partial Content"              ).arg(QVariant(m_meta[QLatin1String("responsecode")]).toInt()); break;
     case 400: throw Exception ( Error(ERR_INTERNAL_SERVER),        QString("HTTP 400: Bad Request") );
     case 401: throw Exception ( Error(ERR_ACCESS_DENIED),          QString("HTTP 401: Unauthorized") );
     case 403: throw Exception ( Error(ERR_COULD_NOT_AUTHENTICATE), QString("HTTP 403: No Authorization") ); // login failed
     case 404: throw Exception ( Error(ERR_SERVICE_NOT_AVAILABLE),  QString("HTTP 404: Not Found") );
-    default:  throw Exception ( Error(ERR_SLAVE_DEFINED),          QString("Unexpected http error %1").arg(QVariant(m_meta["responsecode"]).toInt()) );
+    default:  throw Exception ( Error(ERR_SLAVE_DEFINED),          QString("Unexpected http error %1").arg(QVariant(m_meta[QLatin1String("responsecode")]).toInt()) );
   } // switch
   kDebug() << QString ("request processed [ headers size: %2 / payload size: %1]")
                       .arg(m_meta.size())
                       .arg(m_payload.size());
-  if ( "application/json"!=m_meta["content-type"] )
-    throw Exception ( Error(ERR_SLAVE_DEFINED),QString("unexpected content type in response: %1").arg(m_meta["content-type"]) );
-  kDebug() << QString("response has expected content type '%1'").arg(m_meta["content-type"]);
+  if ( QLatin1String("application/json")!=m_meta[QLatin1String("content-type")] )
+    throw Exception ( Error(ERR_SLAVE_DEFINED),QString("unexpected content type in response: %1").arg(m_meta[QLatin1String("content-type")]) );
+  kDebug() << QString("response has expected content type '%1'").arg(m_meta[QLatin1String("content-type")]);
   // SUCCESS, convert result content (payload) into a usable object structure
   // NOTE: there is a bug in the G3 API implementation, it returns 'null' instead of an empty json structure in certain cases (DELETE)
   if ( "null"==m_payload )
@@ -542,15 +541,15 @@ g3index G3Request::toItemId ( QVariant& entry )
                       QString("gallery response did not hold a valid item description") );
   QVariantMap attributes = entry.toMap();
   // extract token 'id' from attribute 'entity' (IF it exists)
-  if (    attributes.contains("entity")
-       && attributes["entity"].canConvert(QVariant::Map) )
+  if (    attributes.contains(QLatin1String("entity"))
+       && attributes[QLatin1String("entity")].canConvert(QVariant::Map) )
   {
     QMap<QString,QVariant> entity = attributes["entity"].toMap();
     if (    entity.contains("id")
-         && entity["id"].canConvert(QVariant::Int) )
+         && entity[QLatin1String("id")].canConvert(QVariant::Int) )
     {
       kDebug() << "{<id>}" << entity["id"].toInt();
-      return entity["id"].toInt();
+      return entity[QLatin1String("id")].toInt();
     }
     else
       throw Exception ( Error(ERR_INTERNAL), QString("gallery response did not hold a valid item description") );
@@ -614,7 +613,7 @@ bool G3Request::g3Check ( G3Backend* const backend )
   kDebug() << "(<backend>)" << backend->toPrintout();
   try
   {
-    G3Request request ( backend, KIO::HTTP_HEAD, "" );
+    G3Request request ( backend, KIO::HTTP_HEAD );
     request.setup    ( );
     request.process  ( );
     request.evaluate ( );
@@ -654,9 +653,9 @@ bool G3Request::g3Login ( G3Backend* const backend, AuthInfo& credentials )
 {
   MY_KDEBUG_BLOCK ( "<G3Request::g3Login>" );
   kDebug() << "(<backend> <credentials>)" << backend->toPrintout() << credentials.username;
-  G3Request request ( backend, KIO::HTTP_POST, "" );
-  request.addQueryItem ( "user",     credentials.username);
-  request.addQueryItem ( "password", credentials.password);
+  G3Request request ( backend, KIO::HTTP_POST );
+  request.addQueryItem ( QLatin1String("user"),     credentials.username);
+  request.addQueryItem ( QLatin1String("password"), credentials.password);
   request.setup    ( );
   try
   {
@@ -668,7 +667,7 @@ bool G3Request::g3Login ( G3Backend* const backend, AuthInfo& credentials )
     switch ( e.getCode() )
     {
       case Error(ERR_COULD_NOT_AUTHENTICATE):
-        credentials.digestInfo = "";
+        credentials.digestInfo = QLatin1String("");
         kDebug() << "{<authenticated>}" << "FALSE";
         return FALSE;
       default: throw e;
@@ -700,9 +699,9 @@ QList<G3Item*> G3Request::g3GetItems ( G3Backend* const backend, const QStringLi
     kDebug() << QString("retrieving chunk %1 (items %2-%3)").arg(chunk+1).arg(chunk*ITEM_LIST_CHUNK_SIZE)
 //                                                           .arg(MIN((((chunk+1)*ITEM_LIST_CHUNK_SIZE)-1),(urls.count()-1)));
                                                            .arg(std::min((((chunk+1)*ITEM_LIST_CHUNK_SIZE)-1),(urls.count()-1)));
-    G3Request request ( backend, KIO::HTTP_GET, "items" );
-    request.addQueryItem ( "urls", urls_chunk );
-    request.addQueryItem ( "type", type );
+    G3Request request ( backend, KIO::HTTP_GET, QLatin1String("items") );
+    request.addQueryItem ( QLatin1String("urls"), urls_chunk );
+    request.addQueryItem ( QLatin1String("type"), type );
     request.setup        ( );
     request.process      ( );
     request.evaluate     ( );
@@ -745,8 +744,8 @@ QList<g3index> G3Request::g3GetAncestors ( G3Backend* const backend, G3Item* ite
 {
   MY_KDEBUG_BLOCK ( "<G3Request::g3GetAncestors>" );
   kDebug() << "(<backend> <item>)" << backend->toPrintout() << item->toPrintout();
-  G3Request request ( backend, KIO::HTTP_GET, "items" );
-  request.addQueryItem ( "ancestors_for", item->restUrl().url() );
+  G3Request request ( backend, KIO::HTTP_GET, QLatin1String("items") );
+  request.addQueryItem ( QLatin1String("ancestors_for"), item->restUrl().url() );
   request.setup        ( );
   request.process      ( );
   request.evaluate     ( );
@@ -839,7 +838,7 @@ void G3Request::g3PostItem ( G3Backend* const backend, g3index id, const QHash<Q
   for ( QHash<QString,QString>::const_iterator it=attributes.constBegin(); it!=attributes.constEnd(); it++ )
     entity.insert ( it.key(), QVariant(it.value()) );
   // specify entity description as a single, serialized query attribute
-  request.addQueryItem ( "entity", request.g3serialize(QVariant(entity)) );
+  request.addQueryItem ( QLatin1String("entity"), request.g3serialize(QVariant(entity)) );
   request.setup        ( );
   request.process      ( );
   request.evaluate     ( );
@@ -865,7 +864,7 @@ void G3Request::g3PutItem ( G3Backend* const backend, g3index id, const QHash<QS
   for ( QHash<QString,QString>::const_iterator it=attributes.constBegin(); it!=attributes.constEnd(); it++ )
     entity.insert ( it.key(), it.value() );
   // specify entity description as a single, serialized query attribute
-  request.addQueryItem ( "entity", request.g3serialize(QVariant(entity)) );
+  request.addQueryItem ( QLatin1String("entity"), request.g3serialize(QVariant(entity)) );
   request.setup        ( );
   request.process      ( );
   request.evaluate     ( );
@@ -907,8 +906,8 @@ g3index G3Request::g3SetItem ( G3Backend* const backend, g3index id, const QStri
   MY_KDEBUG_BLOCK ( "<G3Request::g3SetItem>" );
   kDebug() << "(<backend> <id> <name> <type> <file>)" << backend->toPrintout() << name << type.toString();
   G3Request request ( backend, KIO::HTTP_POST, QString("item/%1").arg(id) );
-  request.addQueryItem ( "name",  name, TRUE );
-  request.addQueryItem ( "type",  type, TRUE );
+  request.addQueryItem ( QLatin1String("name"),  name, TRUE );
+  request.addQueryItem ( QLatin1String("type"),  type, TRUE );
   request.setup        ( );
   request.process      ( );
   request.evaluate     ( );

@@ -78,16 +78,16 @@ G3Backend::G3Backend ( QObject* parent, const KUrl& g3Url )
 {
   MY_KDEBUG_BLOCK ( "<G3Backend::G3Backend>" );
   m_restUrl = m_baseUrl;
-  m_restUrl.setProtocol ( ("gallery3s"==m_baseUrl.protocol()) ? "https":"http" );
+  m_restUrl.setProtocol ( (QLatin1String("gallery3s")==m_baseUrl.protocol()) ? QLatin1String("https"):QLatin1String("http") );
   // authentication credentials dont make sense since the REST API does not use http basic authentication
   m_restUrl.setUser     ( QString() );
   m_restUrl.setPass     ( QString() );
   m_restUrl.addPath     ( "rest" );
   kDebug() << "{<base> <rest>}" << m_baseUrl.prettyUrl() << m_restUrl.prettyUrl();
   // prepare AuthInfo for later authentication against the remote gallery3 system
-  m_credentials.caption      = "Authentication required";
-  m_credentials.prompt       = "Authentication required";
-  m_credentials.commentLabel = "Login:";
+  m_credentials.caption      = QLatin1String("Authentication required");
+  m_credentials.prompt       = QLatin1String("Authentication required");
+  m_credentials.commentLabel = QLatin1String("Login:");
   m_credentials.comment      = QString("Gallery3 at host '%1'").arg(m_baseUrl.host());
   m_credentials.realmValue   = QString("Gallery3 at host '%1'").arg(m_baseUrl.host());;
   m_credentials.keepPassword = TRUE;
@@ -226,7 +226,7 @@ G3Item* G3Backend::itemByPath ( const QString& path )
 {
   MY_KDEBUG_BLOCK ( "<G3Backend::itemByPath>" );
   kDebug() << "(<path>)" << path;
-  QStringList breadcrumbs = path.split("/");
+  QStringList breadcrumbs = path.split(QLatin1String("/"));
   return itemByPath ( breadcrumbs );
 } // G3Backend::itemByPath
 
@@ -243,7 +243,7 @@ G3Item* G3Backend::itemByPath ( const QString& path )
 G3Item* G3Backend::itemByPath ( const QStringList& breadcrumbs )
 {
   MY_KDEBUG_BLOCK ( "<G3Backend::itemByPath>" );
-  kDebug() << "(<breadcrumbs>)"<< breadcrumbs.join("|");
+  kDebug() << "(<breadcrumbs>)"<< breadcrumbs.join(QLatin1String("|"));
   // start at the 'root' album
   G3Item* item = itemBase ( );
   QList<QString>::const_iterator it;
@@ -298,7 +298,7 @@ QList<G3Item*> G3Backend::membersByItemPath ( const QString& path )
 {
   MY_KDEBUG_BLOCK ( "<G3Backend::membersByItemPath>" );
   kDebug() << "(<path>)" << path;
-  if ( "./"==path )
+  if ( QLatin1String("./")==path )
     return membersByItemPath ( QStringList() );
   else
     return membersByItemPath ( path.split("/") );
@@ -477,9 +477,9 @@ G3Item* const G3Backend::updateItem ( G3Item* item, const QHash<QString,QString>
   delete parent;
   parent = itemByPath ( breadcrumbs );
   // refresh new parent item, if this was a move
-  if ( attributes.contains("parent") )
+  if ( attributes.contains(QLatin1String("parent")) )
   {
-    g3index id = QVariant(KUrl(attributes["parent"]).fileName()).toInt();
+    g3index id = QVariant(KUrl(attributes[QLatin1String("parent")]).fileName()).toInt();
     parent = itemById ( id );
     QStringList breadcrumbs = parent->path();
     delete parent;
@@ -506,17 +506,17 @@ G3Item* const G3Backend::createItem  ( G3Item* parent, const QString& name, cons
   kDebug() << "(<parent> <name> <file[name]>)" << parent->toPrintout() << name << ( file ? file->filename() : "-/-" );
   // setup the attributes that describe to new entity
   QHash<QString,QString> attributes;
-  attributes.insert ( "name",      name );
-  attributes.insert ( "title",     name.left(name.lastIndexOf(".")) ); // strip "file name extension", if contained
+  attributes.insert ( QLatin1String("name"),      name );
+  attributes.insert ( QLatin1String("title"),     name.left(name.lastIndexOf(".")) ); // strip "file name extension", if contained
   if ( file )
   {
-    attributes.insert ( "type",      Entity::G3Type(file->mimetype()).toString() );
-    attributes.insert ( "mime_type", file->mimetype()->name() );
+    attributes.insert ( QLatin1String("type"),      Entity::G3Type(file->mimetype()).toString() );
+    attributes.insert ( QLatin1String("mime_type"), file->mimetype()->name() );
   }
   else
   {
-    attributes.insert ( "type",      Entity::G3Type(Entity::G3Type::ALBUM).toString() );
-    attributes.insert ( "mime_type", "inode/directory" );
+    attributes.insert ( QLatin1String("type"),      Entity::G3Type(Entity::G3Type::ALBUM).toString() );
+    attributes.insert ( QLatin1String("mime_type"), QLatin1String("inode/directory") );
   }
   // send request
   G3Request::g3PostItem ( this, parent->id(), attributes, file );

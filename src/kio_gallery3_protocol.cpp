@@ -148,7 +148,6 @@ void KIOGallery3Protocol::slotRequestAuthInfo ( G3Backend* backend, AuthInfo& cr
   kDebug() << "(<AuthInfo>)" << credentials.url << credentials.caption << credentials.comment;
   // check if there is a matching entry in the cache
   AuthInfo cached = credentials;
-kDebug() << "\r\nbefore:\r\n" << cached.caption<<"\r\n"<<cached.commentLabel<<"\r\n"<<cached.digestInfo<<"\r\n"<<cached.keepPassword<<"\r\n"<<cached.password<<"\r\n"<<cached.prompt<<"\r\n"<<cached.prompt<<"\r\n"<<cached.readOnly<<"\r\n"<<cached.realmValue<<"\r\n"<<cached.url<<"\r\n"<<cached.username<<"\r\n"<<cached.verifyPath;
   // NOTE: there are a few different situations we have to take into account...
 
   if ( 1==attempt && ! credentials.username.isEmpty() && ! credentials.password.isEmpty() )
@@ -186,7 +185,7 @@ kDebug() << "\r\nbefore:\r\n" << cached.caption<<"\r\n"<<cached.commentLabel<<"\
     else
     {
       kDebug() << "authentiaction failed, retrying";
-      message = "Authentication failed";
+      message = QLatin1String("Authentication failed");
     }
   } // while
   kDebug() << "user cancelled authentication";
@@ -240,7 +239,7 @@ void KIOGallery3Protocol::setHost ( const QString& host, g3index port, const QSt
   }
   catch ( Exception &e )
   {
-    messageBox ( Information, QString("Error %1:\n %2").arg(e.getCode()).arg(e.getText()), "Failure" );
+    messageBox ( Information, QString("Error %1:\n %2").arg(e.getCode()).arg(e.getText()), QLatin1String("Failure") );
     error( e.getCode(), e.getText() );
   }
 } // KIOGallery3Protocol::setHost
@@ -256,7 +255,7 @@ void KIOGallery3Protocol::copy ( const KUrl& src, const KUrl& dest, int permissi
   }
   catch ( Exception &e )
   {
-    messageBox ( Information, QString("Error %1:\n %2").arg(e.getCode()).arg(e.getText()), "Failure" );
+    messageBox ( Information, QString("Error %1:\n %2").arg(e.getCode()).arg(e.getText()), QLatin1String("Failure") );
     error( e.getCode(), e.getText() );
   }
 } // KIOGallery3Protocol::copy
@@ -278,7 +277,7 @@ void KIOGallery3Protocol::del ( const KUrl& targetUrl, bool isfile )
   }
   catch ( Exception &e )
   {
-    messageBox ( SlaveBase::Information, "removal of item failed", "Failure" );
+    messageBox ( SlaveBase::Information, "removal of item failed", QLatin1String("Failure") );
     error( e.getCode(), e.getText() );
   }
 } // KIOGallery3Protocol::del
@@ -315,7 +314,7 @@ void KIOGallery3Protocol::get ( const KUrl& targetUrl )
   }
   catch ( Exception &e )
   {
-    messageBox ( Information, QString("Error %1:\n %2").arg(e.getCode()).arg(e.getText()), "Failure" );
+    messageBox ( Information, QString("Error %1:\n %2").arg(e.getCode()).arg(e.getText()), QLatin1String("Failure") );
     error( e.getCode(), e.getText() );
   }
 } // KIOGallery3Protocol::get
@@ -367,7 +366,7 @@ void KIOGallery3Protocol::listDir ( const KUrl& targetUrl )
   }
   catch ( Exception &e )
   {
-    messageBox ( Information, QString("Error %1:\n %2").arg(e.getCode()).arg(e.getText()), "Failure" );
+    messageBox ( Information, QString("Error %1:\n %2").arg(e.getCode()).arg(e.getText()), QLatin1String("Failure") );
     error( e.getCode(), e.getText() );
   }
 } // KIOGallery3Protocol::listDir
@@ -386,7 +385,7 @@ void KIOGallery3Protocol::mimetype ( const KUrl& targetUrl )
   }
   catch ( Exception &e )
   {
-    messageBox ( Information, QString("Error %1:\n %2").arg(e.getCode()).arg(e.getText()), "Failure" );
+    messageBox ( Information, QString("Error %1:\n %2").arg(e.getCode()).arg(e.getText()), QLatin1String("Failure") );
     error( e.getCode(), e.getText() );
   }
 } // KIOGallery3Protocol::mimetype
@@ -409,7 +408,7 @@ void KIOGallery3Protocol::mkdir ( const KUrl& targetUrl, int permissions )
   }
   catch ( Exception &e )
   {
-    messageBox ( Information, QString("Error %1:\n %2").arg(e.getCode()).arg(e.getText()), "Failure" );
+    messageBox ( Information, QString("Error %1:\n %2").arg(e.getCode()).arg(e.getText()), QLatin1String("Failure") );
     error( e.getCode(), e.getText() );
   }
 } // KIOGallery3Protocol::mkdir
@@ -461,7 +460,7 @@ void KIOGallery3Protocol::put ( const KUrl& targetUrl, int permissions, KIO::Job
   }
   catch ( Exception &e )
   {
-    messageBox ( Information, QString("Error %1:\n %2").arg(e.getCode()).arg(e.getText()), "Failure" );
+    messageBox ( Information, QString("Error %1:\n %2").arg(e.getCode()).arg(e.getText()), QLatin1String("Failure") );
     error( e.getCode(), e.getText() );
   }
 } // KIOGallery3Protocol::put
@@ -501,7 +500,7 @@ void KIOGallery3Protocol::rename ( const KUrl& srcUrl, const KUrl& destUrl, KIO:
   }
   catch ( Exception &e )
   {
-    messageBox ( Information, QString("Error %1:\n %2").arg(e.getCode()).arg(e.getText()), "Failure" );
+    messageBox ( Information, QString("Error %1:\n %2").arg(e.getCode()).arg(e.getText()), QLatin1String("Failure") );
     error( e.getCode(), e.getText() );
   }
 } // KIOGallery3Protocol::rename
@@ -540,7 +539,7 @@ void KIOGallery3Protocol::stat ( const KUrl& targetUrl )
   }
   catch ( Exception &e )
   {
-    messageBox ( Information, QString("Error %1:\n %2").arg(e.getCode()).arg(e.getText()), "Failure" );
+    messageBox ( Information, QString("Error %1:\n %2").arg(e.getCode()).arg(e.getText()), QLatin1String("Failure") );
     error( e.getCode(), e.getText() );
   }
 } // KIOGallery3Protocol::stat
@@ -560,7 +559,7 @@ void KIOGallery3Protocol::symlink ( const QString& target, const KUrl& dest, KIO
   }
   catch ( Exception &e )
   {
-    messageBox ( Information, QString("Error %1:\n %2").arg(e.getCode()).arg(e.getText()), "Failure" );
+    messageBox ( Information, QString("Error %1:\n %2").arg(e.getCode()).arg(e.getText()), QLatin1String("Failure") );
     error( e.getCode(), e.getText() );
   }
 } // KIOGallery3Protocol::symlink
@@ -583,7 +582,7 @@ Reimplemented in FileProtocol, and HTTPProtocol.
   }
   catch ( Exception &e )
   {
-    messageBox ( Information, QString("Error %1:\n %2").arg(e.getCode()).arg(e.getText()), "Failure" );
+    messageBox ( Information, QString("Error %1:\n %2").arg(e.getCode()).arg(e.getText()), QLatin1String("Failure") );
     error( e.getCode(), e.getText() );
   }
 } // KIOGallery3Protocol::special
