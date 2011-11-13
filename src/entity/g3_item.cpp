@@ -421,7 +421,7 @@ const UDSEntry G3Item::toUDSEntry ( ) const
   entry.insert( UDSEntry::UDS_FILE_TYPE,          m_type.toUDSFileType() );
   entry.insert( UDSEntry::UDS_NAME,               QString("%1").arg(m_name) );
 //  entry.insert( UDSEntry::UDS_DISPLAY_NAME,       QString("[%1] %2").arg(m_id).arg(attributeMapToken("entity","title",QVariant::String).toString()) );
-  entry.insert( UDSEntry::UDS_COMMENT,            QString("[%1] %2").arg(m_id).arg(attributeMapToken("entity","description",QVariant::String).toString()) );
+  entry.insert( UDSEntry::UDS_COMMENT,            attributeMapToken("entity","description",QVariant::String).toString() );
   entry.insert( UDSEntry::UDS_MIME_TYPE,          m_mimetype->name() );
   entry.insert( UDSEntry::UDS_DISPLAY_TYPE,       m_type.toString() );
   entry.insert( UDSEntry::UDS_SIZE,               attributeMapToken(QLatin1String("entity"),QLatin1String("file_size"),QVariant::Int).toInt() );
@@ -445,6 +445,7 @@ const UDSEntry G3Item::toUDSEntry ( ) const
     {
       case UDSEntry::UDS_NAME:               kDebug() << "UDS_NAME:"               << entry.stringValue(_tag); break;
       case UDSEntry::UDS_DISPLAY_NAME:       kDebug() << "UDS_DISPLAY_NAME:"       << entry.stringValue(_tag); break;
+      case UDSEntry::UDS_COMMENT:            kDebug() << "UDS_COMMENT:"            << entry.stringValue(_tag); break;
       case UDSEntry::UDS_FILE_TYPE:          kDebug() << "UDS_FILE_TYPE:"          << entry.numberValue(_tag); break;
       case UDSEntry::UDS_MIME_TYPE:          kDebug() << "UDS_MIME_TYPE:"          << entry.stringValue(_tag); break;
       case UDSEntry::UDS_MODIFICATION_TIME:  kDebug() << "UDS_MODIFICATION_TIME:"  << entry.numberValue(_tag); break;
