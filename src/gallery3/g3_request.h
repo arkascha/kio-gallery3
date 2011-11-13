@@ -80,7 +80,6 @@ namespace KIO
         void           addQueryItem   ( const QString& key, Entity::G3Type value, bool skipIfEmpty=FALSE );
         void           addQueryItem   ( const QString& key, const QStringList& values, bool skipIfEmpty=FALSE );
         void           setup          ( );
-        void           passthru       ( QObject* target );
         void           process        ( );
         void           evaluate       ( );
         QString        toString       ( );
@@ -94,8 +93,6 @@ namespace KIO
         void signalRequestAuthInfo ( G3Backend* backend, AuthInfo& credentials, int attempt );
         void signalMessageBox      ( int& result, SlaveBase::MessageBoxType type, const QString &text, const QString &caption=QString(), const QString &buttonYes=i18n("&Yes"), const QString &buttonNo=i18n("&No") );
         void signalMessageBox      ( int& result, const QString &text, SlaveBase::MessageBoxType type, const QString &caption=QString(), const QString &buttonYes=i18n("&Yes"), const QString &buttonNo=i18n("&No"), const QString &dontAskAgainName=QString() );
-        void signalData            ( KIO::Job* job, const QByteArray& data );
-        void signalMimetype        ( KIO::Job* job, const QByteArray& data );
       public:
         static bool           g3Check        ( G3Backend* const backend );
         static bool           g3Login        ( G3Backend* const backend, AuthInfo& credentials );

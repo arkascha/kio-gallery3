@@ -354,14 +354,6 @@ void G3Request::setup ( )
   kDebug() << "{<>}";
 } // G3Request::setup
 
-void G3Request::passthru ( QObject* target )
-{
-  MY_KDEBUG_BLOCK ( "<G3Request::passthru>" );
-  kDebug() << "(<QObject>)";
-  connect ( m_job, SIGNAL(    data(KIO::Job*,const QByteArray&)), target, SLOT(    slotData(KIO::Job*,const QByteArray&)) );
-  connect ( m_job, SIGNAL(mimetype(KIO::Job*,const QByteArray&)), target, SLOT(slotMimetype(KIO::Job*,const QString&)) );
-}
-
 /**
  * void G3Request::process ( )
  *
@@ -565,6 +557,8 @@ g3index G3Request::toItemId ( QVariant& entry )
   else
     throw Exception ( Error(ERR_INTERNAL), QString("gallery response did not hold valid return content") );
 } // G3Request::toItemId
+
+//==========
 
 /**
  * QList<g3index> G3Request::toItemIds ( )
@@ -934,7 +928,8 @@ void G3Request::g3FetchObject ( G3Backend* const backend, const KUrl& url )
   for ( QMap<QString,QString>::const_iterator it=queryItems.constBegin(); it!=queryItems.constEnd(); it++ )
     request.addQueryItem ( it.key(), it.value() );
   request.setup    ( );
-  request.passthru ( backend->parent() );
+  connect ( request.m_job, SIGNAL(    data(KIO::Job*,const QByteArray&)), backend->parent(), SLOT(    slotData(KIO::Job*,const QByteArray&)) );
+  connect ( request.m_job, SIGNAL(mimetype(KIO::Job*,const QByteArray&)), backend->parent(), SLOT(slotMimetype(KIO::Job*,const QString&)) );
   request.process  ( );
   kDebug() << "{<>}";
 } // G3Request::g3FetchObject
