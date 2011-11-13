@@ -421,6 +421,7 @@ const UDSEntry G3Item::toUDSEntry ( ) const
   entry.insert( UDSEntry::UDS_FILE_TYPE,          m_type.toUDSFileType() );
   entry.insert( UDSEntry::UDS_NAME,               QString("%1").arg(m_name) );
 //  entry.insert( UDSEntry::UDS_DISPLAY_NAME,       QString("[%1] %2").arg(m_id).arg(attributeMapToken("entity","title",QVariant::String).toString()) );
+  entry.insert( UDSEntry::UDS_COMMENT,            QString("[%1] %2").arg(m_id).arg(attributeMapToken("entity","description",QVariant::String).toString()) );
   entry.insert( UDSEntry::UDS_MIME_TYPE,          m_mimetype->name() );
   entry.insert( UDSEntry::UDS_DISPLAY_TYPE,       m_type.toString() );
   entry.insert( UDSEntry::UDS_SIZE,               attributeMapToken(QLatin1String("entity"),QLatin1String("file_size"),QVariant::Int).toInt() );
@@ -428,6 +429,7 @@ const UDSEntry G3Item::toUDSEntry ( ) const
   entry.insert( UDSEntry::UDS_CREATION_TIME,      attributeMapToken(QLatin1String("entity"),QLatin1String("created"),QVariant::Int).toInt() );
   entry.insert( UDSEntry::UDS_MODIFICATION_TIME,  attributeMapToken(QLatin1String("entity"),QLatin1String("updated"),QVariant::Int).toInt() );
 //  entry.insert( UDSEntry::UDS_LOCAL_PATH,         m_fileUrl.path() );
+//  entry.insert( UDSEntry::UDS_URL,                m_fileUrl.url() );
 //  entry.insert( UDSEntry::UDS_TARGET_URL,         m_fileUrl.url() );
 //  entry.insert( UDSEntry::UDS_LINK_DEST,          m_fileUrl.url() );
 //  if ( ! m_attributes["entity"]Icon.isEmpty() )
