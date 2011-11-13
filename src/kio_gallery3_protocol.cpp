@@ -212,7 +212,6 @@ void KIOGallery3Protocol::slotListUDSEntries ( const UDSEntryList entries )
 {
   kDebug() << "(<UDSEntries[count]>)" << entries.count();
   listEntries ( entries );
-  listEntry ( UDSEntry(), FALSE );
 } // KIOGallery3Protocol::slotListUDSEntries
 
 void KIOGallery3Protocol::slotListUDSEntry ( const UDSEntry entry )
@@ -229,7 +228,6 @@ void KIOGallery3Protocol::slotStatUDSEntry ( const UDSEntry entry )
 
 void KIOGallery3Protocol::slotData ( KIO::Job* job, const QByteArray& payload )
 {
-  kDebug() << "(<data[size]>)" << payload.size();
   data ( payload );
 } // KIOGallery3Protocol::slotData
 
