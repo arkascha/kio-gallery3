@@ -64,15 +64,13 @@ namespace KIO
         QList<G3Item*>                       membersByItemId   ( g3index id );
         QList<G3Item*>                       membersByItemPath ( const QString& path );
         QList<G3Item*>                       membersByItemPath ( const QStringList& breadcrumbs );
-        void                                 pushJob     ( TransferJob* job );
-        TransferJob*                         popJob      ( TransferJob* job );
         int                                  countItems  ( );
+        bool                                 login       ( AuthInfo& credentials );
         void                                 pushItem    ( G3Item* item );
         G3Item*                              popItem     ( g3index id );
         void                                 removeItem  ( G3Item* item );
         G3Item* const                        updateItem  ( G3Item* item, const QHash<QString,QString>& attributes );
         G3Item* const                        createItem  ( G3Item* parent, const QString& name, const Entity::G3File* const file=NULL );
-        bool                                 login       ( AuthInfo& credentials );
         // TODO: updateItem ( ... );
     }; // class G3Backend
 

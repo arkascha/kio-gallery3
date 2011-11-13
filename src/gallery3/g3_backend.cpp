@@ -400,6 +400,24 @@ int G3Backend::countItems  ( )
   return m_items.count();
 } // G3Backend::countItems
 
+//==========
+
+/**
+ * bool G3Backend::login ( AuthInfo& credentials )
+ *
+ * param: AuthInfo& credentials ( authentiction credentials )
+ * returns: bool (authentication succeeded / failed)
+ * description:
+ * performs a G3 specific authentication request
+ * goal is to get back the 'remote access key' that is used by the G§ REST API as a kind of long-term-session-keys
+ * upon success that key is stored inside the authentication credential as 'digestInfo'
+ */
+bool G3Backend::login ( AuthInfo& credentials )
+{
+  kDebug() << "(<credentials>)" << credentials.caption;
+  return G3Request::g3Login ( this, credentials );
+} // G3Request::g3RemoteAccessKey
+
 /**
  * void G3Backend::pushItem ( G3Item* item )
  *
@@ -528,11 +546,5 @@ G3Item* const G3Backend::createItem  ( G3Item* parent, const QString& name, cons
   kDebug() << "created item" << item->toPrintout();
   return item;
 } // G3Backend::createItem
-
-bool G3Backend::login ( AuthInfo& credentials )
-{
-  kDebug() << "(<credentials>)" << credentials.caption;
-  return G3Request::g3Login ( this, credentials );
-} // G3Request::g3RemoteAccessKey
 
 #include "gallery3/g3_backend.moc"
