@@ -38,10 +38,6 @@ namespace KIO
         g3index                    m_id;
         QString                    m_name;
         KMimeType::Ptr             m_mimetype;
-        KUrl                       m_restUrl;
-        KUrl                       m_webUrl;
-        KUrl                       m_fileUrl;
-        KUrl                       m_thumbUrl;
       protected:
         G3Item*                    m_parent;
         QHash<g3index,G3Item*>     m_members;
@@ -53,13 +49,16 @@ namespace KIO
       signals:
         void signalUDSEntry ( const UDSEntry& entry ) const;
       public:
-        inline const g3index        id       ( ) const { return m_id; };
-        inline const QString        name     ( ) const { return m_name; };
-        inline const KMimeType::Ptr mimetype ( ) const { return m_mimetype; };
-        inline const KUrl           restUrl  ( ) const { return m_restUrl; };
-        inline const KUrl           webUrl   ( ) const { return m_webUrl; };
-        inline const KUrl           fileUrl  ( ) const { return m_fileUrl; };
-        inline const KUrl           thumbUrl ( ) const { return m_thumbUrl; };
+        inline const g3index        id             ( ) const { return m_id; };
+        inline const QString        name           ( ) const { return m_name; };
+        inline const KMimeType::Ptr mimetype       ( ) const { return m_mimetype; };
+        inline const KUrl           restUrl        ( ) const { return KUrl ( attributeToken    (                          QLatin1String("url"),              QVariant::String, FALSE ).toString() ); };
+        inline const KUrl           webUrl         ( ) const { return KUrl ( attributeMapToken ( QLatin1String("entity"), QLatin1String("web_url"),          QVariant::String, FALSE ).toString() ); };
+        inline const KUrl           webUrlPublic   ( ) const { return KUrl ( attributeMapToken ( QLatin1String("entity"), QLatin1String("web_url_public"),   QVariant::String, FALSE ).toString() ); };
+        inline const KUrl           fileUrl        ( ) const { return KUrl ( attributeMapToken ( QLatin1String("entity"), QLatin1String("file_url"),         QVariant::String, FALSE ).toString() ); };
+        inline const KUrl           fileUrlPublic  ( ) const { return KUrl ( attributeMapToken ( QLatin1String("entity"), QLatin1String("file_url_public"),  QVariant::String, FALSE ).toString() ); };
+        inline const KUrl           thumbUrl       ( ) const { return KUrl ( attributeMapToken ( QLatin1String("entity"), QLatin1String("thumb_url"),        QVariant::String, FALSE ).toString() ); };
+        inline const KUrl           thumbUrlPublic ( ) const { return KUrl ( attributeMapToken ( QLatin1String("entity"), QLatin1String("thumb_url_public"), QVariant::String, FALSE ).toString() ); };
         QStringList            path              ( ) const;
         G3Item*                parent            ( ) const;
         G3Item*                member            ( const QString& name );

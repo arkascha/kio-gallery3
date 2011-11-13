@@ -81,10 +81,6 @@ G3Item::G3Item ( const Entity::G3Type type, G3Backend* const backend, const QVar
   // a few values stored type-strict for later convenience
   m_id       = attributeMapToken ( QLatin1String("entity"), QLatin1String("id"),   QVariant::UInt,   TRUE  ).toUInt();
   m_name     = attributeMapToken ( QLatin1String("entity"), QLatin1String("name"), QVariant::String, FALSE ).toString();
-  m_restUrl  = KUrl ( attributeToken    (                          QLatin1String("url"),       QVariant::String, FALSE ).toString() );
-  m_webUrl   = KUrl ( attributeMapToken ( QLatin1String("entity"), QLatin1String("web_url"),   QVariant::String, FALSE ).toString() );
-  m_fileUrl  = KUrl ( attributeMapToken ( QLatin1String("entity"), QLatin1String("file_url"),  QVariant::String, FALSE ).toString() );
-  m_thumbUrl = KUrl ( attributeMapToken ( QLatin1String("entity"), QLatin1String("thumb_url"), QVariant::String, FALSE ).toString() );
   // set the items mimetype
   QString mimetype_name = attributeMapToken ( QLatin1String("entity"), QLatin1String("mime_type"), QVariant::String, FALSE ).toString();
   if ( ! mimetype_name.isEmpty() )
@@ -418,13 +414,13 @@ const UDSEntry G3Item::toUDSEntry ( ) const
   MY_KDEBUG_BLOCK ( "<G3Item::toUDSEntry>" );
   kDebug() << "(<this>)" << toPrintout();
   UDSEntry entry;
-  entry.insert( UDSEntry::UDS_FILE_TYPE,          m_type.toUDSFileType() );
   entry.insert( UDSEntry::UDS_NAME,               QString("%1").arg(m_name) );
 //  entry.insert( UDSEntry::UDS_DISPLAY_NAME,       QString("[%1] %2").arg(m_id).arg(attributeMapToken("entity","title",QVariant::String).toString()) );
   entry.insert( UDSEntry::UDS_COMMENT,            attributeMapToken("entity","description",QVariant::String).toString() );
+  entry.insert( UDSEntry::UDS_FILE_TYPE,          m_type.toUDSFileType() );
   entry.insert( UDSEntry::UDS_MIME_TYPE,          m_mimetype->name() );
   entry.insert( UDSEntry::UDS_DISPLAY_TYPE,       m_type.toString() );
-  entry.insert( UDSEntry::UDS_SIZE,               attributeMapToken(QLatin1String("entity"),QLatin1String("file_size"),QVariant::Int).toInt() );
+  entry.insert( UDSEntry::UDS_SIZE,               (Entity::G3Type::ALBUM==m_type.toInt()) ? 0L : attributeMapToken(QLatin1String("entity"),QLatin1String("file_size"),QVariant::Int).toInt() );
   entry.insert( UDSEntry::UDS_ACCESS,             0600 );
   entry.insert( UDSEntry::UDS_CREATION_TIME,      attributeMapToken(QLatin1String("entity"),QLatin1String("created"),QVariant::Int).toInt() );
   entry.insert( UDSEntry::UDS_MODIFICATION_TIME,  attributeMapToken(QLatin1String("entity"),QLatin1String("updated"),QVariant::Int).toInt() );
@@ -432,10 +428,6 @@ const UDSEntry G3Item::toUDSEntry ( ) const
 //  entry.insert( UDSEntry::UDS_URL,                m_fileUrl.url() );
 //  entry.insert( UDSEntry::UDS_TARGET_URL,         m_fileUrl.url() );
 //  entry.insert( UDSEntry::UDS_LINK_DEST,          m_fileUrl.url() );
-//  if ( ! m_attributes["entity"]Icon.isEmpty() )
-//    entry.insert( UDSEntry::UDS_ICON_NAME,          m_attributes["entity"]Icon );
-//  if ( ! m_attributes["entity"]Overlays.isEmpty() )
-//    entry.insert( UDSEntry::UDS_ICON_OVERLAY_NAMES, m_attributes["entity"]Overlays.join(",") );
 
   // some intense debugging output...
   QList<uint> _tags = entry.listFields ( );
