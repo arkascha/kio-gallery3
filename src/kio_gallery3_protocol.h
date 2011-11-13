@@ -57,6 +57,8 @@ namespace KIO
         void slotListUDSEntries  ( const UDSEntryList entries );
         void slotListUDSEntry    ( const UDSEntry entry );
         void slotStatUDSEntry    ( const UDSEntry entry );
+        void slotData            ( KIO::Job* job, const QByteArray& data );
+        void slotMimetype        ( KIO::Job* job, const QString& type );
       public:
         void setHost  ( const QString& host, g3index port, const QString& user, const QString& pass );
         void copy     ( const KUrl& src, const KUrl& dest, int permissions, JobFlags flags );

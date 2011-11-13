@@ -354,6 +354,14 @@ void G3Request::setup ( )
   kDebug() << "{<>}";
 } // G3Request::setup
 
+void G3Request::passthru ( QObject* target )
+{
+  MY_KDEBUG_BLOCK ( "<G3Request::passthru>" );
+  kDebug() << "(<QObject>)";
+  connect ( m_job, SIGNAL(    data(KIO::Job*,const QByteArray&)), target, SLOT(    slotData(KIO::Job*,const QByteArray&)) );
+  connect ( m_job, SIGNAL(mimetype(KIO::Job*,const QByteArray&)), target, SLOT(slotMimetype(KIO::Job*,const QString&)) );
+}
+
 /**
  * void G3Request::process ( )
  *
@@ -915,5 +923,20 @@ g3index G3Request::g3SetItem ( G3Backend* const backend, g3index id, const QStri
   kDebug() << "{<item[id]>}" << index;
   return index;
 } // G3Request::g3SetItem
+
+void G3Request::g3FetchObject ( G3Backend* const backend, const KUrl& url )
+{
+  MY_KDEBUG_BLOCK ( "<G3Request::g3FetchObject>" );
+  kDebug() << "(<backend> <url>)" << backend->toPrintout() << url;
+  // we strip the leading "/rest" from the path to gain the 'service' we require here
+  G3Request request ( backend, KIO::HTTP_GET, url.path().mid(5) );
+  QMap<QString,QString> queryItems = url.queryItems ( );
+  for ( QMap<QString,QString>::const_iterator it=queryItems.constBegin(); it!=queryItems.constEnd(); it++ )
+    request.addQueryItem ( it.key(), it.value() );
+  request.setup    ( );
+  request.passthru ( backend->parent() );
+  request.process  ( );
+  kDebug() << "{<>}";
+} // G3Request::g3FetchObject
 
 #include "gallery3/g3_request.moc"

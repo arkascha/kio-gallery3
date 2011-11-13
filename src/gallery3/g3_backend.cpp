@@ -547,4 +547,32 @@ G3Item* const G3Backend::createItem  ( G3Item* parent, const QString& name, cons
   return item;
 } // G3Backend::createItem
 
+void G3Backend::fetchFile ( G3Item* item )
+{
+  MY_KDEBUG_BLOCK ( "<G3Backend::fetchFile>" );
+  kDebug() << "(<item>>)" << item->toPrintout();
+  G3Request::g3FetchObject ( this, item->fileUrl(TRUE) );
+} // G3Backend::fetchFile
+
+void G3Backend::fetchResize ( G3Item* item )
+{
+  MY_KDEBUG_BLOCK ( "<G3Backend::fetchResize>" );
+  kDebug() << "(<item>>)" << item->toPrintout();
+  G3Request::g3FetchObject ( this, item->resizeUrl(TRUE) );
+} // G3Backend::fetchResize
+
+void G3Backend::fetchThumb ( G3Item* item )
+{
+  MY_KDEBUG_BLOCK ( "<G3Backend::fetchThumb>" );
+  kDebug() << "(<item>>)" << item->toPrintout();
+  G3Request::g3FetchObject ( this, item->thumbUrl(TRUE) );
+} // G3Backend::fetchThumb
+
+void G3Backend::fetchCover ( G3Item* item )
+{
+  MY_KDEBUG_BLOCK ( "<G3Backend::fetchCover>" );
+  kDebug() << "(<item>>)" << item->toPrintout();
+  G3Request::g3FetchObject ( this, item->coverUrl(TRUE) );
+} // G3Backend::fetchCover
+
 #include "gallery3/g3_backend.moc"

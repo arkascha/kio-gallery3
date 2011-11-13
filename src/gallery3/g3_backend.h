@@ -71,6 +71,10 @@ namespace KIO
         void                                 removeItem  ( G3Item* item );
         G3Item* const                        updateItem  ( G3Item* item, const QHash<QString,QString>& attributes );
         G3Item* const                        createItem  ( G3Item* parent, const QString& name, const Entity::G3File* const file=NULL );
+        void                                 fetchFile   ( G3Item* item );
+        void                                 fetchResize ( G3Item* item );
+        void                                 fetchThumb  ( G3Item* item );
+        void                                 fetchCover  ( G3Item* item );
         // TODO: updateItem ( ... );
     }; // class G3Backend
 

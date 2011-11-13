@@ -227,6 +227,19 @@ void KIOGallery3Protocol::slotStatUDSEntry ( const UDSEntry entry )
   statEntry ( entry );
 } // KIOGallery3Protocol::slotStatUDSEntry
 
+void KIOGallery3Protocol::slotData ( KIO::Job* job, const QByteArray& payload )
+{
+  kDebug() << "(<data[size]>)" << payload.size();
+  data ( payload );
+} // KIOGallery3Protocol::slotData
+
+void KIOGallery3Protocol::slotMimetype ( KIO::Job* job, const QString& type )
+{
+  kDebug() << "(<mimetype>)" << type;
+  mimeType ( type );
+} // KIOGallery3Protocol::slotMimetype
+
+
 //======================
 
 void KIOGallery3Protocol::setHost ( const QString& host, g3index port, const QString& user, const QString& pass )
@@ -278,26 +291,30 @@ void KIOGallery3Protocol::get ( const KUrl& targetUrl )
   kDebug() << "(<url>)" << targetUrl;
   try
   {
+    G3Backend* backend = selectBackend ( targetUrl );
     G3Item* item = itemByUrl ( targetUrl );
+    mimeType  ( item->mimetype()->name() );
+    totalSize ( item->size() );
     switch ( item->type().toInt() )
     {
+      case Entity::G3Type::ALBUM:
+        backend->fetchCover ( item );
+        finished ( );
+        break;
+      case Entity::G3Type::PHOTO:
+      case Entity::G3Type::MOVIE:
+        backend->fetchFile ( item );
+        finished ( );
+        break;
+      case Entity::G3Type::TAG:
+      case Entity::G3Type::COMMENT:
+        backend->fetchFile ( item );
+        finished ( );
+        break;
       default:
       case Entity::G3Type::NONE:
         throw Exception ( Error(ERR_SLAVE_DEFINED),
                           QString("unknown item type in action 'get'") );
-      case Entity::G3Type::ALBUM:
-        throw Exception ( Error(ERR_SLAVE_DEFINED),
-                          QString("no way to 'get' a folder entry...") );
-      case Entity::G3Type::PHOTO:
-      case Entity::G3Type::MOVIE:
-        kDebug() << "redirecting to:" << item->fileUrl();
-        redirection ( item->fileUrl() );
-        finished ( );
-      case Entity::G3Type::TAG:
-      case Entity::G3Type::COMMENT:
-        kDebug() << "redirecting to:" << item->webUrl();
-        redirection ( item->webUrl() );
-        finished ( );
     } // switch type
   }
   catch ( Exception &e ) { error( e.getCode(), e.getText() ); }
@@ -484,14 +501,12 @@ void KIOGallery3Protocol::stat ( const KUrl& targetUrl )
       kDebug() << "redirecting to:" << _new_url;
       redirection ( _new_url );
       finished ( );
-      return;
     }
     else if ( "/"==targetUrl.path() )
     {
       const G3Item* item = itemBase ( targetUrl );
       statEntry ( item->toUDSEntry() );
       finished ( );
-      return;
     }
     else
     {

@@ -80,6 +80,7 @@ namespace KIO
         void           addQueryItem   ( const QString& key, Entity::G3Type value, bool skipIfEmpty=FALSE );
         void           addQueryItem   ( const QString& key, const QStringList& values, bool skipIfEmpty=FALSE );
         void           setup          ( );
+        void           passthru       ( QObject* target );
         void           process        ( );
         void           evaluate       ( );
         QString        toString       ( );
@@ -93,6 +94,8 @@ namespace KIO
         void signalRequestAuthInfo ( G3Backend* backend, AuthInfo& credentials, int attempt );
         void signalMessageBox      ( int& result, SlaveBase::MessageBoxType type, const QString &text, const QString &caption=QString(), const QString &buttonYes=i18n("&Yes"), const QString &buttonNo=i18n("&No") );
         void signalMessageBox      ( int& result, const QString &text, SlaveBase::MessageBoxType type, const QString &caption=QString(), const QString &buttonYes=i18n("&Yes"), const QString &buttonNo=i18n("&No"), const QString &dontAskAgainName=QString() );
+        void signalData            ( KIO::Job* job, const QByteArray& data );
+        void signalMimetype        ( KIO::Job* job, const QByteArray& data );
       public:
         static bool           g3Check        ( G3Backend* const backend );
         static bool           g3Login        ( G3Backend* const backend, AuthInfo& credentials );
@@ -105,6 +108,7 @@ namespace KIO
         static void           g3PutItem      ( G3Backend* const backend, g3index id, const QHash<QString,QString>& attributes );
         static void           g3DelItem      ( G3Backend* const backend, g3index id );
         static g3index        g3SetItem      ( G3Backend* const backend, g3index id, const QString& name=QLatin1String(""), Entity::G3Type type=Entity::G3Type::NONE, const QByteArray& file=0 );
+        static void           g3FetchObject  ( G3Backend* const backend, const KUrl& url );
     }; // class G3Request
 
   } // namespace Gallery3
