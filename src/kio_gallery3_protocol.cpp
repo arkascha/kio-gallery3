@@ -247,6 +247,7 @@ void KIOGallery3Protocol::setHost ( const QString& host, g3index port, const QSt
   try
   {
     selectConnection ( host, port, user, pass );
+    finished();
   }
   catch ( Exception &e ) { error( e.getCode(), e.getText() ); }
 } // KIOGallery3Protocol::setHost
@@ -376,7 +377,7 @@ void KIOGallery3Protocol::mimetype ( const KUrl& targetUrl )
   {
     G3Item* item = itemByUrl ( targetUrl );
     mimeType ( item->mimetype()->name() );
-    finished();
+    finished ( );
   }
   catch ( Exception &e ) { error( e.getCode(), e.getText() ); }
 } // KIOGallery3Protocol::mimetype
@@ -395,7 +396,7 @@ void KIOGallery3Protocol::mkdir ( const KUrl& targetUrl, int permissions )
     G3Item* parent   = backend->itemByPath ( targetUrl.directory() );
     kDebug() << QString("creating new album '%1' in album '%2'").arg(filename).arg(targetUrl.directory());
     backend->createItem ( parent, filename );
-    finished();
+    finished ( );
   }
   catch ( Exception &e ) { error( e.getCode(), e.getText() ); }
 } // KIOGallery3Protocol::mkdir
