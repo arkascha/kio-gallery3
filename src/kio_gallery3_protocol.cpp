@@ -247,7 +247,6 @@ void KIOGallery3Protocol::setHost ( const QString& host, g3index port, const QSt
   try
   {
     selectConnection ( host, port, user, pass );
-    finished();
   }
   catch ( Exception &e ) { error( e.getCode(), e.getText() ); }
 } // KIOGallery3Protocol::setHost
@@ -504,15 +503,17 @@ void KIOGallery3Protocol::stat ( const KUrl& targetUrl )
     else if ( "/"==targetUrl.path() )
     {
       const G3Item* item = itemBase ( targetUrl );
+      mimeType  ( item->mimetype()->name() );
       statEntry ( item->toUDSEntry() );
-      finished ( );
+      finished  ( );
     }
     else
     {
       // non-root element
       const G3Item* item = itemByUrl ( targetUrl );
+      mimeType  ( item->mimetype()->name() );
       statEntry ( item->toUDSEntry() );
-      finished ( );
+      finished  ( );
     }
   }
   catch ( Exception &e ) { error( e.getCode(), e.getText() ); }
