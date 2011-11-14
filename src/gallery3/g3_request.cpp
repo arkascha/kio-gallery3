@@ -909,7 +909,7 @@ void G3Request::g3DelItem ( G3Backend* const backend, g3index id )
 g3index G3Request::g3SetItem ( G3Backend* const backend, g3index id, const QString& name, Entity::G3Type type, const QByteArray& file )
 {
   KDebug::Block block ( "G3Request::g3SetItem" );
-  kDebug() << "(<backend> <id> <name> <type> <file>)" << backend->toPrintout() << name << type.toString();
+  kDebug() << "(<backend> <id> <name> <type> <file>)" << backend->toPrintout() << id << name << type.toString();
   G3Request request ( backend, KIO::HTTP_POST, QString("item/%1").arg(id) );
   request.addQueryItem ( QLatin1String("name"),  name, TRUE );
   request.addQueryItem ( QLatin1String("type"),  type, TRUE );
