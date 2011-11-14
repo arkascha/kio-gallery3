@@ -97,7 +97,7 @@ int G3Request::httpStatusCode ( )
     return httpStatus;
   }
   else
-    throw Exception ( Error(ERR_SLAVE_DEFINED), QString("No http status provided in response") );
+    throw Exception ( Error(ERR_SLAVE_DEFINED), i18n("No http status provided in response") );
 } // G3Request::httpStatusCode
 
 
@@ -386,11 +386,11 @@ void G3Request::process ( )
     }
     if ( ! NetAccess::synchronousRun ( m_job, NULL, &m_payload, &m_finalUrl, &m_meta ) )
       throw Exception ( Error(ERR_SLAVE_DEFINED),
-                        QString("request failed: %2 [ %1 ]").arg(m_job->error()).arg(m_job->errorString()) );
+                        i18n("request failed: %2 [%1]").arg(m_job->error()).arg(m_job->errorString()) );
     // check for problems on protocol level
     if ( m_job->error() )
       throw Exception ( Error(ERR_SLAVE_DEFINED),
-                        QString("Unexcepted processing error %1: %2").arg(m_job->error()).arg(m_job->errorString()) );
+                        i18n("Runtime error processing job: %2 [%1]").arg(m_job->error()).arg(m_job->errorString()) );
     // extract and store http status code from reply
     m_status = httpStatusCode();
   } while (    (m_job->url().fileName()!=QLatin1String("rest")) // exception: g3Check: looking for REST API
@@ -423,17 +423,18 @@ void G3Request::evaluate ( )
     case 204: kDebug() << QString("HTTP %1 No Content"                   ).arg(QVariant(m_meta[QLatin1String("responsecode")]).toInt()); break;
     case 205: kDebug() << QString("HTTP %1 Reset Content"                ).arg(QVariant(m_meta[QLatin1String("responsecode")]).toInt()); break;
     case 206: kDebug() << QString("HTTP %1 Partial Content"              ).arg(QVariant(m_meta[QLatin1String("responsecode")]).toInt()); break;
-    case 400: throw Exception ( Error(ERR_INTERNAL_SERVER),        QString("HTTP 400: Bad Request") );
-    case 401: throw Exception ( Error(ERR_ACCESS_DENIED),          QString("HTTP 401: Unauthorized") );
-    case 403: throw Exception ( Error(ERR_COULD_NOT_AUTHENTICATE), QString("HTTP 403: No Authorization") ); // login failed
-    case 404: throw Exception ( Error(ERR_SERVICE_NOT_AVAILABLE),  QString("HTTP 404: Not Found") );
-    default:  throw Exception ( Error(ERR_SLAVE_DEFINED),          QString("Unexpected http error %1").arg(QVariant(m_meta[QLatin1String("responsecode")]).toInt()) );
+    case 400: throw Exception ( Error(ERR_INTERNAL_SERVER),        i18n("HTTP 400: Bad Request") );
+    case 401: throw Exception ( Error(ERR_ACCESS_DENIED),          i18n("HTTP 401: Unauthorized") );
+    case 403: throw Exception ( Error(ERR_COULD_NOT_AUTHENTICATE), i18n("HTTP 403: No Authorization") ); // login failed
+    case 404: throw Exception ( Error(ERR_SERVICE_NOT_AVAILABLE),  i18n("HTTP 404: Not Found") );
+    default:  throw Exception ( Error(ERR_SLAVE_DEFINED),          i18n("Unexpected http error %1").arg(QVariant(m_meta[QLatin1String("responsecode")]).toInt()) );
   } // switch
   kDebug() << QString ("request processed [ headers size: %2 / payload size: %1]")
                       .arg(m_meta.size())
                       .arg(m_payload.size());
   if ( QLatin1String("application/json")!=m_meta[QLatin1String("content-type")] )
-    throw Exception ( Error(ERR_SLAVE_DEFINED),QString("unexpected content type in response: %1").arg(m_meta[QLatin1String("content-type")]) );
+    throw Exception ( Error(ERR_SLAVE_DEFINED),
+                      i18n("unexpected content type in response: %1").arg(m_meta[QLatin1String("content-type")]) );
   kDebug() << QString("response has expected content type '%1'").arg(m_meta[QLatin1String("content-type")]);
   // SUCCESS, convert result content (payload) into a usable object structure
   // NOTE: there is a bug in the G3 API implementation, it returns 'null' instead of an empty json structure in certain cases (DELETE)
@@ -463,7 +464,7 @@ QString G3Request::toString ( )
 {
   if ( ! m_result.canConvert(QVariant::String) )
     throw Exception ( Error(ERR_SLAVE_DEFINED),
-                      QString("gallery response did not hold a valid remote access key") );
+                      i18n("gallery response did not hold a valid remote access key") );
   QString string = m_result.toString();
   kDebug() << "{<string>}" << string;
   return string;
@@ -483,7 +484,7 @@ G3Item* G3Request::toItem ( QVariant& entry )
   KDebug::Block block ( "G3Request::toItem" );
   if ( ! entry.canConvert(QVariant::Map) )
     throw Exception ( Error(ERR_SLAVE_DEFINED),
-                      QString("gallery response did not hold a valid item description") );
+                      i18n("gallery response did not hold a valid item description") );
   QVariantMap attributes = entry.toMap();
   G3Item* item = G3Item::instantiate ( m_backend, attributes );
   kDebug() << "{<item>}" << item->toPrintout();
@@ -506,7 +507,7 @@ QList<G3Item*> G3Request::toItems ( )
   // expected result syntax ?
   if ( ! m_result.canConvert(QVariant::List) )
     throw Exception ( Error(ERR_SLAVE_DEFINED),
-                      QString("gallery response did not hold a valid list of item descriptions") );
+                      i18n("gallery response did not hold a valid list of item descriptions") );
   QList<QVariant> entries = m_result.toList();
   kDebug() << "result holds" << entries.count() << "entries";
   int i=0;
@@ -542,7 +543,7 @@ g3index G3Request::toItemId ( QVariant& entry )
   kDebug() << "(<entry>)";
   if ( ! entry.canConvert(QVariant::Map) )
     throw Exception ( Error(ERR_SLAVE_DEFINED),
-                      QString("gallery response did not hold a valid item description") );
+                      i18n("gallery response did not hold a valid item description") );
   QVariantMap attributes = entry.toMap();
   // extract token 'id' from attribute 'entity' (IF it exists)
   if (    attributes.contains(QLatin1String("entity"))
@@ -556,10 +557,10 @@ g3index G3Request::toItemId ( QVariant& entry )
       return entity[QLatin1String("id")].toInt();
     }
     else
-      throw Exception ( Error(ERR_INTERNAL), QString("gallery response did not hold a valid item description") );
+      throw Exception ( Error(ERR_INTERNAL), i18n("gallery response did not hold a valid item description") );
   } // if
   else
-    throw Exception ( Error(ERR_INTERNAL), QString("gallery response did not hold valid return content") );
+    throw Exception ( Error(ERR_INTERNAL), i18n("gallery response did not hold valid return content") );
 } // G3Request::toItemId
 
 //==========
@@ -580,7 +581,7 @@ QList<g3index> G3Request::toItemIds ( )
   // expected result syntax ?
   if ( ! m_result.canConvert(QVariant::List) )
     throw Exception ( Error(ERR_SLAVE_DEFINED),
-                      QString("gallery response did not hold a valid list of item descriptions") );
+                      i18n("gallery response did not hold a valid list of item descriptions") );
   QList<QVariant> entries = m_result.toList();
   kDebug() << "result holds" << entries.count() << "entries";
   int i=0;
@@ -779,7 +780,7 @@ g3index G3Request::g3GetAncestor ( G3Backend* const backend, G3Item* item )
   switch ( ancestors.count() )
   {
     case 0:
-      throw Exception ( Error(ERR_INTERNAL), QString("requested item appears not to be part of its own ancestors list ?!?") );
+      throw Exception ( Error(ERR_INTERNAL), i18n("requested item appears not to be part of its own ancestors list ?!?") );
     case 1:
       // no further entry in the ancestors list, except the item itself. Therefore there is NO parent item (NULL pinter)
       kDebug() << "item has no parent, this appears to be the base item";

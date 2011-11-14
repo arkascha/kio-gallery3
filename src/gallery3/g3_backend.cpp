@@ -60,8 +60,7 @@ G3Backend* const G3Backend::instantiate ( QObject* parent, QHash<QString,G3Backe
   }
   while ( ! g3Url.path().isEmpty() );
   // REST API _not_ detected
-  throw Exception ( Error(ERR_SLAVE_DEFINED),
-                    QString("No usable G3-API service found") );
+  throw Exception ( Error(ERR_SLAVE_DEFINED),i18n("No usable G3-API service found") );
 } // G3Backend::instantiate
 
 /**
@@ -445,7 +444,7 @@ G3Item* G3Backend::popItem ( g3index id )
   kDebug() << "(<id>)" << id;
   if ( m_items.contains(id) )
     return m_items.take ( id );
-  throw Exception ( Error(ERR_INTERNAL), QString("attempt to remove non-existing item with id '%1'").arg(id) );
+  throw Exception ( Error(ERR_INTERNAL), i18n("attempt to remove non-existing item with id '%1'").arg(id) );
 } // G3Backend::popItem
 
 /**

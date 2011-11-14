@@ -189,14 +189,14 @@ void KIOGallery3Protocol::slotRequestAuthInfo ( G3Backend* backend, AuthInfo& cr
     }
   } // while
   kDebug() << "user cancelled authentication";
-  throw Exception ( Error(ERR_ABORTED), QString("Authentication cancelled to '%1'").arg(credentials.url.prettyUrl()) );
+  throw Exception ( Error(ERR_ABORTED), i18n("Authentication cancelled to '%1'").arg(credentials.url.prettyUrl()) );
 } // KIOGallery3Protocol::slotRequireAuthInfo
 
 void KIOGallery3Protocol::slotMessageBox ( int& result, SlaveBase::MessageBoxType type, const QString &text, const QString &caption, const QString &buttonYes, const QString &buttonNo )
 {
   result = messageBox ( type, text, caption, buttonYes, buttonNo );
   if ( 0==result )
-    throw Exception ( Error(ERR_INTERNAL), QString("Communication error during user feedback") );
+    throw Exception ( Error(ERR_INTERNAL), i18n("Communication error during user feedback") );
   kDebug() << text << caption << ">>" << result;
 } // KIOGallery3Protocol::slotMessageBox
 
@@ -204,7 +204,7 @@ void KIOGallery3Protocol::slotMessageBox ( int& result, const QString &text, Sla
 {
   result = messageBox ( text, type, caption, buttonYes, buttonNo, dontAskAgainName );
   if ( 0==result )
-    throw Exception ( Error(ERR_INTERNAL), QString("Communication error during user feedback") );
+    throw Exception ( Error(ERR_INTERNAL), i18n("Communication error during user feedback") );
   kDebug() << text << caption << ">>" << result << dontAskAgainName;
 } // KIOGallery3Protocol::slotMessageBox
 
@@ -257,8 +257,7 @@ void KIOGallery3Protocol::copy ( const KUrl& src, const KUrl& dest, int permissi
   kDebug() << "(<src url> <dest url> <permissions> <flags>)" << src << dest << permissions << flags;
   try
   {
-    throw Exception ( Error(ERR_UNSUPPORTED_ACTION),
-                      QString("copy action not supported") );
+    throw Exception ( Error(ERR_UNSUPPORTED_ACTION), i18n("copy action not supported") );
   }
   catch ( Exception &e ) { error( e.getCode(), e.getText() ); }
 } // KIOGallery3Protocol::copy
@@ -311,8 +310,7 @@ void KIOGallery3Protocol::get ( const KUrl& targetUrl )
         break;
       default:
       case Entity::G3Type::NONE:
-        throw Exception ( Error(ERR_SLAVE_DEFINED),
-                          QString("unknown item type in action 'get'") );
+        throw Exception ( Error(ERR_SLAVE_DEFINED),i18n("unknown item type in action 'get'") );
     } // switch type
   }
   catch ( Exception &e ) { error( e.getCode(), e.getText() ); }
@@ -413,8 +411,7 @@ void KIOGallery3Protocol::put ( const KUrl& targetUrl, int permissions, KIO::Job
     KTemporaryFile file;
 //    if ( ! file.open(QIODevice::WriteOnly) )
     if ( ! file.open() )
-      throw Exception ( Error(ERR_COULD_NOT_WRITE),
-                        QString("failed to generate temporary file '%1'").arg(file.fileName()) );
+      throw Exception ( Error(ERR_COULD_NOT_WRITE),i18n("failed to generate temporary file '%1'").arg(file.fileName()) );
     kDebug() << "using temporary file" << file.fileName() << "to upload content";
     int read_count=0, write_count=0;
     do
@@ -424,8 +421,7 @@ void KIOGallery3Protocol::put ( const KUrl& targetUrl, int permissions, KIO::Job
       read_count  = readData ( buffer );
       write_count = file.write ( buffer );
       if  ( read_count<0 || write_count<0)
-        throw Exception ( Error(ERR_SLAVE_DEFINED),
-                          QString("failed to buffer data in temporary file").arg(targetUrl.prettyUrl()) );
+        throw Exception ( Error(ERR_SLAVE_DEFINED),i18n("failed to buffer data in temporary file").arg(targetUrl.prettyUrl()) );
     } while ( read_count>0 ); // a return value of 0 (zero) means: no more data
     file.close ( );
     // upload stream as new file to remote gallery
@@ -433,8 +429,7 @@ void KIOGallery3Protocol::put ( const KUrl& targetUrl, int permissions, KIO::Job
     // upload temporary file to server
     QString source = KStandardDirs::locate ( "tmp", file.fileName() );
     if ( source.isEmpty() )
-      throw Exception ( Error(ERR_INTERNAL),
-                        QString("failure while handling temporary file '%1'").arg(file.fileName()) );
+      throw Exception ( Error(ERR_INTERNAL),i18n("failure while handling temporary file '%1'").arg(file.fileName()) );
     KMimeType::Ptr mimetype = KMimeType::findByPath ( source );
     QString        filename = targetUrl.fileName ( );
     G3Item* parent = backend->itemByPath ( targetUrl.directory() );
@@ -456,12 +451,12 @@ void KIOGallery3Protocol::rename ( const KUrl& srcUrl, const KUrl& destUrl, KIO:
   {
     // we support only few types of "renaming" / "moving", deny the rest
     if ( srcUrl.scheme()!=destUrl.scheme() )
-      throw Exception ( Error(ERR_UNSUPPORTED_ACTION), QString("moving of entities between different protocol schemes not supported") );
+      throw Exception ( Error(ERR_UNSUPPORTED_ACTION), i18n("moving of entities between different protocol schemes not supported") );
     if ( srcUrl.host()!=destUrl.host() )
-      throw Exception ( Error(ERR_UNSUPPORTED_ACTION), QString("moving of entities between different gallery hosts not supported") );
+      throw Exception ( Error(ERR_UNSUPPORTED_ACTION), i18n("moving of entities between different gallery hosts not supported") );
     if (   (srcUrl.directory()!=destUrl.directory())
         && (srcUrl.isParentOf(destUrl)||destUrl.isParentOf(srcUrl)) )
-      throw Exception ( Error(ERR_UNSUPPORTED_ACTION), QString("moving of entities between different galleries not supported") );
+      throw Exception ( Error(ERR_UNSUPPORTED_ACTION), i18n("moving of entities between different galleries not supported") );
     G3Backend* backend = selectBackend ( srcUrl );
     G3Item* item   = backend->itemByUrl ( srcUrl );
     QHash<QString,QString> attributes;
@@ -529,8 +524,7 @@ void KIOGallery3Protocol::symlink ( const QString& target, const KUrl& dest, KIO
   kDebug() << "(<target> <dest> <flags>)" << target << dest << flags;
   try
   {
-    throw Exception ( Error(ERR_UNSUPPORTED_ACTION),
-                        QString("sorry, currently not implemented...") );
+    throw Exception ( Error(ERR_UNSUPPORTED_ACTION),i18n("sorry, currently not implemented...") );
   }
   catch ( Exception &e ) { error( e.getCode(), e.getText() ); }
 } // KIOGallery3Protocol::symlink
@@ -548,8 +542,7 @@ Reimplemented in FileProtocol, and HTTPProtocol.
   kDebug() << "(<data>)";
   try
   {
-    throw Exception ( Error(ERR_UNSUPPORTED_ACTION),
-                        QString("sorry, currently not implemented...") );
+    throw Exception ( Error(ERR_UNSUPPORTED_ACTION),i18n("sorry, currently not implemented...") );
   }
   catch ( Exception &e ) { error( e.getCode(), e.getText() ); }
 } // KIOGallery3Protocol::special

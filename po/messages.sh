@@ -1,6 +1,6 @@
 #!/bin/sh
 BASEDIR="../" # root of translatable sources
-PROJECT="kio-clipboard" # project name
+PROJECT="kio-gallery3" # project name
 BUGADDR="" # MSGID-Bugs
 WDIR=`pwd` # working dir
 

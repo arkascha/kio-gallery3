@@ -1,0 +1,176 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2011-11-15 00:44+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: src/entity/g3_item.cpp:41
+msgid "invalid response form gallery: no item entites specified"
+msgstr ""
+
+#: src/entity/g3_item.cpp:49
+msgid "invalid response form gallery: no item type specified"
+msgstr ""
+
+#: src/entity/g3_item.cpp:65
+msgid "failed to instantiate entity because of an unknown item type '%1'"
+msgstr ""
+
+#: src/entity/g3_item.cpp:154
+msgid ""
+"mandatory item attribute '%1' does not exist or does not have requested type"
+msgstr ""
+
+#: src/entity/g3_item.cpp:188
+msgid ""
+"mandatory attribute token '%1|%2' does not exist or does not have requested "
+"type"
+msgstr ""
+
+#: src/entity/g3_item.cpp:198
+msgid "attempt to register item with id '%1' that already exists"
+msgstr ""
+
+#: src/entity/g3_item.cpp:233
+msgid "attempt to remove non-existing member item with id '%1'"
+msgstr ""
+
+#: src/entity/g3_item.cpp:272
+msgid "item with id '%1'"
+msgstr ""
+
+#: src/gallery3/g3_backend.cpp:63
+msgid "No usable G3-API service found"
+msgstr ""
+
+#: src/gallery3/g3_backend.cpp:447
+msgid "attempt to remove non-existing item with id '%1'"
+msgstr ""
+
+#: src/gallery3/g3_request.cpp:100
+msgid "No http status provided in response"
+msgstr ""
+
+#: src/gallery3/g3_request.cpp:389
+msgid "request failed: %2 [%1]"
+msgstr ""
+
+#: src/gallery3/g3_request.cpp:393
+msgid "Runtime error processing job: %2 [%1]"
+msgstr ""
+
+#: src/gallery3/g3_request.cpp:426
+msgid "HTTP 400: Bad Request"
+msgstr ""
+
+#: src/gallery3/g3_request.cpp:427
+msgid "HTTP 401: Unauthorized"
+msgstr ""
+
+#: src/gallery3/g3_request.cpp:428
+msgid "HTTP 403: No Authorization"
+msgstr ""
+
+#: src/gallery3/g3_request.cpp:429
+msgid "HTTP 404: Not Found"
+msgstr ""
+
+#: src/gallery3/g3_request.cpp:430
+msgid "Unexpected http error %1"
+msgstr ""
+
+#: src/gallery3/g3_request.cpp:437
+msgid "unexpected content type in response: %1"
+msgstr ""
+
+#: src/gallery3/g3_request.cpp:467
+msgid "gallery response did not hold a valid remote access key"
+msgstr ""
+
+#: src/gallery3/g3_request.cpp:487 src/gallery3/g3_request.cpp:546
+#: src/gallery3/g3_request.cpp:560
+msgid "gallery response did not hold a valid item description"
+msgstr ""
+
+#: src/gallery3/g3_request.cpp:510 src/gallery3/g3_request.cpp:584
+msgid "gallery response did not hold a valid list of item descriptions"
+msgstr ""
+
+#: src/gallery3/g3_request.cpp:563
+msgid "gallery response did not hold valid return content"
+msgstr ""
+
+#: src/gallery3/g3_request.cpp:783
+msgid "requested item appears not to be part of its own ancestors list ?!?"
+msgstr ""
+
+#: src/gallery3/g3_request.h:94 src/gallery3/g3_request.h:95
+#: src/kio_gallery3_protocol.h:55 src/kio_gallery3_protocol.h:56
+msgid "&Yes"
+msgstr ""
+
+#: src/gallery3/g3_request.h:94 src/gallery3/g3_request.h:95
+#: src/kio_gallery3_protocol.h:55 src/kio_gallery3_protocol.h:56
+msgid "&No"
+msgstr ""
+
+#: src/kio_gallery3.cpp:42
+msgid "Usage: "
+msgstr ""
+
+#: src/kio_gallery3_protocol.cpp:192
+msgid "Authentication cancelled to '%1'"
+msgstr ""
+
+#: src/kio_gallery3_protocol.cpp:199 src/kio_gallery3_protocol.cpp:207
+msgid "Communication error during user feedback"
+msgstr ""
+
+#: src/kio_gallery3_protocol.cpp:260
+msgid "copy action not supported"
+msgstr ""
+
+#: src/kio_gallery3_protocol.cpp:313
+msgid "unknown item type in action 'get'"
+msgstr ""
+
+#: src/kio_gallery3_protocol.cpp:414
+msgid "failed to generate temporary file '%1'"
+msgstr ""
+
+#: src/kio_gallery3_protocol.cpp:424
+msgid "failed to buffer data in temporary file"
+msgstr ""
+
+#: src/kio_gallery3_protocol.cpp:432
+msgid "failure while handling temporary file '%1'"
+msgstr ""
+
+#: src/kio_gallery3_protocol.cpp:454
+msgid "moving of entities between different protocol schemes not supported"
+msgstr ""
+
+#: src/kio_gallery3_protocol.cpp:456
+msgid "moving of entities between different gallery hosts not supported"
+msgstr ""
+
+#: src/kio_gallery3_protocol.cpp:459
+msgid "moving of entities between different galleries not supported"
+msgstr ""
+
+#: src/kio_gallery3_protocol.cpp:527 src/kio_gallery3_protocol.cpp:545
+msgid "sorry, currently not implemented..."
+msgstr ""

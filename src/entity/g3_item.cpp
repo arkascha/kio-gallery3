@@ -12,7 +12,8 @@
 #include <qjson/parser.h>
 #include <qjson/serializer.h>
 #include <qjson/qobjecthelper.h>
-#include <kurl.h>
+#include <KUser>
+#include <KUrl>
 #include <kio/netaccess.h>
 #include <klocalizedstring.h>
 #include <klocale.h>
@@ -37,8 +38,7 @@ G3Item* const G3Item::instantiate ( G3Backend* const backend, const QVariantMap&
        && attributes[QLatin1String("entity")].canConvert(QVariant::Map) )
     entity = attributes[QLatin1String("entity")].toMap();
   else
-    throw Exception ( Error(ERR_INTERNAL),
-                      QString("invalid response form gallery: no item entites specified") );
+    throw Exception ( Error(ERR_INTERNAL),i18n("invalid response form gallery: no item entites specified") );
   if (    entity.contains(QLatin1String("type"))
        && entity[QLatin1String("type")].canConvert(QVariant::String) )
   {
@@ -46,8 +46,7 @@ G3Item* const G3Item::instantiate ( G3Backend* const backend, const QVariantMap&
     kDebug() << QString("item type is '%1' [%2]").arg(type.toString()).arg(type.toInt());
   }
   else
-    throw Exception ( Error(ERR_INTERNAL),
-                      QString("invalid response form gallery: no item type specified") );
+    throw Exception ( Error(ERR_INTERNAL),i18n("invalid response form gallery: no item type specified") );
   // create an item object
   switch ( type.toInt() )
   {
@@ -63,7 +62,7 @@ G3Item* const G3Item::instantiate ( G3Backend* const backend, const QVariantMap&
       return new CommentEntity ( backend, attributes );
     default:
       throw Exception ( Error(ERR_INTERNAL),
-                        QString("failed to instantiate entity because of an unknown item type '%1'").arg(type.toString()) );
+                        i18n("failed to instantiate entity because of an unknown item type '%1'").arg(type.toString()) );
   } // // switch
 } // G3Item::instantiate
 
@@ -152,7 +151,7 @@ const QVariant G3Item::attributeToken ( const QString& attribute, QVariant::Type
   else
     // value does not exist but is required
     throw Exception ( Error(ERR_SLAVE_DEFINED),
-                      QString("mandatory item attribute '%1' does not exist or does not have requested type").arg(attribute) );
+                      i18n("mandatory item attribute '%1' does not exist or does not have requested type").arg(attribute) );
 } // G3Item::attributeToken
 
 const QVariant G3Item::attributeMap ( const QString& attribute, bool strict ) const
@@ -186,7 +185,7 @@ const QVariant G3Item::attributeMapToken ( const QString& attribute, const QStri
   else
     // value does not exist but is required
     throw Exception ( Error(ERR_SLAVE_DEFINED),
-                      QString("mandatory attribute token '%1|%2' does not exist or does not have requested type").arg(attribute).arg(token) );
+                      i18n("mandatory attribute token '%1|%2' does not exist or does not have requested type").arg(attribute).arg(token) );
 } // G3Item::attributeMapToken
 
 //==========
@@ -195,7 +194,8 @@ void G3Item::pushMember ( G3Item* item )
 {
   kDebug() << "(<this> <item>)" << toPrintout() << item->toPrintout();
   if ( m_members.contains(item->id()) )
-    throw Exception ( Error(ERR_INTERNAL), QString("attempt to register item with id '%1' that already exists").arg(item->id()) );
+    throw Exception ( Error(ERR_INTERNAL),
+                      i18n("attempt to register item with id '%1' that already exists").arg(item->id()) );
   // all fine, store items
   m_members.insert ( item->id(), item );
   item->m_parent = this;
@@ -229,7 +229,8 @@ G3Item* G3Item::popMember ( g3index id )
     m_members.remove ( id );
     return item;
   }
-  throw Exception ( Error(ERR_INTERNAL), QString("attempt to remove non-existing member item with id '%1'").arg(id) );
+  throw Exception ( Error(ERR_INTERNAL),
+                    i18n("attempt to remove non-existing member item with id '%1'").arg(id) );
 } // G3Item::popMember
 
 void G3Item::setParent ( G3Item* parent )
@@ -268,7 +269,7 @@ G3Item* G3Item::member ( g3index id )
     return m_members[id];
   }
   else
-    throw Exception ( Error(ERR_DOES_NOT_EXIST), QString("item with id '%1'").arg(id) );
+    throw Exception ( Error(ERR_DOES_NOT_EXIST), i18n("item with id '%1'").arg(id) );
 } // G3Item::member
 
 QHash<g3index,G3Item*> G3Item::members ( )
@@ -427,6 +428,11 @@ const UDSEntry G3Item::toUDSEntry ( ) const
 //  entry.insert( UDSEntry::UDS_URL,                m_fileUrl.url() );
 //  entry.insert( UDSEntry::UDS_TARGET_URL,         m_fileUrl.url() );
 //  entry.insert( UDSEntry::UDS_LINK_DEST,          m_fileUrl.url() );
+/*
+  KUser user ( KUser::UseEffectiveUID );
+  entry.insert( UDSEntry::UDS_USER,               user.loginName() );
+  entry.insert( UDSEntry::UDS_GROUP,              user.groupNames().first() );
+*/
 
   // some intense debugging output...
   QList<uint> _tags = entry.listFields ( );
