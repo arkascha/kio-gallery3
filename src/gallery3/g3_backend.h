@@ -75,7 +75,6 @@ namespace KIO
         void                                 fetchResize ( G3Item* item );
         void                                 fetchThumb  ( G3Item* item );
         void                                 fetchCover  ( G3Item* item );
-        // TODO: updateItem ( ... );
     }; // class G3Backend
 
   } // namespace Gallery3
