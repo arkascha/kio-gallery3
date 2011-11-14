@@ -932,7 +932,6 @@ void G3Request::g3FetchObject ( G3Backend* const backend, const KUrl& url )
     request.addQueryItem ( it.key(), it.value() );
   request.setup    ( );
   connect ( request.m_job, SIGNAL(    data(KIO::Job*,const QByteArray&)), backend->parent(), SLOT(    slotData(KIO::Job*,const QByteArray&)) );
-  connect ( request.m_job, SIGNAL(mimetype(KIO::Job*,const QByteArray&)), backend->parent(), SLOT(slotMimetype(KIO::Job*,const QString&)) );
   request.process  ( );
   kDebug() << "{<>}";
 } // G3Request::g3FetchObject
