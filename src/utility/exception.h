@@ -12,7 +12,7 @@
 #include <QtCore>
 #include <kio/global.h>
 #include <kio/job.h>
-#include "utility/debug.h"
+#include <kdebug.h>
 
 namespace KIO
 {

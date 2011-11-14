@@ -11,9 +11,9 @@
 #include <QByteArray>
 #include <krandom.h>
 #include <kio/global.h>
+#include <kdeversion.h>
 #include <kio/netaccess.h>
 #include <algorithm>
-#include "utility/debug.h"
 #include "utility/exception.h"
 #include "gallery3/g3_request.h"
 
@@ -43,6 +43,7 @@ G3Request::G3Request ( G3Backend* const backend, KIO::HTTP_METHOD method, const 
   , m_status  ( 0 )
   , m_job     ( NULL )
 {
+  KDebug::Block block ( "G3Request::G3Request" );
   kDebug() << "(<backend> <method> <service> <file[name]>)" << backend->toPrintout() << method << service << ( file ? file->filename() : "-/-" );
   m_requestUrl = backend->restUrl();
   m_requestUrl.adjustPath ( KUrl::AddTrailingSlash );
@@ -63,12 +64,14 @@ G3Request::G3Request ( G3Backend* const backend, KIO::HTTP_METHOD method, const 
 G3Request::~G3Request ( )
 {
   kDebug();
+/*
   if ( m_job )
   {
     kDebug() << "deleting background job";
-    // FIXME: deleting the job after it has been executed reproduceably crashes the slave with a segfault
-    // delete m_job;
+    FIXME: deleting the job after it has been executed reproduceably crashes the slave with a segfault
+    delete m_job;
   }
+*/
 } // G3Request::~G3Request
 
 //==========
@@ -85,6 +88,7 @@ G3Request::~G3Request ( )
  */
 int G3Request::httpStatusCode ( )
 {
+  kDebug() << "(<>)";
   QVariant httpStatusCode = QVariant(m_meta[QLatin1String("responsecode")]);
   if ( httpStatusCode.canConvert(QVariant::Int) )
   {
@@ -99,7 +103,7 @@ int G3Request::httpStatusCode ( )
 
 bool G3Request::retryWithChangedCredentials ( int attempt )
 {
-  kDebug();
+  kDebug() << "(<attempt>)" << attempt;
   emit signalRequestAuthInfo ( m_backend, m_backend->credentials(), attempt );
   kDebug() << ( m_backend->credentials().isModified() ? "credentials changed" : "credentials unchanged" );
   return m_backend->credentials().isModified();
@@ -299,7 +303,7 @@ QByteArray G3Request::webFileFormPostPayload ( const QHash<QString,QString>& que
  */ 
 void G3Request::setup ( )
 {
-  MY_KDEBUG_BLOCK ( "<G3Request::setup>" );
+  KDebug::Block block ( "G3Request::setup" );
   kDebug() << "(<>)";
   // reset / initialize the members
   m_header.clear();
@@ -364,7 +368,7 @@ void G3Request::setup ( )
  */
 void G3Request::process ( )
 {
-  MY_KDEBUG_BLOCK ( "<G3Request::process>" );
+  KDebug::Block block ( "G3Request::process" );
   kDebug() << "(<>)";
   // prepare handling of authentication info
   // run the job
@@ -406,7 +410,7 @@ void G3Request::process ( )
  */
 void G3Request::evaluate ( )
 {
-  MY_KDEBUG_BLOCK ( "<G3Request::evaluate>" );
+  KDebug::Block block ( "G3Request::evaluate" );
   kDebug() << "(<>)";
   // check for success on protocol & content level (headers and so on)
   switch ( m_status )
@@ -476,7 +480,7 @@ QString G3Request::toString ( )
  */
 G3Item* G3Request::toItem ( QVariant& entry )
 {
-  MY_KDEBUG_BLOCK ( "<G3Request::toItem>" );
+  KDebug::Block block ( "G3Request::toItem" );
   if ( ! entry.canConvert(QVariant::Map) )
     throw Exception ( Error(ERR_SLAVE_DEFINED),
                       QString("gallery response did not hold a valid item description") );
@@ -496,7 +500,7 @@ G3Item* G3Request::toItem ( QVariant& entry )
  */
 QList<G3Item*> G3Request::toItems ( )
 {
-  MY_KDEBUG_BLOCK ( "<G3Request::toItems>" );
+  KDebug::Block block ( "G3Request::toItems" );
   kDebug() << "(<>)";
   QList<G3Item*> items;
   // expected result syntax ?
@@ -534,7 +538,7 @@ QList<G3Item*> G3Request::toItems ( )
  */
 g3index G3Request::toItemId ( QVariant& entry )
 {
-  MY_KDEBUG_BLOCK ( "<G3Request::toItemId>" );
+  KDebug::Block block ( "G3Request::toItemId" );
   kDebug() << "(<entry>)";
   if ( ! entry.canConvert(QVariant::Map) )
     throw Exception ( Error(ERR_SLAVE_DEFINED),
@@ -570,7 +574,7 @@ g3index G3Request::toItemId ( QVariant& entry )
  */
 QList<g3index> G3Request::toItemIds ( )
 {
-  MY_KDEBUG_BLOCK ( "<G3Request::toItemIds>" );
+  KDebug::Block block ( "G3Request::toItemIds" );
   kDebug() << "(<>)";
   QList<g3index> ids;
   // expected result syntax ?
@@ -611,7 +615,7 @@ QList<g3index> G3Request::toItemIds ( )
  */
 bool G3Request::g3Check ( G3Backend* const backend )
 {
-  MY_KDEBUG_BLOCK ( "<G3Request::g3Check>" );
+  KDebug::Block block ( "G3Request::g3Check" );
   kDebug() << "(<backend>)" << backend->toPrintout();
   try
   {
@@ -653,7 +657,7 @@ bool G3Request::g3Check ( G3Backend* const backend )
  */
 bool G3Request::g3Login ( G3Backend* const backend, AuthInfo& credentials )
 {
-  MY_KDEBUG_BLOCK ( "<G3Request::g3Login>" );
+  KDebug::Block block ( "G3Request::g3Login" );
   kDebug() << "(<backend> <credentials>)" << backend->toPrintout() << credentials.username;
   G3Request request ( backend, KIO::HTTP_POST );
   request.addQueryItem ( QLatin1String("user"),     credentials.username);
@@ -690,7 +694,7 @@ bool G3Request::g3Login ( G3Backend* const backend, AuthInfo& credentials )
  */
 QList<G3Item*> G3Request::g3GetItems ( G3Backend* const backend, const QStringList& urls, Entity::G3Type type )
 {
-  MY_KDEBUG_BLOCK ( "<G3Request::g3GetItems>" );
+  KDebug::Block block ( "G3Request::g3GetItems" );
   kDebug() << "(<backend> <urls [count]> <type>)" << backend->toPrintout() << urls.count() << type.toString();
   QList<G3Item*> items;
   QStringList urls_chunk;
@@ -726,7 +730,7 @@ QList<G3Item*> G3Request::g3GetItems ( G3Backend* const backend, const QStringLi
  */
 QList<G3Item*> G3Request::g3GetItems ( G3Backend* const backend, g3index id, Entity::G3Type type )
 {
-  MY_KDEBUG_BLOCK ( "<G3Request::g3GetItems>" );
+  KDebug::Block block ( "G3Request::g3GetItems" );
   kDebug() << "(<backend> <id> <type>)" << backend->toPrintout() << id << type.toString();
   KUrl url = backend->restUrl ( );
   url.addPath ( QString("item/%1").arg(id) );
@@ -744,7 +748,7 @@ QList<G3Item*> G3Request::g3GetItems ( G3Backend* const backend, g3index id, Ent
  */
 QList<g3index> G3Request::g3GetAncestors ( G3Backend* const backend, G3Item* item )
 {
-  MY_KDEBUG_BLOCK ( "<G3Request::g3GetAncestors>" );
+  KDebug::Block block ( "G3Request::g3GetAncestors" );
   kDebug() << "(<backend> <item>)" << backend->toPrintout() << item->toPrintout();
   G3Request request ( backend, KIO::HTTP_GET, QLatin1String("items") );
   request.addQueryItem ( QLatin1String("ancestors_for"), item->restUrl().url() );
@@ -767,7 +771,7 @@ QList<g3index> G3Request::g3GetAncestors ( G3Backend* const backend, G3Item* ite
  */
 g3index G3Request::g3GetAncestor ( G3Backend* const backend, G3Item* item )
 {
-  MY_KDEBUG_BLOCK ( "<G3Request::g3GetAncestor>" );
+  KDebug::Block block ( "G3Request::g3GetAncestor" );
   kDebug() << "(<backend> <item>)" << backend->toPrintout() << item->toPrintout();
   QList<g3index> ancestors = g3GetAncestors ( backend, item );
   // second last one in the row should be the direct ancestor, the 'parent', IF it exists
@@ -804,7 +808,7 @@ g3index G3Request::g3GetAncestor ( G3Backend* const backend, G3Item* item )
  */
 G3Item* G3Request::g3GetItem ( G3Backend* const backend, g3index id, const QString& scope, const QString& name, bool random, Entity::G3Type type )
 {
-  MY_KDEBUG_BLOCK ( "<G3Request::g3GetItem>" );
+  KDebug::Block block ( "G3Request::g3GetItem" );
   kDebug() << "(<backend> <id> <scope> <name> <random> <type>)" << backend->toPrintout() << scope << name << random << type.toString();
   G3Request request ( backend, KIO::HTTP_GET, QString("item/%1").arg(id) );
   request.addQueryItem ( "scope", scope );
@@ -830,8 +834,7 @@ G3Item* G3Request::g3GetItem ( G3Backend* const backend, g3index id, const QStri
  */
 void G3Request::g3PostItem ( G3Backend* const backend, g3index id, const QHash<QString,QString>& attributes, const Entity::G3File* file )
 {
-  // TODO: implement file to post a file as item, if file is specified (not NULL)
-  MY_KDEBUG_BLOCK ( "<G3Request::g3PostItem>" );
+  KDebug::Block block ( "G3Request::g3PostItem" );
   kDebug() << "(<backend> <id> <attributes[count]> <file>)" << backend->toPrintout() << id << attributes.count()
                                                             << ( file ? file->filename() : "-/-" );
   G3Request request ( backend, KIO::HTTP_POST, QString("item/%1").arg(id), file );
@@ -858,7 +861,7 @@ void G3Request::g3PostItem ( G3Backend* const backend, g3index id, const QHash<Q
  */
 void G3Request::g3PutItem ( G3Backend* const backend, g3index id, const QHash<QString,QString>& attributes )
 {
-  MY_KDEBUG_BLOCK ( "<G3Request::g3PutItem>" );
+  KDebug::Block block ( "G3Request::g3PutItem" );
   kDebug() << "(<backend> <id> <attributes[keys]> <type>)" << backend->toPrintout() << attributes.keys();
   G3Request request ( backend, KIO::HTTP_PUT, QString("item/%1").arg(id) );
   // add attributes as 'entity' structure
@@ -882,7 +885,7 @@ void G3Request::g3PutItem ( G3Backend* const backend, g3index id, const QHash<QS
  */
 void G3Request::g3DelItem ( G3Backend* const backend, g3index id )
 {
-  MY_KDEBUG_BLOCK ( "<G3Request::g3DelItem>" );
+  KDebug::Block block ( "G3Request::g3DelItem" );
   kDebug() << "(<backend> <id>)" << backend->toPrintout() << id;
   G3Request request ( backend, KIO::HTTP_DELETE, QString("item/%1").arg(id) );
   request.setup        ( );
@@ -905,7 +908,7 @@ void G3Request::g3DelItem ( G3Backend* const backend, g3index id )
  */
 g3index G3Request::g3SetItem ( G3Backend* const backend, g3index id, const QString& name, Entity::G3Type type, const QByteArray& file )
 {
-  MY_KDEBUG_BLOCK ( "<G3Request::g3SetItem>" );
+  KDebug::Block block ( "G3Request::g3SetItem" );
   kDebug() << "(<backend> <id> <name> <type> <file>)" << backend->toPrintout() << name << type.toString();
   G3Request request ( backend, KIO::HTTP_POST, QString("item/%1").arg(id) );
   request.addQueryItem ( QLatin1String("name"),  name, TRUE );
@@ -920,7 +923,7 @@ g3index G3Request::g3SetItem ( G3Backend* const backend, g3index id, const QStri
 
 void G3Request::g3FetchObject ( G3Backend* const backend, const KUrl& url )
 {
-  MY_KDEBUG_BLOCK ( "<G3Request::g3FetchObject>" );
+  KDebug::Block block ( "G3Request::g3FetchObject" );
   kDebug() << "(<backend> <url>)" << backend->toPrintout() << url;
   // we strip the leading "/rest" from the path to gain the 'service' we require here
   G3Request request ( backend, KIO::HTTP_GET, url.path().mid(5) );

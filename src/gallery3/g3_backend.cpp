@@ -7,7 +7,6 @@
  */
 
 #include <klocalizedstring.h>
-#include "utility/debug.h"
 #include "utility/exception.h"
 #include "gallery3/g3_backend.h"
 #include "gallery3/g3_request.h"
@@ -30,7 +29,7 @@ using namespace KIO::Gallery3;
  */
 G3Backend* const G3Backend::instantiate ( QObject* parent, QHash<QString,G3Backend*>& backends, KUrl g3Url )
 {
-  MY_KDEBUG_BLOCK ( "<G3Backend::instantiate>" );
+  KDebug::Block block ( "G3Backend::instantiate" );
   kDebug() << "(<url>)" << g3Url;
   G3Backend* backend;
   // try if any existing backend is assiciated with a sub-URL of the requested one
@@ -76,7 +75,7 @@ G3Backend::G3Backend ( QObject* parent, const KUrl& g3Url )
   : QObject   ( parent )
   , m_baseUrl ( g3Url.url(KUrl::RemoveTrailingSlash) )
 {
-  MY_KDEBUG_BLOCK ( "<G3Backend::G3Backend>" );
+  KDebug::Block block ( "G3Backend::G3Backend" );
   m_restUrl = m_baseUrl;
   m_restUrl.setProtocol ( (QLatin1String("gallery3s")==m_baseUrl.protocol()) ? QLatin1String("https"):QLatin1String("http") );
   // authentication credentials dont make sense since the REST API does not use http basic authentication
@@ -109,7 +108,7 @@ G3Backend::G3Backend ( QObject* parent, const KUrl& g3Url )
  */
 G3Backend::~G3Backend ( )
 {
-  MY_KDEBUG_BLOCK ( "<G3Backend::~G3Backend>" );
+  KDebug::Block block ( "G3Backend::~G3Backend" );
   kDebug() << "(<>)";
   // remove all items generated on-the-fly if the base item exists at all
   if ( m_items.contains(1) )
@@ -128,7 +127,7 @@ G3Backend::~G3Backend ( )
  */
 const UDSEntry G3Backend::toUDSEntry ( )
 {
-  MY_KDEBUG_BLOCK ( "<G3Backend::toUDSEntry>" );
+  KDebug::Block block ( "G3Backend::toUDSEntry" );
   kDebug() << "(<>)";
   return itemBase()->toUDSEntry();
 } // G3Backend::toUDSEntry
@@ -138,7 +137,7 @@ const UDSEntry G3Backend::toUDSEntry ( )
  */
 const UDSEntryList G3Backend::toUDSEntryList ( )
 {
-  MY_KDEBUG_BLOCK ( "<G3Backend::toUDSEntryList>" );
+  KDebug::Block block ( "G3Backend::toUDSEntryList" );
   kDebug() << "(<>)";
   UDSEntryList list;
   list << itemBase()->toUDSEntry();
@@ -169,7 +168,7 @@ const QString G3Backend::toPrintout ( ) const
  */
 G3Item* G3Backend::itemBase ( )
 {
-  MY_KDEBUG_BLOCK ( "<G3Backend::itemBase>" );
+  KDebug::Block block ( "G3Backend::itemBase" );
   kDebug() << "(<>)";
   return itemById ( 1 );
 } // G3Backend::itemBase
@@ -186,7 +185,7 @@ G3Item* G3Backend::itemBase ( )
  */
 G3Item* G3Backend::itemById ( g3index id )
 {
-  MY_KDEBUG_BLOCK ( "<G3Backend::itemById>" );
+  KDebug::Block block ( "G3Backend::itemById" );
   kDebug() << "(<id>)" << id;
   if ( m_items.contains(id) )
     return m_items[id];
@@ -206,7 +205,7 @@ G3Item* G3Backend::itemById ( g3index id )
  */
 G3Item* G3Backend::itemByUrl ( const KUrl& itemUrl )
 {
-  MY_KDEBUG_BLOCK ( "<G3Backend::itemByUrl>" );
+  KDebug::Block block ( "G3Backend::itemByUrl" );
   kDebug() << "(<url>)" << itemUrl;
   const QString itemPath = KUrl::relativeUrl ( m_baseUrl, itemUrl );
   return itemByPath ( itemPath );
@@ -224,7 +223,7 @@ G3Item* G3Backend::itemByUrl ( const KUrl& itemUrl )
  */
 G3Item* G3Backend::itemByPath ( const QString& path )
 {
-  MY_KDEBUG_BLOCK ( "<G3Backend::itemByPath>" );
+  KDebug::Block block ( "G3Backend::itemByPath" );
   kDebug() << "(<path>)" << path;
   QStringList breadcrumbs = path.split(QLatin1String("/"));
   return itemByPath ( breadcrumbs );
@@ -242,7 +241,7 @@ G3Item* G3Backend::itemByPath ( const QString& path )
  */
 G3Item* G3Backend::itemByPath ( const QStringList& breadcrumbs )
 {
-  MY_KDEBUG_BLOCK ( "<G3Backend::itemByPath>" );
+  KDebug::Block block ( "G3Backend::itemByPath" );
   kDebug() << "(<breadcrumbs>)"<< breadcrumbs.join(QLatin1String("|"));
   // start at the 'root' album
   G3Item* item = itemBase ( );
@@ -268,7 +267,7 @@ G3Item* G3Backend::itemByPath ( const QStringList& breadcrumbs )
  */
 QList<G3Item*> G3Backend::membersByItemId ( g3index id )
 {
-  MY_KDEBUG_BLOCK ( "<G3Backend::membersByItemId>" );
+  KDebug::Block block ( "G3Backend::membersByItemId" );
   kDebug() << "(<id>)" << id;
   G3Item* parent = itemById ( id );
   QList<G3Item*> items = G3Request::g3GetItems ( this, id );
@@ -296,7 +295,7 @@ QList<G3Item*> G3Backend::membersByItemId ( g3index id )
  */
 QList<G3Item*> G3Backend::membersByItemPath ( const QString& path )
 {
-  MY_KDEBUG_BLOCK ( "<G3Backend::membersByItemPath>" );
+  KDebug::Block block ( "G3Backend::membersByItemPath" );
   kDebug() << "(<path>)" << path;
   if ( QLatin1String("./")==path )
     return membersByItemPath ( QStringList() );
@@ -318,7 +317,7 @@ QList<G3Item*> G3Backend::membersByItemPath ( const QString& path )
  */
 QList<G3Item*> G3Backend::membersByItemPath ( const QStringList& breadcrumbs )
 {
-  MY_KDEBUG_BLOCK ( "<G3Backend::membersByItemPath>" );
+  KDebug::Block block ( "G3Backend::membersByItemPath" );
   kDebug() << "(<breadcrumbs>)" << breadcrumbs.join("|");
   G3Item* parent = itemByPath ( breadcrumbs );
   QList<G3Item*> items = G3Request::g3GetItems ( this, QStringList(QString("%1/item/%2").arg(m_restUrl.url()).arg(parent->id())) );
@@ -345,7 +344,7 @@ QList<G3Item*> G3Backend::membersByItemPath ( const QStringList& breadcrumbs )
  */
 G3Item* G3Backend::item ( g3index id )
 {
-  MY_KDEBUG_BLOCK ( "<G3Backend::item>" );
+  KDebug::Block block ( "G3Backend::item" );
   kDebug() << "(<id>)" << id;
   if ( m_items.contains(id) )
     return m_items[id];
@@ -365,7 +364,7 @@ G3Item* G3Backend::item ( g3index id )
  */
 QHash<g3index,G3Item*> G3Backend::members ( g3index id )
 {
-  MY_KDEBUG_BLOCK ( "<G3Backend::members>" );
+  KDebug::Block block ( "G3Backend::members" );
   kDebug() << "(<id>)" << id;
   itemById(id)->members ( );
 } // G3Backend::members
@@ -380,7 +379,7 @@ QHash<g3index,G3Item*> G3Backend::members ( g3index id )
  */
 QHash<g3index,G3Item*> G3Backend::members ( G3Item* item )
 {
-  MY_KDEBUG_BLOCK ( "<G3Backend::members>" );
+  KDebug::Block block ( "G3Backend::members" );
   kDebug() << "(<item>)" << item->toPrintout();
   return item->members ( );
 } // G3Backend::members
@@ -459,7 +458,7 @@ G3Item* G3Backend::popItem ( g3index id )
  */
 void G3Backend::removeItem ( G3Item* item )
 {
-  MY_KDEBUG_BLOCK ( "<G3Backend::removeItem>" );
+  KDebug::Block block ( "G3Backend::removeItem" );
   kDebug() << "(<item>)" << item->toPrintout();
   G3Request::g3DelItem ( this, item->id() );
   G3Item* parent = item->parent();
@@ -486,7 +485,7 @@ void G3Backend::removeItem ( G3Item* item )
  */
 G3Item* const G3Backend::updateItem ( G3Item* item, const QHash<QString,QString>& attributes )
 {
-  MY_KDEBUG_BLOCK ( "<G3Backend::updateItem>" );
+  KDebug::Block block ( "G3Backend::updateItem" );
   kDebug() << "(<item> <attributes[keys]>)" << item->toPrintout() << QStringList(attributes.keys()).join(",");
   G3Request::g3PutItem ( this, item->id(), attributes );
   // refresh old parent item
@@ -520,7 +519,7 @@ G3Item* const G3Backend::updateItem ( G3Item* item, const QHash<QString,QString>
  */
 G3Item* const G3Backend::createItem  ( G3Item* parent, const QString& name, const Entity::G3File* const file )
 {
-  MY_KDEBUG_BLOCK ( "<G3Backend::createItem>" );
+  KDebug::Block block ( "G3Backend::createItem" );
   kDebug() << "(<parent> <name> <file[name]>)" << parent->toPrintout() << name << ( file ? file->filename() : "-/-" );
   // setup the attributes that describe to new entity
   QHash<QString,QString> attributes;
@@ -549,28 +548,28 @@ G3Item* const G3Backend::createItem  ( G3Item* parent, const QString& name, cons
 
 void G3Backend::fetchFile ( G3Item* item )
 {
-  MY_KDEBUG_BLOCK ( "<G3Backend::fetchFile>" );
+  KDebug::Block block ( "G3Backend::fetchFile" );
   kDebug() << "(<item>>)" << item->toPrintout();
   G3Request::g3FetchObject ( this, item->fileUrl(TRUE) );
 } // G3Backend::fetchFile
 
 void G3Backend::fetchResize ( G3Item* item )
 {
-  MY_KDEBUG_BLOCK ( "<G3Backend::fetchResize>" );
+  KDebug::Block block ( "G3Backend::fetchResize" );
   kDebug() << "(<item>>)" << item->toPrintout();
   G3Request::g3FetchObject ( this, item->resizeUrl(TRUE) );
 } // G3Backend::fetchResize
 
 void G3Backend::fetchThumb ( G3Item* item )
-{
-  MY_KDEBUG_BLOCK ( "<G3Backend::fetchThumb>" );
+{  
+  KDebug::Block block ( "G3Backend::fetchThumb" );
   kDebug() << "(<item>>)" << item->toPrintout();
   G3Request::g3FetchObject ( this, item->thumbUrl(TRUE) );
 } // G3Backend::fetchThumb
 
 void G3Backend::fetchCover ( G3Item* item )
 {
-  MY_KDEBUG_BLOCK ( "<G3Backend::fetchCover>" );
+  KDebug::Block block ( "G3Backend::fetchCover" );
   kDebug() << "(<item>>)" << item->toPrintout();
   G3Request::g3FetchObject ( this, item->coverUrl(TRUE) );
 } // G3Backend::fetchCover

@@ -14,7 +14,6 @@
 #include <kcomponentdata.h>
 #include <kaboutdata.h>
 #include "utility/defines.h"
-#include "utility/debug.h"
 #include "utility/exception.h"
 #include "kio_gallery3_protocol.h"
 #include "about_gallery3.data"

@@ -9,7 +9,6 @@
 #include <QFile>
 #include <kmimetype.h>
 #include <kio/netaccess.h>
-#include "utility/debug.h"
 #include "utility/exception.h"
 #include "kio_protocol.h"
 
@@ -24,11 +23,11 @@ using namespace KIO::Gallery3;
 KIOProtocol::KIOProtocol ( const QByteArray& pool, const QByteArray& app, const QString& protocol )
   : SlaveBase ( protocol.toUtf8(), pool, app )
 {
-  kDebug() << "<...>";
+  KDebug::Block block ( "KIOProtocol:KIOProtocol" );
 } // KIOProtocol::KIOProtocol
 
 KIOProtocol::~KIOProtocol ( )
 {
-  kDebug() << "<>";
+  KDebug::Block block ( "KIOProtocol::~KIOProtocol" );
 } // KIOProtocol::~KIOProtocol
 

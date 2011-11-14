@@ -17,7 +17,6 @@
 #include <klocalizedstring.h>
 #include <klocale.h>
 #include <kdatetime.h>
-#include "utility/debug.h"
 #include "utility/exception.h"
 #include "kio_gallery3_protocol.h"
 #include "gallery3/g3_backend.h"
@@ -29,7 +28,7 @@ using namespace KIO::Gallery3;
 
 G3Item* const G3Item::instantiate ( G3Backend* const backend, const QVariantMap& attributes )
 {
-  MY_KDEBUG_BLOCK ( "<G3Item::instantiate>" );
+  KDebug::Block block ( "G3Item::instantiate" );
   kDebug() << "(<backend> <attributes>)" << backend->toPrintout() << QStringList(attributes.keys()).join(",");
   // find out the items type first
   QVariantMap    entity;
@@ -75,7 +74,7 @@ G3Item::G3Item ( const Entity::G3Type type, G3Backend* const backend, const QVar
   : G3Entity     ( type, backend )
   , m_attributes ( attributes )
 {
-  MY_KDEBUG_BLOCK ( "<G3Item::G3Item>" );
+  KDebug::Block block ( "G3Item::G3Item" );
   kDebug() << "(<type> <backend> <attributes>)" << type.toString() << backend->toPrintout() << QStringList(attributes.keys()).join(",");
   // store most important entity tokens directly as strings
   // a few values stored type-strict for later convenience
@@ -118,7 +117,7 @@ G3Item::G3Item ( const Entity::G3Type type, G3Backend* const backend, const QVar
  */
 G3Item::~G3Item()
 {
-  MY_KDEBUG_BLOCK ( "<G3Item::~G3Item>" );
+  KDebug::Block block ( "G3Item::~G3Item" );
   kDebug() << "(<>)";
   // remove this node from parents list of members
   if ( NULL!=m_parent )
@@ -243,7 +242,7 @@ void G3Item::setParent ( G3Item* parent )
 
 G3Item* G3Item::member ( const QString& name )
 {
-  MY_KDEBUG_BLOCK ( "<G3Item::member>" );
+  KDebug::Block block ( "G3Item::member" );
   kDebug() << "(<this> <name>)" << toPrintout() << name;
   // make sure members have been retrieved
   buildMemberItems ( );
@@ -258,7 +257,7 @@ G3Item* G3Item::member ( const QString& name )
 
 G3Item* G3Item::member ( g3index id )
 {
-  MY_KDEBUG_BLOCK ( "<G3Item::member>" );
+  KDebug::Block block ( "G3Item::member" );
   kDebug() << "(<this> <id>)" << toPrintout() << id;
   // make sure members have been retrieved
   buildMemberItems ( );
@@ -274,7 +273,7 @@ G3Item* G3Item::member ( g3index id )
 
 QHash<g3index,G3Item*> G3Item::members ( )
 {
-  MY_KDEBUG_BLOCK ( "<G3Item::members>" );
+  KDebug::Block block ( "G3Item::members" );
   kDebug() << "(<this>)" << toPrintout();
   buildMemberItems ( );
   return m_members;
@@ -282,7 +281,7 @@ QHash<g3index,G3Item*> G3Item::members ( )
 
 bool G3Item::containsMember ( const QString& name )
 {
-  MY_KDEBUG_BLOCK ( "<G3Item::containsMember>" );
+  KDebug::Block block ( "G3Item::containsMember" );
   kDebug() << "(<this> <name>)" << toPrintout() << name;
   buildMemberItems ( );
   try
@@ -304,7 +303,7 @@ bool G3Item::containsMember ( const QString& name )
 
 bool G3Item::containsMember ( g3index id )
 {
-  MY_KDEBUG_BLOCK ( "<G3Item::containsMember>" );
+  KDebug::Block block ( "G3Item::containsMember" );
   kDebug() << "(<this> <id>)" << toPrintout() << id;
   buildMemberItems ( );
   return m_members.contains ( id );
@@ -312,7 +311,7 @@ bool G3Item::containsMember ( g3index id )
 
 int G3Item::countMembers ( )
 {
-  MY_KDEBUG_BLOCK ( "<G3Item::countMembers>" );
+  KDebug::Block block ( "G3Item::countMembers" );
   kDebug() << "(<this>)" << toPrintout();
   buildMemberItems ( );
   return m_members.count();
@@ -320,7 +319,7 @@ int G3Item::countMembers ( )
 
 void G3Item::buildMemberItems ( )
 {
-  MY_KDEBUG_BLOCK ( "<G3Item::buildMemberItems>" );
+  KDebug::Block block ( "G3Item::buildMemberItems" );
   kDebug() << "(<this>)" << toPrintout();
   QVariantList list = attributeList("members",TRUE).toList();
   // members list oout of sync ?
@@ -368,7 +367,7 @@ void G3Item::buildMemberItems ( )
 
 QStringList G3Item::path ( ) const
 {
-  MY_KDEBUG_BLOCK ( "<G3Item::path>" );
+  KDebug::Block block ( "G3Item::path" );
   kDebug() << "(<this>)" << toPrintout();
   if ( NULL!=m_parent )
   {
@@ -411,7 +410,7 @@ const QString G3Item::toPrintout ( ) const
  */
 const UDSEntry G3Item::toUDSEntry ( ) const
 {
-  MY_KDEBUG_BLOCK ( "<G3Item::toUDSEntry>" );
+  KDebug::Block block ( "G3Item::toUDSEntry" );
   kDebug() << "(<this>)" << toPrintout();
   UDSEntry entry;
   entry.insert( UDSEntry::UDS_NAME,               QString("%1").arg(m_name) );
@@ -461,7 +460,7 @@ const UDSEntry G3Item::toUDSEntry ( ) const
  */
 const UDSEntryList G3Item::toUDSEntryList ( bool signalEntries ) const
 {
-  MY_KDEBUG_BLOCK ( "<G3Item::toUDSEntryList>" );
+  KDebug::Block block ( "G3Item::toUDSEntryList" );
   kDebug() << "(<this>)" << toPrintout();
   // NOTE: the CALLING func has to make sure the members array is complete and up2date
   // generate and return final list
@@ -478,7 +477,7 @@ const UDSEntryList G3Item::toUDSEntryList ( bool signalEntries ) const
 
 const QHash<QString,QString> G3Item::toAttributes ( ) const
 {
-  MY_KDEBUG_BLOCK ( "<G3Item::toAttributes>" );
+  KDebug::Block block ( "G3Item::toAttributes" );
   kDebug() << "(<this>)" << toPrintout();
   QHash<QString,QString> attributes;
   attributes.insert ( QLatin1String("id"),       QString("%1").arg(m_id) );
@@ -492,35 +491,35 @@ const QHash<QString,QString> G3Item::toAttributes ( ) const
 AlbumEntity::AlbumEntity ( G3Backend* const backend, const QVariantMap& attributes )
   : G3Item ( Entity::G3Type::ALBUM, backend, attributes )
 {
-  MY_KDEBUG_BLOCK ( "<AlbumEntity::AlbumEntity>" );
+  KDebug::Block block ( "AlbumEntity::AlbumEntity" );
   kDebug() << "(<backend> <attributes>)" << backend->toPrintout() << QStringList(attributes.keys()).join(",");
 } // AlbumEntity::AlbumEntity
 
 MovieEntity::MovieEntity ( G3Backend* const backend, const QVariantMap& attributes )
   : G3Item ( Entity::G3Type::MOVIE, backend, attributes )
 {
-  MY_KDEBUG_BLOCK ( "<MovieEntity::MovieEntity>" );
+  KDebug::Block block ( "MovieEntity::MovieEntity" );
   kDebug() << "(<backend> <attributes>)" << backend->toPrintout() << QStringList(attributes.keys()).join(",");
 } // MovieEntity::MovieEntity
 
 PhotoEntity::PhotoEntity ( G3Backend* const backend, const QVariantMap& attributes )
   : G3Item ( Entity::G3Type::PHOTO, backend, attributes )
 {
-  MY_KDEBUG_BLOCK ( "<PhotoEntity::PhotoEntity>" );
+  KDebug::Block block ( "PhotoEntity::PhotoEntity" );
   kDebug() << "(<backend> <attributes>)" << backend->toPrintout() << QStringList(attributes.keys()).join(",");
 } // PhotoEntity::PhotoEntity
 
 TagEntity::TagEntity ( G3Backend* const backend, const QVariantMap& attributes )
   : G3Item ( Entity::G3Type::TAG, backend, attributes )
 {
-  MY_KDEBUG_BLOCK ( "<TagEntity::TagEntity>" );
+  KDebug::Block block ( "TagEntity::TagEntity" );
   kDebug() << "(<backend> <attributes>)" << backend->toPrintout() << QStringList(attributes.keys()).join(",");
 } // TagEntity::TagEntity
 
 CommentEntity::CommentEntity ( G3Backend* const backend, const QVariantMap& attributes )
   : G3Item ( Entity::G3Type::COMMENT, backend, attributes )
 {
-  MY_KDEBUG_BLOCK ( "<CommentEntity::CommentEntity>" );
+  KDebug::Block block ( "CommentEntity::CommentEntity" );
   kDebug() << "(<backend> <attributes>)" << backend->toPrintout() << QStringList(attributes.keys()).join(",");
 } // CommentEntity::CommentEntity
 

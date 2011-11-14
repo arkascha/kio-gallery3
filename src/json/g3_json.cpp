@@ -7,7 +7,6 @@
  */
 
 #include "json/g3_json.h"
-#include "utility/debug.h"
 #include "utility/exception.h"
 
 using namespace KIO;

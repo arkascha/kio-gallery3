@@ -16,7 +16,6 @@
 #include <kio/filejob.h>
 #include <ktemporaryfile.h>
 #include <kstandarddirs.h>
-#include "utility/debug.h"
 #include "utility/exception.h"
 #include "gallery3/g3_backend.h"
 #include "kio_gallery3_protocol.h"
@@ -37,6 +36,7 @@ using namespace KIO::Gallery3;
  */
 void KIOGallery3Protocol::selectConnection ( const QString& host, qint16 port, const QString& user, const QString& pass )
 {
+  KDebug::Block block ( "KIOGallery3Protocol::selectConnection" );
   kDebug() << "(<host> <port> <user> <pass>)" << host << port << user << ( pass.isEmpty() ? "" : "<hidden password>" );
   m_connection.host = host;
   m_connection.port = port;
@@ -56,7 +56,7 @@ void KIOGallery3Protocol::selectConnection ( const QString& host, qint16 port, c
  */
 G3Backend* KIOGallery3Protocol::selectBackend ( const KUrl& targetUrl )
 {
-  MY_KDEBUG_BLOCK ( "<KIOGallery3Protocol::selectBackend>" );
+  KDebug::Block block ( "KIOGallery3Protocol::selectBackend" );
   kDebug() << "(<url>)" << targetUrl;
   // enhance the url with the current (updated) connection details
   KUrl itemUrl;
@@ -74,7 +74,7 @@ G3Backend* KIOGallery3Protocol::selectBackend ( const KUrl& targetUrl )
 
 G3Item* KIOGallery3Protocol::itemBase ( const KUrl& itemUrl )
 {
-  MY_KDEBUG_BLOCK ( "<KIOGallery3Protocol::itemBase>" );
+  KDebug::Block block ( "KIOGallery3Protocol::itemBase" );
   kDebug() << "(<url>)" << itemUrl;
   G3Backend* backend = selectBackend ( itemUrl );
   return backend->itemBase ( );
@@ -82,7 +82,7 @@ G3Item* KIOGallery3Protocol::itemBase ( const KUrl& itemUrl )
 
 G3Item* KIOGallery3Protocol::itemByUrl ( const KUrl& itemUrl )
 {
-  MY_KDEBUG_BLOCK ( "<KIOGallery3Protocol::itemByUrl>" );
+  KDebug::Block block ( "KIOGallery3Protocol::itemByUrl" );
   kDebug() << "(<url>)" << itemUrl;
   G3Backend* backend = selectBackend ( itemUrl );
   QString path = KUrl::relativeUrl ( backend->baseUrl(), itemUrl );
@@ -91,7 +91,7 @@ G3Item* KIOGallery3Protocol::itemByUrl ( const KUrl& itemUrl )
 
 QList<G3Item*> KIOGallery3Protocol::itemsByUrl ( const KUrl& itemUrl )
 {
-  MY_KDEBUG_BLOCK ( "<KIOGallery3Protocol::itemsByUrl>" );
+  KDebug::Block block ( "KIOGallery3Protocol::itemsByUrl" );
   kDebug() << "(<url>)" << itemUrl;
   G3Backend* backend = selectBackend ( itemUrl );
   QString path = KUrl::relativeUrl ( backend->baseUrl(), itemUrl );
@@ -109,7 +109,7 @@ KIOGallery3Protocol::KIOGallery3Protocol ( const QByteArray &pool, const QByteAr
   : QObject ( parent )
   , KIOProtocol ( pool, app, protocol() )
 {
-  MY_KDEBUG_BLOCK ( "<slave setup>" );
+  KDebug::Block block ( "KIOGallery3Protocol::KIOGallery3Protocol" );
   try
   {
     // initialize the wrappers nodes
@@ -123,7 +123,7 @@ KIOGallery3Protocol::KIOGallery3Protocol ( const QByteArray &pool, const QByteAr
  */
 KIOGallery3Protocol::~KIOGallery3Protocol ( )
 {
-  MY_KDEBUG_BLOCK ( "<slave shutdown>" );
+  KDebug::Block block ( "KIOGallery3Protocol::~KIOGallery3Protocol" );
   try
   {
     kDebug() << "deleting existing backends";
@@ -144,7 +144,7 @@ KIOGallery3Protocol::~KIOGallery3Protocol ( )
 
 void KIOGallery3Protocol::slotRequestAuthInfo ( G3Backend* backend, AuthInfo& credentials, int attempt )
 {
-  MY_KDEBUG_BLOCK ( "<KIOGallery3Protocol::slotRequestAuthInfo>" );
+  KDebug::Block block ( "KIOGallery3Protocol::slotRequestAuthInfo" );
   kDebug() << "(<AuthInfo>)" << credentials.url << credentials.caption << credentials.comment;
   // check if there is a matching entry in the cache
   AuthInfo cached = credentials;
@@ -242,7 +242,7 @@ void KIOGallery3Protocol::slotMimetype ( KIO::Job* job, const QString& type )
 
 void KIOGallery3Protocol::setHost ( const QString& host, g3index port, const QString& user, const QString& pass )
 {
-  MY_KDEBUG_BLOCK ( "KIOGallery3Protocol::setHost" );
+  KDebug::Block block ( "KIOGallery3Protocol::setHost" );
   kDebug() << "(<host> <port> <user> <pass>)" << host << port << user << ( pass.isEmpty() ? "" : "<hidden password>" );
   try
   {
@@ -253,7 +253,7 @@ void KIOGallery3Protocol::setHost ( const QString& host, g3index port, const QSt
 
 void KIOGallery3Protocol::copy ( const KUrl& src, const KUrl& dest, int permissions, JobFlags flags )
 {
-  MY_KDEBUG_BLOCK ( "KIOGallery3Protocol::copy" );
+  KDebug::Block block ( "KIOGallery3Protocol::copy" );
   kDebug() << "(<src url> <dest url> <permissions> <flags>)" << src << dest << permissions << flags;
   try
   {
@@ -268,7 +268,7 @@ void KIOGallery3Protocol::copy ( const KUrl& src, const KUrl& dest, int permissi
 void KIOGallery3Protocol::del ( const KUrl& targetUrl, bool isfile )
 {
   // note: isfile signals if a directory or a file is meant to be deleted
-  MY_KDEBUG_BLOCK ( "KIOGallery3Protocol::del" );
+  KDebug::Block block ( "KIOGallery3Protocol::del" );
   kDebug() << "(<url> <isfile>)" << targetUrl << isfile;
   try
   {
@@ -285,7 +285,7 @@ void KIOGallery3Protocol::del ( const KUrl& targetUrl, bool isfile )
  */
 void KIOGallery3Protocol::get ( const KUrl& targetUrl )
 {
-  MY_KDEBUG_BLOCK ( "KIOGallery3Protocol::get" );
+  KDebug::Block block ( "KIOGallery3Protocol::get" );
   kDebug() << "(<url>)" << targetUrl;
   try
   {
@@ -323,7 +323,7 @@ void KIOGallery3Protocol::get ( const KUrl& targetUrl )
  */
 void KIOGallery3Protocol::listDir ( const KUrl& targetUrl )
 {
-  MY_KDEBUG_BLOCK ( "KIOGallery3Protocol::listDir" );
+  KDebug::Block block ( "KIOGallery3Protocol::listDir" );
   kDebug() << "(<url>)" << targetUrl << targetUrl.scheme() << targetUrl.host() << targetUrl.path();
   try
   {
@@ -370,7 +370,7 @@ void KIOGallery3Protocol::listDir ( const KUrl& targetUrl )
  */
 void KIOGallery3Protocol::mimetype ( const KUrl& targetUrl )
 {
-  MY_KDEBUG_BLOCK ( "KIOGallery3Protocol::mimetype" );
+  KDebug::Block block ( "KIOGallery3Protocol::mimetype" );
   kDebug() << "(<url>)" << targetUrl;
   try
   {
@@ -385,7 +385,7 @@ void KIOGallery3Protocol::mimetype ( const KUrl& targetUrl )
  */
 void KIOGallery3Protocol::mkdir ( const KUrl& targetUrl, int permissions )
 {
-  MY_KDEBUG_BLOCK ( "KIOGallery3Protocol::mkdir" );
+  KDebug::Block block ( "KIOGallery3Protocol::mkdir" );
   kDebug() << "(<url> <permissions>)" << targetUrl << permissions;
   try
   {
@@ -404,7 +404,7 @@ void KIOGallery3Protocol::mkdir ( const KUrl& targetUrl, int permissions )
  */
 void KIOGallery3Protocol::put ( const KUrl& targetUrl, int permissions, KIO::JobFlags flags )
 {
-  MY_KDEBUG_BLOCK ( "KIOGallery3Protocol::put" );
+  KDebug::Block block ( "KIOGallery3Protocol::put" );
   kDebug() << "(<url, <permissions> <flags>)" << targetUrl << permissions << flags;
   try
   {
@@ -450,7 +450,7 @@ void KIOGallery3Protocol::put ( const KUrl& targetUrl, int permissions, KIO::Job
 
 void KIOGallery3Protocol::rename ( const KUrl& srcUrl, const KUrl& destUrl, KIO::JobFlags flags )
 {
-  MY_KDEBUG_BLOCK ( "KIOGallery3Protocol::rename" );
+  KDebug::Block block ( "KIOGallery3Protocol::rename" );
   kDebug() << "(<src> <dest> <flags>)" << srcUrl << destUrl;
   try
   {
@@ -488,7 +488,7 @@ void KIOGallery3Protocol::rename ( const KUrl& srcUrl, const KUrl& destUrl, KIO:
  */
 void KIOGallery3Protocol::stat ( const KUrl& targetUrl )
 {
-  MY_KDEBUG_BLOCK ( "KIOGallery3Protocol::stat" );
+  KDebug::Block block ( "KIOGallery3Protocol::stat" );
   kDebug() << "(<url>)" << targetUrl;
   try
   {
@@ -523,7 +523,7 @@ void KIOGallery3Protocol::stat ( const KUrl& targetUrl )
  */
 void KIOGallery3Protocol::symlink ( const QString& target, const KUrl& dest, KIO::JobFlags flags )
 {
-  MY_KDEBUG_BLOCK ( "KIOGallery3Protocol::symlink" );
+  KDebug::Block block ( "KIOGallery3Protocol::symlink" );
   kDebug() << "(<target> <dest> <flags>)" << target << dest << flags;
   try
   {
@@ -542,7 +542,7 @@ Parameters:
 data  packed data; the meaning is completely dependent on the slave, but usually starts with an int for the command number. Document your slave's commands, at least in its header file.
 Reimplemented in FileProtocol, and HTTPProtocol.
 */
-  MY_KDEBUG_BLOCK ( "KIOGallery3Protocol::special" );
+  KDebug::Block block ( "KIOGallery3Protocol::special" );
   kDebug() << "(<data>)";
   try
   {

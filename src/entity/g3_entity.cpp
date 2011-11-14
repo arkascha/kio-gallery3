@@ -17,7 +17,6 @@
 #include <klocalizedstring.h>
 #include <klocale.h>
 #include <kdatetime.h>
-#include "utility/debug.h"
 #include "utility/exception.h"
 #include "kio_gallery3_protocol.h"
 #include "gallery3/g3_backend.h"
