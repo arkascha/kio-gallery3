@@ -15,9 +15,9 @@ Summary:        KDE IO Slave for file based access to a remote gallery3 server
 Version:        0.1.0
 Release:        1
 Source:         %name-%version.tar.bz2
-Url:            
+Url:            http://kde-apps.org/
 Requires:       libkde4 >= 4.7
-Requires:       libqjson
+Requires:       libqjson0
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 BuildRequires:  cmake libqt4-devel libqjson-devel
 BuildRequires:  libkde4-devel >= 4.7

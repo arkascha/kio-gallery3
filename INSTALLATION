@@ -1,36 +1,43 @@
-OVERVIEW
-The installation is pretty easy. There is no build-time
-dependency on gallery since to us it is a remote server 
-API. If it changes, you are screwed, but this should not 
-happen, as it is official and other programs will rely 
+Overview: 
+The installation is pretty easy. There is no build-time dependency on Gallery3
+since to us it is a remote RESTful API. If that one changes, you are screwed,
+but this should not happen, as it is official and stable, other programs rely
 on it as well.
 
-REQUIREMENTS
-KDE>=4.5
+Requirements: 
+KDE>=4.7
 Qt4
+QJson
 
-INSTALLATION FROM BINARY PACKAGE
-If you have a precompiled package matching your system
-(architecture and distribution) installation is handled
-by the standard tool that comes with the distribution.
+Installation from a binary package: 
+If you have a precompiled package matching your system (architecture and
+distribution) installation is handled by the standard tool that comes with
+the distribution.
 
-BUILD AND INSTALL INSTRUCTIONS
-# in the source directory:
+Build and install from source: 
+# in the unpacked sources directory:
 mkdir build
 cd build
 cmake -DCMAKE_INSTALL_PREFIX=`kde4-config --prefix` ..
 make
 sudo make install
-
 [sudo make uninstall]
 
 That's it.
-You might want to add shortcuts for easier access at a
-few places, for example dolphins 'places' sidebar, once 
-you have successfully connected to your gallery. 
+You might want to add shortcuts for easier access at a few places, for example
+dolphins 'places' sidebar, once you have successfully connected to your gallery. 
+Prefer the 'gallery3s' protocol in favour of 'gallery3' whenever possible to
+take advantage of its encryption of sensitive information. 
 
-USAGE PREREQUISITES
-Obviously you do need a remote gallery3 server you have access to.
-That server must have the "rest" module enabled. This module provides
+Usage prerequisites: 
+Obviously you do need a remote Gallery3 system you have access to.
+That server must have the 'REST' module enabled. This module provides
 the RESTful API used by this slave implementation. Please refer to
 the gallery3 documentation about this.
+It is not required to grant guest access to the API, in fact the makers of
+Gallery3 advise against that. kio-gallery3 will try authenticated access when
+required. This is done by prompting the user for authentication credentials
+and an explicit login to the Gallery3 API. 
+Read-only ("show-only") access to a Gallery3 certainly does not required an
+authenticated session, so for certain purposes you might want to enable the
+guest access to the API.

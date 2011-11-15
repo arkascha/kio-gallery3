@@ -5,5 +5,22 @@
 - - binary compatibility (actually irrelevant for a kio slave...)
 - - kde coding conventions (hm...)
 ** Convenience:
-- offer to access the gallery3 web surface directly for certain tasks
-
+- additional actions upon items beside classical file management
+- - offer to access the gallery3 web surface directly for certain tasks
+- - support the ordering of items as used by gallery3
+** Startup speed:
+- multiple slaves started at the same time still have to keep a full copy (cache)
+of the remote item hierarchy structure by themselves. The hierarchy is required
+due to the logic of the Gallery3 REST API which is clean, crunchy, logical and
+extensible but doent easily offer itself for a deep access by path into the items
+hierarchy. Sharing the hierarchy cache between all concurrent slaves might solve
+this in future, maybe by using an additional 'kded module'.
+** Preview: 
+- use remotely existing thumbnails inside kde preview logic
+- - dont download full size item and generate a new thumbnail
+- - download remotely existing thumbnail instead and use that
+- - might required an additional plugin to the kio-thumbnail slave
+** Issues:
+- authentication works for me including the persistant storage of credentials if
+requested. However there appear to be rare situations when accessing the gallery3
+for the first time in a session requires a second round trip.
