@@ -16,11 +16,11 @@ Version:        0.1.0
 Release:        1
 Source:         %name-%version.tar.bz2
 Url:            
-Requires:       libkde4 >= 4.5
+Requires:       libkde4 >= 4.7
 Requires:       libqjson
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 BuildRequires:  cmake libqt4-devel libqjson-devel
-BuildRequires:  libkde4-devel >= 4.5
+BuildRequires:  libkde4-devel >= 4.7
 BuildRequires:  libkdecore4-devel
 %kde4_runtime_requires
 
@@ -58,11 +58,10 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root)
 %doc AUTHORS CHANGELOG
 %_kde4_modules/kio_gallery3.so
-%_kde4_modules/kio_gallery3s.so
 %_kde_share_dir/services/gallery3.protocol
 %_kde_share_dir/services/gallery3s.protocol
 
 %changelog
-* Tue Nov 03 2011 Christian Reiner: version 0.1
+* Tue Nov 15 2011 Christian Reiner: version 0.1
 - initial (and certainly more'n buggy) release
 - publication on kde-apps.org
