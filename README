@@ -6,8 +6,9 @@ makes the content of a remote gallery3 system available inside the local
 file management. That means you can access all items contained in the 
 gallery entries using standard file dialogs like 'File open' or 'Save File', 
 you even can use a file browser and add or access existing entries. In general
-you can use the slaves wherever you can use an URL inside KDE to get access to
-the gallery3 content. There are no temporary file generated.
+you can use the slave wherever you can use an URL inside KDE to get access to
+the gallery3 content: 'places' in Dolphin and File dialogs, as cli argument
+upon applciation startup, in desktop shortcuts, ...
 
 License: LGPL
 Author: Christian Reiner, Hamburg, Germany
