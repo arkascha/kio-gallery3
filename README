@@ -1,14 +1,7 @@
 README file for the kio-gallery3 package
 
 Overview:
-kio-gallery3 implements a kio-slave, a protocol for KDEs I/O system. It
-makes the content of a remote gallery3 system available inside the local
-file management. That means you can access all items contained in the 
-gallery entries using standard file dialogs like 'File open' or 'Save File', 
-you even can use a file browser and add or access existing entries. In general
-you can use the slave wherever you can use an URL inside KDE to get access to
-the gallery3 content: 'places' in Dolphin and File dialogs, as cli argument
-upon applciation startup, in desktop shortcuts, ...
+kio-gallery3 implements a kio-slave, a protocol for KDEs I/O system. It makes the content of a remote Gallery3 system ([url]http://gallery.menalto.com/[/url]) available inside the local file management. That means you can access all items contained in the gallery using standard file dialogs like "File open" or "Save File", you can use a file browser and add or access existing entries. Or you can directly start an application like Gwenview to use the remote contents of the gallery. In general you can use the slave wherever you can use an URL inside KDE to get access to the gallery3 content: "places" in Dolphin and File dialogs, as cli argument upon applciation startup, in desktop shortcuts, ...
 
 License: LGPL
 Author: Christian Reiner, Hamburg, Germany
@@ -17,14 +10,11 @@ Web: -/-
 
 Warranty: 
 This software comes with no warranties. Use it at own risk.
-It was developed and tested under KDE-4.7 running on a GNU/Linux (openSUSE) on
-a x86_64 platform. I hope it works under other platforms and environments.
+It was developed and tested under KDE-4.7 running on a GNU/Linux (openSUSE) on a x86_64 platform. I hope it works under other platforms and environments.
 
 Current state:
 This is an early and definitely buggy release.
-Make sure you have an up-to-date backup of your gallery (database and files) and
-that this backup can be restored successfully. Better even test with a separat
-installation of Gallery3.
+Make sure you have an up-to-date backup of your gallery (database and files) and that this backup can be restored successfully. Better even test with a separat installation of Gallery3.
 
 Future roadmap: 
 - faster access for subsequently started slaves by using shared memory
@@ -35,11 +25,5 @@ Future roadmap:
 - as typical in a FOSS project future development depends on interest and contributions
 
 Usage:
-Just enter "gallery3://<my.server.domain>/<gallery-folder>" in the location bar of
-for example dolphin or a "File open" dialog. This is the url you use to access
-your gallery3 system with a browser, except that the protocol (http or https) is
-replaced with gallery3 or gallery3s. 
-Prefer gallery3s in favour of gallery3 whenever possible (if you have working https
-access to your gallery) for using ssl encryption to access the gallery. This way
-sensitive information like your username, password and remote access key are
-protected by encryption whilst being sent over the internet. 
+Just enter "gallery3://<my.server.domain>/<gallery-folder>" in the location bar of for example dolphin or a "File open" dialog. This is the url you use to access your gallery3 system with a browser, except that the protocol (http or https) is replaced with gallery3 or gallery3s. 
+Prefer gallery3s in favour of gallery3 whenever possible (if you have working https access to your gallery) for using ssl encryption to access the gallery. This way sensitive information like your username, password and remote access key are protected by encryption whilst being sent over the internet. 
