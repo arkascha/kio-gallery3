@@ -32,15 +32,22 @@ namespace KIO
     {
       Q_OBJECT
       private:
-        struct
+        class Members
         {
-          QString host;
-          g3index port;
-          QString user;
-          QString pass;
-        } m_connection;
+          public:
+            inline Members ( ) : backends(QHash<QString,G3Backend*>()) { };
+            struct
+            {
+              QString host;
+              g3index port;
+              QString user;
+              QString pass;
+            } connection;
+            QHash<QString,G3Backend*> backends;
+        }; // class Members
+      private:
+        Members* const m;
       protected:
-        QHash<QString,G3Backend*> m_backends;
         void               selectConnection ( const QString& host, qint16 port, const QString& user, const QString& pass );
         G3Backend*         selectBackend    ( const KUrl& base );
         G3Item*            itemBase         ( const KUrl& itemUrl );

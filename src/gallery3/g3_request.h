@@ -48,25 +48,32 @@ namespace KIO
       , public G3JsonParser
       , public G3JsonSerializer
     {
+      class Members
+      {
+        public:
+          Members  ( G3Backend* const backend, KIO::HTTP_METHOD method, const QString& service, const Entity::G3File* const file );
+          G3Backend* const            backend;
+          const KIO::HTTP_METHOD      method;
+          const QString               service;
+          const Entity::G3File* const file;     // request upload file
+          KUrl                        requestUrl;
+          KUrl                        finalUrl;
+          // FIXME: maybe we have to use QSharedPointer here... calling delete on m_job in the descructor often causes a segfault...
+          KIO::TransferJob*           job;
+          // to be sent
+          QHash<QString,QString>      header;   // request header items
+          QHash<QString,QString>      query;    // request query items
+          QString                     boundary; // multi-part boundary
+          // to be received
+          int                         status;   // http status code
+          QMap<QString,QString>       meta;     // result meta data
+          QByteArray                  payload;  // result payload
+          QVariant                    result;
+      }; // struct Members
       Q_OBJECT
       private:
-        G3Backend* const            m_backend;
-        const KIO::HTTP_METHOD      m_method;
-        const QString               m_service;
-        const Entity::G3File* const m_file;     // request upload file
-        KUrl                        m_requestUrl;
-        KUrl                        m_finalUrl;
-        // FIXME: maybe we have to use QSharedPointer here... calling delete on m_job in the descructor often causes a segfault...
-        KIO::TransferJob*           m_job;
-        // to be sent
-        QHash<QString,QString>      m_header;   // request header items
-        QHash<QString,QString>      m_query;    // request query items
-        QString                     m_boundary; // multi-part boundary
-        // to be received
-        int                         m_status;   // http status code
-        QMap<QString,QString>       m_meta;     // result meta data
-        QByteArray                  m_payload;  // result payload
-        QVariant                    m_result;
+        Members* const m;
+      private:
         KUrl       webUrlWithQueryItems   ( KUrl url, const QHash<QString,QString>& query );
         QByteArray webFormPostPayload     ( const QHash<QString,QString>& query );
         QByteArray webFileFormPostPayload ( const QHash<QString,QString>& query, const Entity::G3File* const file );
@@ -87,8 +94,8 @@ namespace KIO
         QList<G3Item*> toItems        ( );
         g3index        toItemId       ( QVariant& entry );
         QList<g3index> toItemIds      ( );
-        inline G3Item* toItem         ( ) { return toItem(m_result); };
-        inline g3index toItemId       ( ) { return toItemId(m_result); };
+        inline G3Item* toItem         ( ) { return toItem(m->result); };
+        inline g3index toItemId       ( ) { return toItemId(m->result); };
       signals:
         void signalRequestAuthInfo ( G3Backend* backend, AuthInfo& credentials, int attempt );
         void signalMessageBox      ( int& result, SlaveBase::MessageBoxType type, const QString &text, const QString &caption=QString(), const QString &buttonYes=i18n("&Yes"), const QString &buttonNo=i18n("&No") );

@@ -38,10 +38,10 @@ void KIOGallery3Protocol::selectConnection ( const QString& host, qint16 port, c
 {
   KDebug::Block block ( "KIOGallery3Protocol::selectConnection" );
   kDebug() << "(<host> <port> <user> <pass>)" << host << port << user << ( pass.isEmpty() ? "" : "<hidden password>" );
-  m_connection.host = host;
-  m_connection.port = port;
-  m_connection.user = user;
-  m_connection.pass = pass;
+  m->connection.host = host;
+  m->connection.port = port;
+  m->connection.user = user;
+  m->connection.pass = pass;
 } // KIOGallery3Protocol::selectConnection
 
 /**
@@ -62,13 +62,13 @@ G3Backend* KIOGallery3Protocol::selectBackend ( const KUrl& targetUrl )
   KUrl itemUrl;
   itemUrl = KUrl ( QString("%1://%2%3%4%5")
                           .arg( targetUrl.scheme() )
-                          .arg( m_connection.user.isEmpty() ? "" : QString("%1@").arg(m_connection.user) )
-                          .arg( m_connection.host )
-                          .arg( 0==m_connection.port ? "" : QString(":%1").arg(m_connection.port) )
+                          .arg( m->connection.user.isEmpty() ? "" : QString("%1@").arg(m->connection.user) )
+                          .arg( m->connection.host )
+                          .arg( 0==m->connection.port ? "" : QString(":%1").arg(m->connection.port) )
                           .arg( targetUrl.path() ) );
   itemUrl.adjustPath ( KUrl::RemoveTrailingSlash );
   kDebug() << "corrected url:" << itemUrl;
-  G3Backend* backend = G3Backend::instantiate ( this, m_backends, itemUrl );
+  G3Backend* backend = G3Backend::instantiate ( this, m->backends, itemUrl );
   return backend;
 } // KIOGallery3Protocol::selectBackend
 
@@ -106,8 +106,9 @@ QList<G3Item*> KIOGallery3Protocol::itemsByUrl ( const KUrl& itemUrl )
  * That object is initialized by refreshing it's nodes collection and destroyed again locally in the destructor. 
  */
 KIOGallery3Protocol::KIOGallery3Protocol ( const QByteArray &pool, const QByteArray &app, QObject* parent )
-  : QObject ( parent )
+  : QObject     ( parent )
   , KIOProtocol ( pool, app, protocol() )
+  , m           ( new KIOGallery3Protocol::Members )
 {
   KDebug::Block block ( "KIOGallery3Protocol::KIOGallery3Protocol" );
   try
@@ -128,11 +129,13 @@ KIOGallery3Protocol::~KIOGallery3Protocol ( )
   {
     kDebug() << "deleting existing backends";
     QHash<QString,G3Backend*>::const_iterator backend;
-    for ( backend=m_backends.constBegin(); backend!=m_backends.constEnd(); backend++ )
+    for ( backend=m->backends.constBegin(); backend!=m->backends.constEnd(); backend++ )
     {
       kDebug() << "removing backend" << backend.value()->toPrintout();
       delete backend.value();
     }
+    // delete private members
+    delete m;
   }
   catch ( Exception &e )
   {

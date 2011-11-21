@@ -1,3 +1,5 @@
+* Mon Nov 21 2011 Christian Reiner: version 0.1.2
+- introduction of d-pointer usage for kde coding compliance
 * Sun Nov 20 2011 Christian Reiner: version 0.1.1
 - fixed access rights visualization for items
 * Tue Nov 15 2011 Christian Reiner: version 0.1.0

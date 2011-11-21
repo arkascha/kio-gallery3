@@ -69,43 +69,43 @@ G3Item* const G3Item::instantiate ( G3Backend* const backend, const QVariantMap&
 /**
  * This constructs an item object that describes exactly one single node inside the gallery.
  */
-G3Item::G3Item ( const Entity::G3Type type, G3Backend* const backend, const QVariantMap& attributes )
-  : G3Entity     ( type, backend )
-  , m_attributes ( attributes )
+G3Item::G3Item ( const Entity::G3Type type, G3Backend* const backend, const QVariantMap& data )
+  : G3Entity ( type, backend )
+  , m        ( new G3Item::Members(backend,data) )
 {
   KDebug::Block block ( "G3Item::G3Item" );
-  kDebug() << "(<type> <backend> <attributes>)" << type.toString() << backend->toPrintout() << QStringList(attributes.keys()).join(",");
+  kDebug() << "(<type> <backend> <attributes>)" << type.toString() << backend->toPrintout() << QStringList(data.keys()).join(",");
   // store most important entity tokens directly as strings
   // a few values stored type-strict for later convenience
-  m_id       = attributeMapToken ( QLatin1String("entity"), QLatin1String("id"),   QVariant::UInt,   TRUE  ).toUInt();
-  m_name     = attributeMapToken ( QLatin1String("entity"), QLatin1String("name"), QVariant::String, FALSE ).toString();
+  m->id         = attributeMapToken ( QLatin1String("entity"), QLatin1String("id"),   QVariant::UInt,   TRUE  ).toUInt();
+  m->name       = attributeMapToken ( QLatin1String("entity"), QLatin1String("name"), QVariant::String, FALSE ).toString();
   // set the items mimetype
   QString mimetype_name = attributeMapToken ( QLatin1String("entity"), QLatin1String("mime_type"), QVariant::String, FALSE ).toString();
   if ( ! mimetype_name.isEmpty() )
-    m_mimetype = KMimeType::mimeType(mimetype_name);
+    m->mimetype = KMimeType::mimeType(mimetype_name);
   else
     switch ( type.toInt() )
     {
       case Entity::G3Type::ALBUM:
-        m_mimetype = KMimeType::mimeType ( QLatin1String("inode/directory") );
+        m->mimetype = KMimeType::mimeType ( QLatin1String("inode/directory") );
         break;
       default:
-        m_mimetype = KMimeType::defaultMimeTypePtr ( );
+        m->mimetype = KMimeType::defaultMimeTypePtr ( );
     } // switch type
   // set parent and pushd into parent
   QString parent_url = attributeMapToken ( QLatin1String("entity"), QLatin1String("parent"), QVariant::String, FALSE ).toString();
   if ( parent_url.isEmpty() )
   {
-    m_parent = NULL;
+    m->parent = NULL;
     m_backend->pushItem ( this );
   }
   else
   {
     KUrl url = KUrl ( parent_url );
     g3index id = QVariant(url.fileName()).toInt();
-    m_parent = m_backend->item ( id );
-    kDebug() << "caching item" << this->toPrintout() << "in parent item" << m_parent->toPrintout();
-    m_parent->pushMember ( this );
+    m->parent = m_backend->item ( id );
+    kDebug() << "caching item" << this->toPrintout() << "in parent item" << m->parent->toPrintout();
+    m->parent->pushMember ( this );
     m_backend->pushItem ( this );
   } // else
 } // G3Item::G3Item
@@ -119,21 +119,23 @@ G3Item::~G3Item()
   KDebug::Block block ( "G3Item::~G3Item" );
   kDebug() << "(<>)";
   // remove this node from parents list of members
-  if ( NULL!=m_parent )
+  if ( NULL!=m->parent )
   {
     kDebug() << "removing item" << toPrintout() << "from parents member list";
-    m_parent->popMember ( this );
+    m->parent->popMember ( this );
   }
   // delete all members registered inside this item
   QHash<g3index,G3Item*>::iterator member;
-  while ( ! m_members.isEmpty() )
+  while ( ! m->members.isEmpty() )
   {
-    member = m_members.begin ( );
+    member = m->members.begin ( );
     kDebug() << "deleting member" << member.value()->toPrintout();
     delete member.value();
   }
   // remove this item from the backends catalog
-  m_backend->popItem ( m_id );
+  m_backend->popItem ( m->id );
+  // delete private members
+  delete m;
 } // G3Item::~G3Item
 
 //==========
@@ -141,10 +143,10 @@ G3Item::~G3Item()
 const QVariant G3Item::attributeToken ( const QString& attribute, QVariant::Type type, bool strict ) const
 {
   kDebug() << "(<attribute> <type> <strict>)" << attribute << type << strict;
-  if (   m_attributes.contains (attribute)
-      && m_attributes[attribute].canConvert(type) )
+  if (   m->attributes.contains (attribute)
+      && m->attributes[attribute].canConvert(type) )
     // value exists and is convertable
-    return m_attributes[attribute];
+    return m->attributes[attribute];
   else if ( ! strict )
     // value does not exist but an empty instance will be accepted anyway
     return QVariant(type);
@@ -193,12 +195,12 @@ const QVariant G3Item::attributeMapToken ( const QString& attribute, const QStri
 void G3Item::pushMember ( G3Item* item )
 {
   kDebug() << "(<this> <item>)" << toPrintout() << item->toPrintout();
-  if ( m_members.contains(item->id()) )
+  if ( m->members.contains(item->id()) )
     throw Exception ( Error(ERR_INTERNAL),
                       i18n("attempt to register item with id '%1' that already exists").arg(item->id()) );
   // all fine, store items
-  m_members.insert ( item->id(), item );
-  item->m_parent = this;
+  m->members.insert ( item->id(), item );
+  item->m->parent = this;
 } // G3Item::pushMember
 
 /**
@@ -223,10 +225,10 @@ G3Item* G3Item::popMember ( G3Item* item )
 G3Item* G3Item::popMember ( g3index id )
 {
   kDebug() << "(<this> <id>)" << toPrintout() << id;
-  if ( m_members.contains(id) )
+  if ( m->members.contains(id) )
   {
-    G3Item* item = m_members[id];
-    m_members.remove ( id );
+    G3Item* item = m->members[id];
+    m->members.remove ( id );
     return item;
   }
   throw Exception ( Error(ERR_INTERNAL),
@@ -236,7 +238,7 @@ G3Item* G3Item::popMember ( g3index id )
 void G3Item::setParent ( G3Item* parent )
 {
   kDebug() << "(<parent>)" << parent->toPrintout();
-  m_parent = parent;
+  m->parent = parent;
 } // G3Item::setParent
 
 //==========
@@ -249,7 +251,7 @@ G3Item* G3Item::member ( const QString& name )
   buildMemberItems ( );
   // look for requested member
   QHash<g3index,G3Item*>::const_iterator member;
-  for ( member=m_members.constBegin(); member!=m_members.constEnd(); member++ )
+  for ( member=m->members.constBegin(); member!=m->members.constEnd(); member++ )
     if ( name==member.value()->name() )
       return member.value();
   // no success, no matching member found
@@ -263,10 +265,10 @@ G3Item* G3Item::member ( g3index id )
   // make sure members have been retrieved
   buildMemberItems ( );
   // look for requested member
-  if ( m_members.contains(id) )
+  if ( m->members.contains(id) )
   {
-    kDebug() << QString("found member '%1' [%2]").arg(m_members[id]->toPrintout()).arg(m_members[id]->id());
-    return m_members[id];
+    kDebug() << QString("found member '%1' [%2]").arg(m->members[id]->toPrintout()).arg(m->members[id]->id());
+    return m->members[id];
   }
   else
     throw Exception ( Error(ERR_DOES_NOT_EXIST), i18n("item with id '%1'").arg(id) );
@@ -277,7 +279,7 @@ QHash<g3index,G3Item*> G3Item::members ( )
   KDebug::Block block ( "G3Item::members" );
   kDebug() << "(<this>)" << toPrintout();
   buildMemberItems ( );
-  return m_members;
+  return m->members;
 } // G3Item::members
 
 bool G3Item::containsMember ( const QString& name )
@@ -307,7 +309,7 @@ bool G3Item::containsMember ( g3index id )
   KDebug::Block block ( "G3Item::containsMember" );
   kDebug() << "(<this> <id>)" << toPrintout() << id;
   buildMemberItems ( );
-  return m_members.contains ( id );
+  return m->members.contains ( id );
 }
 
 int G3Item::countMembers ( )
@@ -315,7 +317,7 @@ int G3Item::countMembers ( )
   KDebug::Block block ( "G3Item::countMembers" );
   kDebug() << "(<this>)" << toPrintout();
   buildMemberItems ( );
-  return m_members.count();
+  return m->members.count();
 } // G3Item::countMembers
 
 void G3Item::buildMemberItems ( )
@@ -324,7 +326,7 @@ void G3Item::buildMemberItems ( )
   kDebug() << "(<this>)" << toPrintout();
   QVariantList list = attributeList("members",TRUE).toList();
   // members list oout of sync ?
-  if ( list.count()!=m_members.count() )
+  if ( list.count()!=m->members.count() )
   {
     // note: we do NOT construct a list of KUrls, since we need to specify the urls as strings in the request url anyway
     QHash<g3index,QString> urls;
@@ -336,18 +338,18 @@ void G3Item::buildMemberItems ( )
       urls.insert ( id, entry.toString() );
     } // foreach
     // remove all 'stale members', members that are not mentioned in attribute 'members'
-    foreach ( G3Item* member, m_members )
+    foreach ( G3Item* member, m->members )
       if ( ! urls.contains(member->id()) )
       {
         kDebug() << "removing stale member" << member->toPrintout();
-        m_members.remove ( member->id() );
+        m->members.remove ( member->id() );
         delete member;
       } // if
       else
         kDebug() << "keeping existing member" << member->toPrintout();
     // identify all members not present but mentioned in attribute 'members'
     foreach ( g3index id, urls.keys() )
-      if ( ! m_members.contains(id) )
+      if ( ! m->members.contains(id) )
         // keep id in list of urls, will be used further down
         kDebug() << "keeping id" << id << " in list of missing members";
       else
@@ -370,9 +372,9 @@ QStringList G3Item::path ( ) const
 {
   KDebug::Block block ( "G3Item::path" );
   kDebug() << "(<this>)" << toPrintout();
-  if ( NULL!=m_parent )
+  if ( NULL!=m->parent )
   {
-    QStringList path = m_parent->path();
+    QStringList path = m->parent->path();
     path << name();
     return path;
   }
@@ -382,7 +384,7 @@ QStringList G3Item::path ( ) const
 G3Item* G3Item::parent ( ) const
 {
   kDebug() << "(<>)";
-  return m_parent;
+  return m->parent;
 } // G3Item::parent
 
 //==========
@@ -414,11 +416,11 @@ const UDSEntry G3Item::toUDSEntry ( ) const
   KDebug::Block block ( "G3Item::toUDSEntry" );
   kDebug() << "(<this>)" << toPrintout();
   UDSEntry entry;
-  entry.insert( UDSEntry::UDS_NAME,               QString("%1").arg(m_name) );
-//  entry.insert( UDSEntry::UDS_DISPLAY_NAME,       QString("[%1] %2").arg(m_id).arg(attributeMapToken("entity","title",QVariant::String).toString()) );
+  entry.insert( UDSEntry::UDS_NAME,               QString("%1").arg(m->name) );
+//  entry.insert( UDSEntry::UDS_DISPLAY_NAME,       QString("[%1] %2").arg(m->id).arg(attributeMapToken("entity","title",QVariant::String).toString()) );
   entry.insert( UDSEntry::UDS_COMMENT,            attributeMapToken("entity","description",QVariant::String).toString() );
   entry.insert( UDSEntry::UDS_FILE_TYPE,          m_type.toUDSFileType() );
-  entry.insert( UDSEntry::UDS_MIME_TYPE,          m_mimetype->name() );
+  entry.insert( UDSEntry::UDS_MIME_TYPE,          m->mimetype->name() );
   entry.insert( UDSEntry::UDS_DISPLAY_TYPE,       m_type.toString() );
   entry.insert( UDSEntry::UDS_SIZE,               (Entity::G3Type::ALBUM==m_type.toInt()) ? 0L : attributeMapToken(QLatin1String("entity"),QLatin1String("file_size"),QVariant::Int).toInt() );
   entry.insert( UDSEntry::UDS_ACCESS,             canEdit() ? 0600 : 0400 );
@@ -471,8 +473,8 @@ const UDSEntryList G3Item::toUDSEntryList ( bool signalEntries ) const
   // NOTE: the CALLING func has to make sure the members array is complete and up2date
   // generate and return final list
   UDSEntryList list;
-  kDebug() << "listing" << m_members.count() << "item members";
-  foreach ( G3Item* member, m_members )
+  kDebug() << "listing" << m->members.count() << "item members";
+  foreach ( G3Item* member, m->members )
     if ( signalEntries )
       emit signalUDSEntry ( member->toUDSEntry() );
     else
@@ -486,8 +488,8 @@ const QHash<QString,QString> G3Item::toAttributes ( ) const
   KDebug::Block block ( "G3Item::toAttributes" );
   kDebug() << "(<this>)" << toPrintout();
   QHash<QString,QString> attributes;
-  attributes.insert ( QLatin1String("id"),       QString("%1").arg(m_id) );
-  attributes.insert ( QLatin1String("name"),     m_name );
+  attributes.insert ( QLatin1String("id"),       QString("%1").arg(m->id) );
+  attributes.insert ( QLatin1String("name"),     m->name );
   attributes.insert ( QLatin1String("type"),     m_type.toString() );
   return attributes;
 } // G3Item::toAttributes

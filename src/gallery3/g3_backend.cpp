@@ -71,31 +71,31 @@ G3Backend* const G3Backend::instantiate ( QObject* parent, QHash<QString,G3Backe
  * stores the derived REST API url and handles the requested protocol (http or https)
  */
 G3Backend::G3Backend ( QObject* parent, const KUrl& g3Url )
-  : QObject   ( parent )
-  , m_baseUrl ( g3Url.url(KUrl::RemoveTrailingSlash) )
+  : QObject ( parent )
+  , m       ( new G3Backend::Members(g3Url) )
 {
   KDebug::Block block ( "G3Backend::G3Backend" );
-  m_restUrl = m_baseUrl;
-  m_restUrl.setProtocol ( (QLatin1String("gallery3s")==m_baseUrl.protocol()) ? QLatin1String("https"):QLatin1String("http") );
+  m->restUrl = m->baseUrl;
+  m->restUrl.setProtocol ( (QLatin1String("gallery3s")==m->baseUrl.protocol()) ? QLatin1String("https"):QLatin1String("http") );
   // authentication credentials dont make sense since the REST API does not use http basic authentication
-  m_restUrl.setUser     ( QString() );
-  m_restUrl.setPass     ( QString() );
-  m_restUrl.addPath     ( "rest" );
-  kDebug() << "{<base> <rest>}" << m_baseUrl << m_restUrl;
+  m->restUrl.setUser     ( QString() );
+  m->restUrl.setPass     ( QString() );
+  m->restUrl.addPath     ( "rest" );
+  kDebug() << "{<base> <rest>}" << m->baseUrl << m->restUrl;
   // prepare AuthInfo for later authentication against the remote gallery3 system
-  m_credentials.caption      = QLatin1String("Authentication required");
-  m_credentials.prompt       = QLatin1String("Authentication required");
-  m_credentials.commentLabel = QLatin1String("Login:");
-  m_credentials.comment      = QString("Gallery3 at host '%1'").arg(m_baseUrl.host());
-  m_credentials.realmValue   = QString("Gallery3 at host '%1'").arg(m_baseUrl.host());;
-  m_credentials.keepPassword = TRUE;
-  m_credentials.verifyPath   = TRUE;
-  m_credentials.url          = m_baseUrl;
-  m_credentials.password     = m_baseUrl.password ( ); // might be empty
-  if ( ! m_baseUrl.userName().isEmpty() )
+  m->credentials.caption      = QLatin1String("Authentication required");
+  m->credentials.prompt       = QLatin1String("Authentication required");
+  m->credentials.commentLabel = QLatin1String("Login:");
+  m->credentials.comment      = QString("Gallery3 at host '%1'").arg(m->baseUrl.host());
+  m->credentials.realmValue   = QString("Gallery3 at host '%1'").arg(m->baseUrl.host());;
+  m->credentials.keepPassword = TRUE;
+  m->credentials.verifyPath   = TRUE;
+  m->credentials.url          = m->baseUrl;
+  m->credentials.password     = m->baseUrl.password ( ); // might be empty
+  if ( ! m->baseUrl.userName().isEmpty() )
   {
-    m_credentials.username = m_baseUrl.userName();
-    m_credentials.readOnly = TRUE;
+    m->credentials.username = m->baseUrl.userName();
+    m->credentials.readOnly = TRUE;
   }
 }
 
@@ -110,13 +110,15 @@ G3Backend::~G3Backend ( )
   KDebug::Block block ( "G3Backend::~G3Backend" );
   kDebug() << "(<>)";
   // remove all items generated on-the-fly if the base item exists at all
-  if ( m_items.contains(1) )
+  if ( m->items.contains(1) )
     delete itemBase ( );
   // remove any left-over items (stale)
-  kDebug() << m_items.count() << "stale items left, deleting them";
+  kDebug() << m->items.count() << "stale items left, deleting them";
   QHash<g3index,G3Item*>::const_iterator item;
-  for ( item=m_items.constBegin(); item!=m_items.constEnd(); item++ )
+  for ( item=m->items.constBegin(); item!=m->items.constEnd(); item++ )
     delete item.value();
+  // delete private members
+  delete m;
 }
 
 //==========
@@ -152,7 +154,7 @@ const UDSEntryList G3Backend::toUDSEntryList ( )
  */
 const QString G3Backend::toPrintout ( ) const
 {
-  return QString("G3Backend [%1 items] (%2)").arg(m_items.count()).arg(m_baseUrl.prettyUrl());
+  return QString("G3Backend [%1 items] (%2)").arg(m->items.count()).arg(m->baseUrl.prettyUrl());
 } // G3Backend::toPrintout
 
 //==========
@@ -186,8 +188,8 @@ G3Item* G3Backend::itemById ( g3index id )
 {
   KDebug::Block block ( "G3Backend::itemById" );
   kDebug() << "(<id>)" << id;
-  if ( m_items.contains(id) )
-    return m_items[id];
+  if ( m->items.contains(id) )
+    return m->items[id];
   // item not yet known, try to request it from the gallery server
   return item ( id );
 } // G3Backend::itemById
@@ -206,7 +208,7 @@ G3Item* G3Backend::itemByUrl ( const KUrl& itemUrl )
 {
   KDebug::Block block ( "G3Backend::itemByUrl" );
   kDebug() << "(<url>)" << itemUrl;
-  const QString itemPath = KUrl::relativeUrl ( m_baseUrl, itemUrl );
+  const QString itemPath = KUrl::relativeUrl ( m->baseUrl, itemUrl );
   return itemByPath ( itemPath );
 } // G3Backend::itemByUrl
 
@@ -319,7 +321,7 @@ QList<G3Item*> G3Backend::membersByItemPath ( const QStringList& breadcrumbs )
   KDebug::Block block ( "G3Backend::membersByItemPath" );
   kDebug() << "(<breadcrumbs>)" << breadcrumbs.join("|");
   G3Item* parent = itemByPath ( breadcrumbs );
-  QList<G3Item*> items = G3Request::g3GetItems ( this, QStringList(QString("%1/item/%2").arg(m_restUrl.url()).arg(parent->id())) );
+  QList<G3Item*> items = G3Request::g3GetItems ( this, QStringList(QString("%1/item/%2").arg(m->restUrl.url()).arg(parent->id())) );
   // process url list, generate items and sort them into this backends item cache
   foreach ( G3Item* item, items )
   {
@@ -345,8 +347,8 @@ G3Item* G3Backend::item ( g3index id )
 {
   KDebug::Block block ( "G3Backend::item" );
   kDebug() << "(<id>)" << id;
-  if ( m_items.contains(id) )
-    return m_items[id];
+  if ( m->items.contains(id) )
+    return m->items[id];
   // item not found, retrieve it from the remote gallery
   G3Item* item = G3Request::g3GetItem ( this, id );
   kDebug() << "{<item>}" << item->toPrintout();
@@ -395,7 +397,7 @@ QHash<g3index,G3Item*> G3Backend::members ( G3Item* item )
 int G3Backend::countItems  ( )
 {
   kDebug() << "(<>)";
-  return m_items.count();
+  return m->items.count();
 } // G3Backend::countItems
 
 //==========
@@ -427,7 +429,7 @@ bool G3Backend::login ( AuthInfo& credentials )
 void G3Backend::pushItem ( G3Item* item )
 {
   kDebug() << "(<item>)" << item->toPrintout();
-  m_items.insert ( item->id(), item );
+  m->items.insert ( item->id(), item );
 } // G3Backend::pushItem
 
 /**
@@ -442,8 +444,8 @@ void G3Backend::pushItem ( G3Item* item )
 G3Item* G3Backend::popItem ( g3index id )
 {
   kDebug() << "(<id>)" << id;
-  if ( m_items.contains(id) )
-    return m_items.take ( id );
+  if ( m->items.contains(id) )
+    return m->items.take ( id );
   throw Exception ( Error(ERR_INTERNAL), i18n("attempt to remove non-existing item with id '%1'").arg(id) );
 } // G3Backend::popItem
 

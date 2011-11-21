@@ -20,6 +20,25 @@
 using namespace KIO;
 using namespace KIO::Gallery3;
 
+G3Request::Members::Members ( G3Backend* const backend, KIO::HTTP_METHOD method, const QString& service, const Entity::G3File* const file )
+  : backend ( backend )
+  , method  ( method )
+  , service ( service )
+  , file    ( file )
+  , payload ( NULL )
+  , result  ( QVariant() )
+  , meta    ( QMap<QString,QString>() )
+  , query   ( QHash<QString,QString>() )
+  , status  ( 0 )
+  , job     ( NULL )
+{
+  kDebug();
+  requestUrl = backend->restUrl();
+  requestUrl.adjustPath ( KUrl::AddTrailingSlash );
+  requestUrl.addPath ( service );
+  boundary = KRandom::randomString(42+13).toAscii();
+} // G3Request::Members
+
 /**
  * G3Request::G3Request ( G3Backend* const backend, KIO::HTTP_METHOD method, const QString& service, const Entity::G3File* const file )
  *
@@ -32,23 +51,10 @@ using namespace KIO::Gallery3;
  * some members are initialized, some basic settings done and a connection to the controlling slave base is established for authentication purposes
  */
 G3Request::G3Request ( G3Backend* const backend, KIO::HTTP_METHOD method, const QString& service, const Entity::G3File* const file )
-  : m_backend ( backend )
-  , m_method  ( method )
-  , m_service ( service )
-  , m_file    ( file )
-  , m_payload ( NULL )
-  , m_result  ( QVariant() )
-  , m_meta    ( QMap<QString,QString>() )
-  , m_query   ( QHash<QString,QString>() )
-  , m_status  ( 0 )
-  , m_job     ( NULL )
+  : m ( new G3Request::Members(backend,method,service,file) )
 {
   KDebug::Block block ( "G3Request::G3Request" );
   kDebug() << "(<backend> <method> <service> <file[name]>)" << backend->toPrintout() << method << service << ( file ? file->filename() : "-/-" );
-  m_requestUrl = backend->restUrl();
-  m_requestUrl.adjustPath ( KUrl::AddTrailingSlash );
-  m_requestUrl.addPath ( m_service );
-  m_boundary = KRandom::randomString(42+13).toAscii();
   // an agent string we can recognize
   addHeaderItem ( QLatin1String("User-Agent"), QString("kio-gallery3 (X11; Linux x86_64) KDE/%1.%2.%3")
   // NOTE: opensuse uses a complete release string instead of the version for KDE_VERSION and KDE::versionString()
@@ -64,12 +70,14 @@ G3Request::G3Request ( G3Backend* const backend, KIO::HTTP_METHOD method, const 
 G3Request::~G3Request ( )
 {
   kDebug();
+  // delete private members
+  delete m;
 /*
-  if ( m_job )
+  if ( m->job )
   {
     kDebug() << "deleting background job";
     FIXME: deleting the job after it has been executed reproduceably crashes the slave with a segfault
-    delete m_job;
+    delete m->job;
   }
 */
 } // G3Request::~G3Request
@@ -89,10 +97,10 @@ G3Request::~G3Request ( )
 int G3Request::httpStatusCode ( )
 {
   kDebug() << "(<>)";
-  QVariant httpStatusCode = QVariant(m_meta[QLatin1String("responsecode")]);
+  QVariant httpStatusCode = QVariant(m->meta[QLatin1String("responsecode")]);
   if ( httpStatusCode.canConvert(QVariant::Int) )
   {
-    int httpStatus = QVariant(m_meta[QLatin1String("responsecode")]).toInt();
+    int httpStatus = QVariant(m->meta[QLatin1String("responsecode")]).toInt();
     kDebug() << httpStatus;
     return httpStatus;
   }
@@ -104,9 +112,9 @@ int G3Request::httpStatusCode ( )
 bool G3Request::retryWithChangedCredentials ( int attempt )
 {
   kDebug() << "(<attempt>)" << attempt;
-  emit signalRequestAuthInfo ( m_backend, m_backend->credentials(), attempt );
-  kDebug() << ( m_backend->credentials().isModified() ? "credentials changed" : "credentials unchanged" );
-  return m_backend->credentials().isModified();
+  emit signalRequestAuthInfo ( m->backend, m->backend->credentials(), attempt );
+  kDebug() << ( m->backend->credentials().isModified() ? "credentials changed" : "credentials unchanged" );
+  return m->backend->credentials().isModified();
 } // G3Request::retryWithChangedCredentials
 
 /**
@@ -124,12 +132,12 @@ void G3Request::addHeaderItem ( const QString& key, const QString& value )
   // add value to an existing header if one already exists, do NOT overwrite the existing one
   // we need this for the customHTTPHeaders as required by the G3 API
   QString content;
-  if ( m_header.contains(key) )
-    content = QString("%1\r\n%2").arg(m_header[key]).arg(value.trimmed());
+  if ( m->header.contains(key) )
+    content = QString("%1\r\n%2").arg(m->header[key]).arg(value.trimmed());
   else
     content = value;
   // TODO: some plausibility checks might be good here...
-  m_header.insert ( key, content );
+  m->header.insert ( key, content );
   kDebug() << "{<>}";
 } // G3Request::addHeaderItem
 
@@ -147,12 +155,12 @@ void G3Request::addHeaderItem ( const QString& key, const QString& value )
 void G3Request::addQueryItem ( const QString& key, const QString& value, bool skipIfEmpty )
 {
   kDebug() << "(<key> <value> <bool>)" << key << value << skipIfEmpty;
-  if ( m_query.contains(key) )
-    m_query.remove ( key ); // TODO: throw an error instead ?!?
+  if ( m->query.contains(key) )
+    m->query.remove ( key ); // TODO: throw an error instead ?!?
   if ( value.isEmpty() )
     kDebug() << QString("skipping query item '%1'").arg(key);
   else
-    m_query.insert ( key, value );
+    m->query.insert ( key, value );
   kDebug() << "{<>}";
 } // G3Request::addQueryItem
 
@@ -170,8 +178,8 @@ void G3Request::addQueryItem ( const QString& key, const QString& value, bool sk
 void G3Request::addQueryItem ( const QString& key, Entity::G3Type value, bool skipIfEmpty )
 {
   kDebug() << "(<key> <value> <bool>)" << key << value.toString() << skipIfEmpty;
-  if ( m_query.contains(key) )
-    m_query.remove ( key ); // TODO: throw an error instead ?!?
+  if ( m->query.contains(key) )
+    m->query.remove ( key ); // TODO: throw an error instead ?!?
   if ( value==Entity::G3Type::NONE )
     kDebug() << QString("skipping query item '%1' holding 'NONE' as entity type").arg(key);
   else
@@ -224,7 +232,7 @@ void G3Request::addQueryItem ( const QString& key, const QStringList& values, bo
 KUrl G3Request::webUrlWithQueryItems ( KUrl url, const QHash<QString,QString>& query )
 {
   kDebug() << "(<url> <query [count]>)" << url << query.count();
-    for ( QHash<QString,QString>::const_iterator it=m_query.constBegin(); it!=m_query.constEnd(); it++ )
+    for ( QHash<QString,QString>::const_iterator it=m->query.constBegin(); it!=m->query.constEnd(); it++ )
       url.addQueryItem ( it.key(), it.value() );
   kDebug() << "{<url>}" << url;
   return url;
@@ -243,7 +251,7 @@ QByteArray G3Request::webFormPostPayload ( const QHash<QString,QString>& query )
   kDebug() << "(<query[count]>)" << query.count();
   QStringList queryItems;
   // construct an encoded form payload
-  for ( QHash<QString,QString>::const_iterator it=m_query.constBegin(); it!=m_query.constEnd(); it++ )
+  for ( QHash<QString,QString>::const_iterator it=m->query.constBegin(); it!=m->query.constEnd(); it++ )
     queryItems << QString("%1=%2").arg(it.key()).arg(it.value());
   QByteArray buffer;
   buffer = queryItems.join("&").toAscii();
@@ -269,16 +277,16 @@ QByteArray G3Request::webFileFormPostPayload ( const QHash<QString,QString>& que
   binary.open ( QIODevice::ReadOnly );
   QByteArray buffer;
   // one part for each query items
-  for ( QHash<QString,QString>::const_iterator it=m_query.constBegin(); it!=m_query.constEnd(); it++ )
+  for ( QHash<QString,QString>::const_iterator it=m->query.constBegin(); it!=m->query.constEnd(); it++ )
   {
-    buffer.append ( QString("--%1\r\n").arg(m_boundary).toAscii() );
+    buffer.append ( QString("--%1\r\n").arg(m->boundary).toAscii() );
     buffer.append ( QString("Content-Disposition: form-data; name=\"%1\"\r\n").arg(it.key()).toAscii() );
     buffer.append ( QString("Content-Type: text/plain; charset=UTF-8\r\n").toAscii() );
     buffer.append ( QString("Content-Transfer-Encoding: 8bit\r\n\r\n").toAscii() );
     buffer.append ( it.value().toAscii() );
   } // for
   // the file to be uploaded
-  buffer.append ( QString("\r\n--%1\r\n").arg(m_boundary).toAscii() );
+  buffer.append ( QString("\r\n--%1\r\n").arg(m->boundary).toAscii() );
   buffer.append ( QString("Content-Disposition: form-data; name=\"file\"; filename=\"%1\"\r\n").arg(file->filename()).toAscii() );
 //  buffer.append ( QString("Content-Type: application/octet-stream\r\n").toAscii() );
   buffer.append ( QString("Content-Type: %1\r\n\r\n").arg(file->mimetype()->name()).toAscii() );
@@ -286,7 +294,7 @@ QByteArray G3Request::webFileFormPostPayload ( const QHash<QString,QString>& que
 //  buffer.append ( QString("Content-Transfer-Encoding: binary\r\n\r\n").toAscii() );
   buffer.append ( binary.readAll() );
   // terminating boundary marker (note the trailing "--")
-  buffer.append ( QString("\r\n--%1--").arg(m_boundary).toAscii() );
+  buffer.append ( QString("\r\n--%1--").arg(m->boundary).toAscii() );
   binary.close ( );
   kDebug() << "{<buffer[size]>}" << buffer.size();
   return buffer;
@@ -306,55 +314,55 @@ void G3Request::setup ( )
   KDebug::Block block ( "G3Request::setup" );
   kDebug() << "(<>)";
   // reset / initialize the members
-  m_header.clear();
-  m_meta.clear();
-  m_payload = NULL;
-  m_result  = QVariant();
-  m_status  = 0;
+  m->header.clear();
+  m->meta.clear();
+  m->payload = NULL;
+  m->result  = QVariant();
+  m->status  = 0;
   // G3 uses 'RemoteAccesKeys' for authentication purposes (see API documentation)
   // this key is locally stored by this slave, we specify it if it exists
-  if ( ! m_backend->credentials().digestInfo.isEmpty() )
-    addHeaderItem ( QLatin1String("customHTTPHeader"), QString("X-Gallery-Request-Key: %1" ).arg(m_backend->credentials().digestInfo) );
+  if ( ! m->backend->credentials().digestInfo.isEmpty() )
+    addHeaderItem ( QLatin1String("customHTTPHeader"), QString("X-Gallery-Request-Key: %1" ).arg(m->backend->credentials().digestInfo) );
   // setup the actual http job
-  switch ( m_method )
+  switch ( m->method )
   {
     case KIO::HTTP_DELETE:
-      m_job = KIO::http_post ( m_requestUrl, QByteArray(), KIO::DefaultFlags );
+      m->job = KIO::http_post ( m->requestUrl, QByteArray(), KIO::DefaultFlags );
       addHeaderItem ( QLatin1String("content-type"),     QLatin1String("Content-Type: application/x-www-form-urlencoded") );
       addHeaderItem ( QLatin1String("customHTTPHeader"), QLatin1String("X-Gallery-Request-Method: delete") );
       break;
     case KIO::HTTP_GET:
-      m_job = KIO::get ( webUrlWithQueryItems(m_requestUrl,m_query), KIO::Reload, KIO::DefaultFlags );
+      m->job = KIO::get ( webUrlWithQueryItems(m->requestUrl,m->query), KIO::Reload, KIO::DefaultFlags );
       addHeaderItem ( QLatin1String("customHTTPHeader"), QLatin1String("X-Gallery-Request-Method: get") );
       break;
     case KIO::HTTP_HEAD:
-//      m_job = KIO::get ( webUrlWithQueryItems(m_requestUrl,m_query), KIO::Reload, KIO::DefaultFlags );
-      m_job = KIO::mimetype ( webUrlWithQueryItems(m_requestUrl,m_query), KIO::DefaultFlags );
+//      m->job = KIO::get ( webUrlWithQueryItems(m->requestUrl,m->query), KIO::Reload, KIO::DefaultFlags );
+      m->job = KIO::mimetype ( webUrlWithQueryItems(m->requestUrl,m->query), KIO::DefaultFlags );
       addHeaderItem ( QLatin1String("customHTTPHeader"), QLatin1String("X-Gallery-Request-Method: head") );
       break;
     case KIO::HTTP_POST:
-      if ( m_file )
+      if ( m->file )
       {
-        m_job = KIO::http_post ( m_requestUrl, webFileFormPostPayload(m_query,m_file), KIO::DefaultFlags );
-        addHeaderItem ( QLatin1String("content-type"), QString("Content-Type: multipart/form-data; boundary=%1").arg(m_boundary) );
+        m->job = KIO::http_post ( m->requestUrl, webFileFormPostPayload(m->query,m->file), KIO::DefaultFlags );
+        addHeaderItem ( QLatin1String("content-type"), QString("Content-Type: multipart/form-data; boundary=%1").arg(m->boundary) );
       }
       else
       {
-        m_job = KIO::http_post ( m_requestUrl, webFormPostPayload(m_query), KIO::DefaultFlags );
+        m->job = KIO::http_post ( m->requestUrl, webFormPostPayload(m->query), KIO::DefaultFlags );
         addHeaderItem ( QLatin1String("content-type"), QLatin1String("Content-Type: application/x-www-form-urlencoded") );
       }
       addHeaderItem ( QLatin1String("customHTTPHeader"), QLatin1String("X-Gallery-Request-Method: post") );
       break;
     case KIO::HTTP_PUT:
-      m_job = KIO::http_post ( m_requestUrl, webFormPostPayload(m_query), KIO::DefaultFlags );
+      m->job = KIO::http_post ( m->requestUrl, webFormPostPayload(m->query), KIO::DefaultFlags );
       addHeaderItem ( QLatin1String("content-type"), QLatin1String("Content-Type: application/x-www-form-urlencoded") );
       addHeaderItem ( QLatin1String("customHTTPHeader"), QLatin1String("X-Gallery-Request-Method: put") );
       break;
   } // switch request method
   // add header items if specified
   QHash<QString,QString>::const_iterator it;
-  for ( it=m_header.constBegin(); it!=m_header.constEnd(); it++ )
-    m_job->addMetaData ( it.key(), it.value() );
+  for ( it=m->header.constBegin(); it!=m->header.constEnd(); it++ )
+    m->job->addMetaData ( it.key(), it.value() );
   kDebug() << "{<>}";
 } // G3Request::setup
 
@@ -372,29 +380,29 @@ void G3Request::process ( )
   kDebug() << "(<>)";
   // prepare handling of authentication info
   // run the job
-  kDebug() << "sending request to url" << m_job->url();
+  kDebug() << "sending request to url" << m->job->url();
   int attempt = 0;
   do
   {
     // if status is 403 this is a retry after a failed attempt
     // we simply construct a fresh job by calling setup again...
     // TODO: required at all ? or can a job simply be run several times ?
-    if ( 403==m_status )
+    if ( 403==m->status )
     {
       kDebug() << "resetting job for a new trial";
       setup ( );
     }
-    if ( ! NetAccess::synchronousRun ( m_job, NULL, &m_payload, &m_finalUrl, &m_meta ) )
+    if ( ! NetAccess::synchronousRun ( m->job, NULL, &m->payload, &m->finalUrl, &m->meta ) )
       throw Exception ( Error(ERR_SLAVE_DEFINED),
-                        i18n("request failed: %2 [%1]").arg(m_job->error()).arg(m_job->errorString()) );
+                        i18n("request failed: %2 [%1]").arg(m->job->error()).arg(m->job->errorString()) );
     // check for problems on protocol level
-    if ( m_job->error() )
+    if ( m->job->error() )
       throw Exception ( Error(ERR_SLAVE_DEFINED),
-                        i18n("Runtime error processing job: %2 [%1]").arg(m_job->error()).arg(m_job->errorString()) );
+                        i18n("Runtime error processing job: %2 [%1]").arg(m->job->error()).arg(m->job->errorString()) );
     // extract and store http status code from reply
-    m_status = httpStatusCode();
-  } while (    (m_job->url().fileName()!=QLatin1String("rest")) // exception: g3Check: looking for REST API
-            && (403==m_status)                   // repeat only in this case
+    m->status = httpStatusCode();
+  } while (    (m->job->url().fileName()!=QLatin1String("rest")) // exception: g3Check: looking for REST API
+            && (403==m->status)                   // repeat only in this case
 //            && retryWithChangedCredentials(++attempt) );  // retry makes sense if credentials have changed
             && retryWithChangedCredentials(attempt) );  // retry makes sense if credentials have changed
   kDebug() << "{<>}"; 
@@ -413,40 +421,40 @@ void G3Request::evaluate ( )
   KDebug::Block block ( "G3Request::evaluate" );
   kDebug() << "(<>)";
   // check for success on protocol & content level (headers and so on)
-  switch ( m_status )
+  switch ( m->status )
   {
     case 0:   break; // no error
-    case 200: kDebug() << QString("HTTP %1 OK"                           ).arg(QVariant(m_meta[QLatin1String("responsecode")]).toInt()); break;
-    case 201: kDebug() << QString("HTTP %1 Created"                      ).arg(QVariant(m_meta[QLatin1String("responsecode")]).toInt()); break;
-    case 202: kDebug() << QString("HTTP %1 Accepted"                     ).arg(QVariant(m_meta[QLatin1String("responsecode")]).toInt()); break;
-    case 203: kDebug() << QString("HTTP %1 Non-Authoritative Information").arg(QVariant(m_meta[QLatin1String("responsecode")]).toInt()); break;
-    case 204: kDebug() << QString("HTTP %1 No Content"                   ).arg(QVariant(m_meta[QLatin1String("responsecode")]).toInt()); break;
-    case 205: kDebug() << QString("HTTP %1 Reset Content"                ).arg(QVariant(m_meta[QLatin1String("responsecode")]).toInt()); break;
-    case 206: kDebug() << QString("HTTP %1 Partial Content"              ).arg(QVariant(m_meta[QLatin1String("responsecode")]).toInt()); break;
+    case 200: kDebug() << QString("HTTP %1 OK"                           ).arg(QVariant(m->meta[QLatin1String("responsecode")]).toInt()); break;
+    case 201: kDebug() << QString("HTTP %1 Created"                      ).arg(QVariant(m->meta[QLatin1String("responsecode")]).toInt()); break;
+    case 202: kDebug() << QString("HTTP %1 Accepted"                     ).arg(QVariant(m->meta[QLatin1String("responsecode")]).toInt()); break;
+    case 203: kDebug() << QString("HTTP %1 Non-Authoritative Information").arg(QVariant(m->meta[QLatin1String("responsecode")]).toInt()); break;
+    case 204: kDebug() << QString("HTTP %1 No Content"                   ).arg(QVariant(m->meta[QLatin1String("responsecode")]).toInt()); break;
+    case 205: kDebug() << QString("HTTP %1 Reset Content"                ).arg(QVariant(m->meta[QLatin1String("responsecode")]).toInt()); break;
+    case 206: kDebug() << QString("HTTP %1 Partial Content"              ).arg(QVariant(m->meta[QLatin1String("responsecode")]).toInt()); break;
     case 400: throw Exception ( Error(ERR_INTERNAL_SERVER),        i18n("HTTP 400: Bad Request") );
     case 401: throw Exception ( Error(ERR_ACCESS_DENIED),          i18n("HTTP 401: Unauthorized") );
     case 403: throw Exception ( Error(ERR_COULD_NOT_AUTHENTICATE), i18n("HTTP 403: No Authorization") ); // login failed
     case 404: throw Exception ( Error(ERR_SERVICE_NOT_AVAILABLE),  i18n("HTTP 404: Not Found") );
-    default:  throw Exception ( Error(ERR_SLAVE_DEFINED),          i18n("Unexpected http error %1").arg(QVariant(m_meta[QLatin1String("responsecode")]).toInt()) );
+    default:  throw Exception ( Error(ERR_SLAVE_DEFINED),          i18n("Unexpected http error %1").arg(QVariant(m->meta[QLatin1String("responsecode")]).toInt()) );
   } // switch
   kDebug() << QString ("request processed [ headers size: %2 / payload size: %1]")
-                      .arg(m_meta.size())
-                      .arg(m_payload.size());
-  if ( QLatin1String("application/json")!=m_meta[QLatin1String("content-type")] )
+                      .arg(m->meta.size())
+                      .arg(m->payload.size());
+  if ( QLatin1String("application/json")!=m->meta[QLatin1String("content-type")] )
     throw Exception ( Error(ERR_SLAVE_DEFINED),
-                      i18n("unexpected content type in response: %1").arg(m_meta[QLatin1String("content-type")]) );
-  kDebug() << QString("response has expected content type '%1'").arg(m_meta[QLatin1String("content-type")]);
+                      i18n("unexpected content type in response: %1").arg(m->meta[QLatin1String("content-type")]) );
+  kDebug() << QString("response has expected content type '%1'").arg(m->meta[QLatin1String("content-type")]);
   // SUCCESS, convert result content (payload) into a usable object structure
   // NOTE: there is a bug in the G3 API implementation, it returns 'null' instead of an empty json structure in certain cases (DELETE)
-  if ( "null"==m_payload )
+  if ( "null"==m->payload )
     // gallery3 sends the literal string 'null' when serializing an empty set or object
-    m_result = QVariant();
-  else if ( '"'==m_payload.trimmed()[0] )
+    m->result = QVariant();
+  else if ( '"'==m->payload.trimmed()[0] )
     // QJson crashes when decoding a simple json encoded string ("string")
     // workaround: we wrap and dewrap it as a single array element
-    m_result = g3parse(QString("["+m_payload+"]").toUtf8()).toList().first();
+    m->result = g3parse(QString("["+m->payload+"]").toUtf8()).toList().first();
   else
-    m_result = g3parse ( m_payload );
+    m->result = g3parse ( m->payload );
   kDebug() << "{<>}";
 } // G3Request::process
 
@@ -462,10 +470,10 @@ void G3Request::evaluate ( )
  */
 QString G3Request::toString ( )
 {
-  if ( ! m_result.canConvert(QVariant::String) )
+  if ( ! m->result.canConvert(QVariant::String) )
     throw Exception ( Error(ERR_SLAVE_DEFINED),
                       i18n("gallery response did not hold a valid remote access key") );
-  QString string = m_result.toString();
+  QString string = m->result.toString();
   kDebug() << "{<string>}" << string;
   return string;
 } // G3Request::toString
@@ -486,7 +494,7 @@ G3Item* G3Request::toItem ( QVariant& entry )
     throw Exception ( Error(ERR_SLAVE_DEFINED),
                       i18n("gallery response did not hold a valid item description") );
   QVariantMap attributes = entry.toMap();
-  G3Item* item = G3Item::instantiate ( m_backend, attributes );
+  G3Item* item = G3Item::instantiate ( m->backend, attributes );
   kDebug() << "{<item>}" << item->toPrintout();
   return item;
 } // G3Request::toItem
@@ -505,10 +513,10 @@ QList<G3Item*> G3Request::toItems ( )
   kDebug() << "(<>)";
   QList<G3Item*> items;
   // expected result syntax ?
-  if ( ! m_result.canConvert(QVariant::List) )
+  if ( ! m->result.canConvert(QVariant::List) )
     throw Exception ( Error(ERR_SLAVE_DEFINED),
                       i18n("gallery response did not hold a valid list of item descriptions") );
-  QList<QVariant> entries = m_result.toList();
+  QList<QVariant> entries = m->result.toList();
   kDebug() << "result holds" << entries.count() << "entries";
   int i=0;
   foreach ( QVariant entry, entries )
@@ -579,10 +587,10 @@ QList<g3index> G3Request::toItemIds ( )
   kDebug() << "(<>)";
   QList<g3index> ids;
   // expected result syntax ?
-  if ( ! m_result.canConvert(QVariant::List) )
+  if ( ! m->result.canConvert(QVariant::List) )
     throw Exception ( Error(ERR_SLAVE_DEFINED),
                       i18n("gallery response did not hold a valid list of item descriptions") );
-  QList<QVariant> entries = m_result.toList();
+  QList<QVariant> entries = m->result.toList();
   kDebug() << "result holds" << entries.count() << "entries";
   int i=0;
   foreach ( QVariant entry, entries )
@@ -932,7 +940,7 @@ void G3Request::g3FetchObject ( G3Backend* const backend, const KUrl& url )
   for ( QMap<QString,QString>::const_iterator it=queryItems.constBegin(); it!=queryItems.constEnd(); it++ )
     request.addQueryItem ( it.key(), it.value() );
   request.setup    ( );
-  connect ( request.m_job, SIGNAL(    data(KIO::Job*,const QByteArray&)), backend->parent(), SLOT(    slotData(KIO::Job*,const QByteArray&)) );
+  connect ( request.m->job, SIGNAL(    data(KIO::Job*,const QByteArray&)), backend->parent(), SLOT(    slotData(KIO::Job*,const QByteArray&)) );
   request.process  ( );
   kDebug() << "{<>}";
 } // G3Request::g3FetchObject

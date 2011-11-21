@@ -35,12 +35,18 @@ namespace KIO
     class G3Backend
       : public QObject
     {
+      class Members
+      {
+        public:
+        inline Members ( const KUrl& g3Url ) : baseUrl(g3Url) { };
+        AuthInfo               credentials;
+        const KUrl             baseUrl;
+        KUrl                   restUrl;
+        QHash<g3index,G3Item*> items;
+      }; // struct Members
       Q_OBJECT
       private:
-        AuthInfo               m_credentials;
-        const KUrl             m_baseUrl;
-        KUrl                   m_restUrl;
-        QHash<g3index,G3Item*> m_items;
+        Members* const m;
       protected:
       public:
         static G3Backend* const instantiate ( QObject* parent, QHash<QString,G3Backend*>& backends, const KUrl g3Url );
@@ -49,10 +55,10 @@ namespace KIO
         const UDSEntry                       toUDSEntry     ( );
         const UDSEntryList                   toUDSEntryList ( );
         const QString                        toPrintout     ( ) const;
-        inline AuthInfo&                     credentials ( )       { return m_credentials; }
-        inline const KUrl&                   baseUrl     ( ) const { return m_baseUrl; };
-        inline const KUrl&                   restUrl     ( ) const { return m_restUrl; };
-        inline const QHash<g3index,G3Item*>& items       ( ) const { return m_items;    };
+        inline AuthInfo&                     credentials ( )       { return m->credentials; }
+        inline const KUrl&                   baseUrl     ( ) const { return m->baseUrl; };
+        inline const KUrl&                   restUrl     ( ) const { return m->restUrl; };
+        inline const QHash<g3index,G3Item*>& items       ( ) const { return m->items;    };
         G3Item*                              item       ( g3index id );
         G3Item*                              itemBase   ( );
         G3Item*                              itemById   ( g3index id );

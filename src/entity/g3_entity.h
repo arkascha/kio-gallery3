@@ -45,6 +45,7 @@ namespace KIO
       public:
         G3Entity ( const Entity::G3Type type, G3Backend* const backend );
         inline const Entity::G3Type type ( ) const { return m_type; };
+        virtual const QString toPrintout ( ) const = 0;
   //      QByteArray toJSON     ( ) const;
   //      Entity&    fromJSON   ( const QByteArray& json );
     }; // class G3Entity
