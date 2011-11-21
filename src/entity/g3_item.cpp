@@ -421,7 +421,7 @@ const UDSEntry G3Item::toUDSEntry ( ) const
   entry.insert( UDSEntry::UDS_MIME_TYPE,          m_mimetype->name() );
   entry.insert( UDSEntry::UDS_DISPLAY_TYPE,       m_type.toString() );
   entry.insert( UDSEntry::UDS_SIZE,               (Entity::G3Type::ALBUM==m_type.toInt()) ? 0L : attributeMapToken(QLatin1String("entity"),QLatin1String("file_size"),QVariant::Int).toInt() );
-  entry.insert( UDSEntry::UDS_ACCESS,             0600 );
+  entry.insert( UDSEntry::UDS_ACCESS,             canEdit() ? 0600 : 0400 );
   entry.insert( UDSEntry::UDS_CREATION_TIME,      attributeMapToken(QLatin1String("entity"),QLatin1String("created"),QVariant::Int).toInt() );
   entry.insert( UDSEntry::UDS_MODIFICATION_TIME,  attributeMapToken(QLatin1String("entity"),QLatin1String("updated"),QVariant::Int).toInt() );
 //  entry.insert( UDSEntry::UDS_LOCAL_PATH,         m_fileUrl.path() );

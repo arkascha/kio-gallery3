@@ -459,6 +459,9 @@ void G3Backend::removeItem ( G3Item* item )
 {
   KDebug::Block block ( "G3Backend::removeItem" );
   kDebug() << "(<item>)" << item->toPrintout();
+  // check for write permissions
+  if ( ! item->canEdit() )
+    throw Exception ( Error(ERR_WRITE_ACCESS_DENIED),item->toPrintout() );
   G3Request::g3DelItem ( this, item->id() );
   G3Item* parent = item->parent();
   if ( parent )
@@ -486,6 +489,9 @@ G3Item* const G3Backend::updateItem ( G3Item* item, const QHash<QString,QString>
 {
   KDebug::Block block ( "G3Backend::updateItem" );
   kDebug() << "(<item> <attributes[keys]>)" << item->toPrintout() << QStringList(attributes.keys()).join(",");
+  // check for write permissions
+  if ( ! item->canEdit() )
+    throw Exception ( Error(ERR_WRITE_ACCESS_DENIED),item->toPrintout() );
   G3Request::g3PutItem ( this, item->id(), attributes );
   // refresh old parent item
   G3Item* parent = item->parent ( );
@@ -520,6 +526,9 @@ G3Item* const G3Backend::createItem  ( G3Item* parent, const QString& name, cons
 {
   KDebug::Block block ( "G3Backend::createItem" );
   kDebug() << "(<parent> <name> <file[name]>)" << parent->toPrintout() << name << ( file ? file->filename() : "-/-" );
+  // check for write permissions
+  if ( ! parent->canEdit() )
+    throw Exception ( Error(ERR_WRITE_ACCESS_DENIED),parent->toPrintout() );
   // setup the attributes that describe to new entity
   QHash<QString,QString> attributes;
   attributes.insert ( QLatin1String("name"),      name );

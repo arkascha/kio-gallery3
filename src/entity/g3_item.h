@@ -53,6 +53,7 @@ namespace KIO
         inline const QString        name     ( ) const { return m_name; };
         inline const KMimeType::Ptr mimetype ( ) const { return m_mimetype; };
         inline int                  size            ( bool strict=FALSE ) const { return (Entity::G3Type::ALBUM==m_type.toInt()) ? 0L : attributeMapToken(QLatin1String("entity"),QLatin1String("file_size"),QVariant::Int).toInt(); };
+        inline bool                 canEdit         ( bool strict=FALSE ) const { return attributeMapToken ( QLatin1String("entity"), QLatin1String("can_edit"), QVariant::Bool, strict ).toBool(); };
         inline const KUrl           restUrl         ( bool strict=FALSE ) const { return KUrl ( attributeToken    (                          QLatin1String("url"),               QVariant::String, strict ).toString() ); };
         inline const KUrl           coverUrl        ( bool strict=FALSE ) const { return KUrl ( attributeMapToken ( QLatin1String("entity"), QLatin1String("album_cover"),       QVariant::String, strict ).toString() ); };
         inline const KUrl           webUrl          ( bool strict=FALSE ) const { return KUrl ( attributeMapToken ( QLatin1String("entity"), QLatin1String("web_url"),           QVariant::String, strict ).toString() ); };
