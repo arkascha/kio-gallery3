@@ -11,16 +11,15 @@
 
 #include <QHash>
 #include <ktemporaryfile.h>
+#include <kio/authinfo.h>
 #include "utility/defines.h"
-#include "gallery3/g3_request.h"
-#include "entity/g3_file.h"
-#include "entity/g3_item.h"
 
 namespace KIO
 {
   namespace Gallery3
   {
-    class EntityObject;
+    class G3Item;
+    class G3File;
 
     /**
      * class G3Backend
@@ -76,7 +75,7 @@ namespace KIO
         G3Item*                              popItem     ( g3index id );
         void                                 removeItem  ( G3Item* item );
         G3Item* const                        updateItem  ( G3Item* item, const QHash<QString,QString>& attributes );
-        G3Item* const                        createItem  ( G3Item* parent, const QString& name, const Entity::G3File* const file=NULL );
+        G3Item* const                        createItem  ( G3Item* parent, const QString& name, const G3File* const file=NULL );
         void                                 fetchFile   ( G3Item* item );
         void                                 fetchResize ( G3Item* item );
         void                                 fetchThumb  ( G3Item* item );

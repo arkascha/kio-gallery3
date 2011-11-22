@@ -1,9 +1,6 @@
 ** Features:
 
 ** Implementation
-- use d-pointers for private members
-- - binary compatibility (actually irrelevant for a kio slave...)
-- - kde coding conventions (hm...)
 ** Convenience:
 - additional actions upon items beside classical file management
 - - offer to access the gallery3 web surface directly for certain tasks
@@ -21,6 +18,3 @@ this in future, maybe by using an additional 'kded module'.
 - - download remotely existing thumbnail instead and use that
 - - might required an additional plugin to the kio-thumbnail slave
 ** Issues:
-- authentication works for me including the persistant storage of credentials if
-requested. However there appear to be rare situations when accessing the gallery3
-for the first time in a session requires a second round trip.

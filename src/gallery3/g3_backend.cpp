@@ -10,6 +10,8 @@
 #include "utility/exception.h"
 #include "gallery3/g3_backend.h"
 #include "gallery3/g3_request.h"
+#include "entity/g3_file.h"
+#include "entity/g3_item.h"
 
 using namespace KIO;
 using namespace KIO::Gallery3;
@@ -513,18 +515,18 @@ G3Item* const G3Backend::updateItem ( G3Item* item, const QHash<QString,QString>
 } // G3Backend::updateItem
 
 /**
- * G3Item* const G3Backend::createItem  ( G3Item* parent, const QString& name, const Entity::G3File* const file )
+ * G3Item* const G3Backend::createItem  ( G3Item* parent, const QString& name, const G3File* const file )
  *
  * param: G3Item* parent (pointer to item object)
  * param: const QString& name (readable name the item is created as)
- * param: Entity::G3File* file (pointer to a G3File describing a file to be uploaded)
+ * param: G3File* file (pointer to a G3File describing a file to be uploaded)
  * returns: G3Item* (pointer to created item object)
  * description:
  * creates an item inside the remote gallery system, be it an album, a photo or a movie
  * this creation consists of the node created, some attributes for its description and
  * in a local file in case of a photo or movie item
  */
-G3Item* const G3Backend::createItem  ( G3Item* parent, const QString& name, const Entity::G3File* const file )
+G3Item* const G3Backend::createItem  ( G3Item* parent, const QString& name, const G3File* const file )
 {
   KDebug::Block block ( "G3Backend::createItem" );
   kDebug() << "(<parent> <name> <file[name]>)" << parent->toPrintout() << name << ( file ? file->filename() : "-/-" );
@@ -537,12 +539,12 @@ G3Item* const G3Backend::createItem  ( G3Item* parent, const QString& name, cons
   attributes.insert ( QLatin1String("title"),     name.left(name.lastIndexOf(".")) ); // strip "file name extension", if contained
   if ( file )
   {
-    attributes.insert ( QLatin1String("type"),      Entity::G3Type(file->mimetype()).toString() );
+    attributes.insert ( QLatin1String("type"),      G3Type(file->mimetype()).toString() );
     attributes.insert ( QLatin1String("mime_type"), file->mimetype()->name() );
   }
   else
   {
-    attributes.insert ( QLatin1String("type"),      Entity::G3Type(Entity::G3Type::ALBUM).toString() );
+    attributes.insert ( QLatin1String("type"),      G3Type(G3Type::ALBUM).toString() );
     attributes.insert ( QLatin1String("mime_type"), QLatin1String("inode/directory") );
   }
   // send request

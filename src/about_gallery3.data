@@ -8,7 +8,7 @@
 #define ABOUT_APP_NAME                    "kio_gallery3"
 #define ABOUT_CATALOG_NAME                "kio_gallery3"
 #define ABOUT_PROGRAM_NAME                "KIO protocol 'gallery3:/'"
-#define ABOUT_VERSION                     "0.1.2"
+#define ABOUT_VERSION                     "0.1.3"
 #define ABOUT_DESCRIPTION                 "KIO slave that implements access to a remote gallery3 server"
 #define ABOUT_LICENCE_TYPE                KAboutData::License_LGPL
 #define ABOUT_COPYRIGHT                   "(C) 2011 Christian Reiner, Hamburg, Germany"

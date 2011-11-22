@@ -17,14 +17,17 @@
 #include <kio/udsentry.h>
 #include <ktemporaryfile.h>
 #include "utility/defines.h"
-#include "gallery3/g3_backend.h"
 #include "kio_protocol.h"
 
 namespace KIO
 {
   namespace Gallery3
   {
+    class G3Backend;
+    class G3Item;
+    
     /**
+     * class KIOGallery3Protocol
     */
     class KIOGallery3Protocol
       : public QObject
@@ -48,11 +51,11 @@ namespace KIO
       private:
         Members* const m;
       protected:
-        void               selectConnection ( const QString& host, qint16 port, const QString& user, const QString& pass );
-        G3Backend*         selectBackend    ( const KUrl& base );
-        G3Item*            itemBase         ( const KUrl& itemUrl );
-        G3Item*            itemByUrl        ( const KUrl& itemUrl );
-        QList<G3Item*>     itemsByUrl       ( const KUrl& itemUrl );
+        void           selectConnection ( const QString& host, qint16 port, const QString& user, const QString& pass );
+        G3Backend*     selectBackend    ( const KUrl& base );
+        G3Item*        itemBase         ( const KUrl& itemUrl );
+        G3Item*        itemByUrl        ( const KUrl& itemUrl );
+        QList<G3Item*> itemsByUrl       ( const KUrl& itemUrl );
       public:
         inline const QString protocol ( ) { return QString("gallery3"); };
         KIOGallery3Protocol ( const QByteArray &pool, const QByteArray &app, QObject* parent=0 );

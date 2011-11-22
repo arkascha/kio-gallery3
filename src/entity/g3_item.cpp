@@ -33,7 +33,7 @@ G3Item* const G3Item::instantiate ( G3Backend* const backend, const QVariantMap&
   kDebug() << "(<backend> <attributes>)" << backend->toPrintout() << QStringList(attributes.keys()).join(",");
   // find out the items type first
   QVariantMap    entity;
-  Entity::G3Type type;
+  G3Type type;
   if (    attributes.contains(QLatin1String("entity"))
        && attributes[QLatin1String("entity")].canConvert(QVariant::Map) )
     entity = attributes[QLatin1String("entity")].toMap();
@@ -42,7 +42,7 @@ G3Item* const G3Item::instantiate ( G3Backend* const backend, const QVariantMap&
   if (    entity.contains(QLatin1String("type"))
        && entity[QLatin1String("type")].canConvert(QVariant::String) )
   {
-    type = Entity::G3Type ( entity[QLatin1String("type")].toString() );
+    type = G3Type ( entity[QLatin1String("type")].toString() );
     kDebug() << QString("item type is '%1' [%2]").arg(type.toString()).arg(type.toInt());
   }
   else
@@ -50,15 +50,15 @@ G3Item* const G3Item::instantiate ( G3Backend* const backend, const QVariantMap&
   // create an item object
   switch ( type.toInt() )
   {
-    case Entity::G3Type::ALBUM:
+    case G3Type::ALBUM:
       return new AlbumEntity   ( backend, attributes );
-    case Entity::G3Type::MOVIE:
+    case G3Type::MOVIE:
       return new MovieEntity   ( backend, attributes );
-    case Entity::G3Type::PHOTO:
+    case G3Type::PHOTO:
       return new PhotoEntity   ( backend, attributes );
-    case Entity::G3Type::TAG:
+    case G3Type::TAG:
       return new TagEntity     ( backend, attributes );
-    case Entity::G3Type::COMMENT:
+    case G3Type::COMMENT:
       return new CommentEntity ( backend, attributes );
     default:
       throw Exception ( Error(ERR_INTERNAL),
@@ -69,12 +69,11 @@ G3Item* const G3Item::instantiate ( G3Backend* const backend, const QVariantMap&
 /**
  * This constructs an item object that describes exactly one single node inside the gallery.
  */
-G3Item::G3Item ( const Entity::G3Type type, G3Backend* const backend, const QVariantMap& data )
-  : G3Entity ( type, backend )
-  , m        ( new G3Item::Members(backend,data) )
+G3Item::G3Item ( const G3Type type, G3Backend* const backend, const QVariantMap& attributes )
+  : m ( new G3Item::Members(type,backend,attributes) )
 {
   KDebug::Block block ( "G3Item::G3Item" );
-  kDebug() << "(<type> <backend> <attributes>)" << type.toString() << backend->toPrintout() << QStringList(data.keys()).join(",");
+  kDebug() << "(<type> <backend> <attributes>)" << type.toString() << backend->toPrintout() << QStringList(attributes.keys()).join(",");
   // store most important entity tokens directly as strings
   // a few values stored type-strict for later convenience
   m->id         = attributeMapToken ( QLatin1String("entity"), QLatin1String("id"),   QVariant::UInt,   TRUE  ).toUInt();
@@ -86,7 +85,7 @@ G3Item::G3Item ( const Entity::G3Type type, G3Backend* const backend, const QVar
   else
     switch ( type.toInt() )
     {
-      case Entity::G3Type::ALBUM:
+      case G3Type::ALBUM:
         m->mimetype = KMimeType::mimeType ( QLatin1String("inode/directory") );
         break;
       default:
@@ -97,16 +96,16 @@ G3Item::G3Item ( const Entity::G3Type type, G3Backend* const backend, const QVar
   if ( parent_url.isEmpty() )
   {
     m->parent = NULL;
-    m_backend->pushItem ( this );
+    m->backend->pushItem ( this );
   }
   else
   {
     KUrl url = KUrl ( parent_url );
     g3index id = QVariant(url.fileName()).toInt();
-    m->parent = m_backend->item ( id );
+    m->parent = m->backend->item ( id );
     kDebug() << "caching item" << this->toPrintout() << "in parent item" << m->parent->toPrintout();
     m->parent->pushMember ( this );
-    m_backend->pushItem ( this );
+    m->backend->pushItem ( this );
   } // else
 } // G3Item::G3Item
 
@@ -133,7 +132,7 @@ G3Item::~G3Item()
     delete member.value();
   }
   // remove this item from the backends catalog
-  m_backend->popItem ( m->id );
+  m->backend->popItem ( m->id );
   // delete private members
   delete m;
 } // G3Item::~G3Item
@@ -361,7 +360,7 @@ void G3Item::buildMemberItems ( )
     if ( 0<urls.count() )
     {
       kDebug() << "constructing" << urls.count() << "missing member items";
-      QList<G3Item*> items = G3Request::g3GetItems ( m_backend, urls.values() );
+      QList<G3Item*> items = G3Request::g3GetItems ( m->backend, urls.values() );
     }
   } // if
 } // G3Item::getMembers
@@ -419,10 +418,10 @@ const UDSEntry G3Item::toUDSEntry ( ) const
   entry.insert( UDSEntry::UDS_NAME,               QString("%1").arg(m->name) );
 //  entry.insert( UDSEntry::UDS_DISPLAY_NAME,       QString("[%1] %2").arg(m->id).arg(attributeMapToken("entity","title",QVariant::String).toString()) );
   entry.insert( UDSEntry::UDS_COMMENT,            attributeMapToken("entity","description",QVariant::String).toString() );
-  entry.insert( UDSEntry::UDS_FILE_TYPE,          m_type.toUDSFileType() );
+  entry.insert( UDSEntry::UDS_FILE_TYPE,          m->type.toUDSFileType() );
   entry.insert( UDSEntry::UDS_MIME_TYPE,          m->mimetype->name() );
-  entry.insert( UDSEntry::UDS_DISPLAY_TYPE,       m_type.toString() );
-  entry.insert( UDSEntry::UDS_SIZE,               (Entity::G3Type::ALBUM==m_type.toInt()) ? 0L : attributeMapToken(QLatin1String("entity"),QLatin1String("file_size"),QVariant::Int).toInt() );
+  entry.insert( UDSEntry::UDS_DISPLAY_TYPE,       m->type.toString() );
+  entry.insert( UDSEntry::UDS_SIZE,               (G3Type::ALBUM==m->type.toInt()) ? 0L : attributeMapToken(QLatin1String("entity"),QLatin1String("file_size"),QVariant::Int).toInt() );
   entry.insert( UDSEntry::UDS_ACCESS,             canEdit() ? 0600 : 0400 );
   entry.insert( UDSEntry::UDS_CREATION_TIME,      attributeMapToken(QLatin1String("entity"),QLatin1String("created"),QVariant::Int).toInt() );
   entry.insert( UDSEntry::UDS_MODIFICATION_TIME,  attributeMapToken(QLatin1String("entity"),QLatin1String("updated"),QVariant::Int).toInt() );
@@ -490,42 +489,42 @@ const QHash<QString,QString> G3Item::toAttributes ( ) const
   QHash<QString,QString> attributes;
   attributes.insert ( QLatin1String("id"),       QString("%1").arg(m->id) );
   attributes.insert ( QLatin1String("name"),     m->name );
-  attributes.insert ( QLatin1String("type"),     m_type.toString() );
+  attributes.insert ( QLatin1String("type"),     m->type.toString() );
   return attributes;
 } // G3Item::toAttributes
 
 //==========
 
 AlbumEntity::AlbumEntity ( G3Backend* const backend, const QVariantMap& attributes )
-  : G3Item ( Entity::G3Type::ALBUM, backend, attributes )
+  : G3Item ( G3Type::ALBUM, backend, attributes )
 {
   KDebug::Block block ( "AlbumEntity::AlbumEntity" );
   kDebug() << "(<backend> <attributes>)" << backend->toPrintout() << QStringList(attributes.keys()).join(",");
 } // AlbumEntity::AlbumEntity
 
 MovieEntity::MovieEntity ( G3Backend* const backend, const QVariantMap& attributes )
-  : G3Item ( Entity::G3Type::MOVIE, backend, attributes )
+  : G3Item ( G3Type::MOVIE, backend, attributes )
 {
   KDebug::Block block ( "MovieEntity::MovieEntity" );
   kDebug() << "(<backend> <attributes>)" << backend->toPrintout() << QStringList(attributes.keys()).join(",");
 } // MovieEntity::MovieEntity
 
 PhotoEntity::PhotoEntity ( G3Backend* const backend, const QVariantMap& attributes )
-  : G3Item ( Entity::G3Type::PHOTO, backend, attributes )
+  : G3Item ( G3Type::PHOTO, backend, attributes )
 {
   KDebug::Block block ( "PhotoEntity::PhotoEntity" );
   kDebug() << "(<backend> <attributes>)" << backend->toPrintout() << QStringList(attributes.keys()).join(",");
 } // PhotoEntity::PhotoEntity
 
 TagEntity::TagEntity ( G3Backend* const backend, const QVariantMap& attributes )
-  : G3Item ( Entity::G3Type::TAG, backend, attributes )
+  : G3Item ( G3Type::TAG, backend, attributes )
 {
   KDebug::Block block ( "TagEntity::TagEntity" );
   kDebug() << "(<backend> <attributes>)" << backend->toPrintout() << QStringList(attributes.keys()).join(",");
 } // TagEntity::TagEntity
 
 CommentEntity::CommentEntity ( G3Backend* const backend, const QVariantMap& attributes )
-  : G3Item ( Entity::G3Type::COMMENT, backend, attributes )
+  : G3Item ( G3Type::COMMENT, backend, attributes )
 {
   KDebug::Block block ( "CommentEntity::CommentEntity" );
   kDebug() << "(<backend> <attributes>)" << backend->toPrintout() << QStringList(attributes.keys()).join(",");

@@ -1,3 +1,5 @@
+* Tue Nov 22 2011 Christian Reiner: version 0.1.3
+- internal code simplifications as preparation for future extensions
 * Mon Nov 21 2011 Christian Reiner: version 0.1.2
 - introduction of d-pointer usage for kde coding compliance
 * Sun Nov 20 2011 Christian Reiner: version 0.1.1

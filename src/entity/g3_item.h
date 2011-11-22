@@ -9,17 +9,19 @@
 #ifndef ENTITY_G3_ITEM_H
 #define ENTITY_G3_ITEM_H
 
+#include <QVariant>
 #include <kio/global.h>
 #include <kio/udsentry.h>
 #include <kmimetype.h>
 #include <kdatetime.h>
-#include "entity/g3_entity.h"
+#include "utility/defines.h"
+#include "entity/g3_type.h"
 
 namespace KIO
 {
   namespace Gallery3
   {
-
+    class G3Backend;
     /**
     * This class describes all aspects of an 'item', as defined by the gallery3 API.
     *
@@ -31,34 +33,36 @@ namespace KIO
     */
     class G3Item
       : public QObject
-      , public G3Entity
     {
       class Members
       {
         public:
-        inline Members ( G3Backend* const backend, const QVariantMap& data) : attributes(data) { };
-        g3index                    id;
-        QString                    name;
-        KMimeType::Ptr             mimetype;
-        G3Item*                    parent;
-        QHash<g3index,G3Item*>     members;
-        QVariantMap                attributes;
+        inline Members ( const G3Type type, G3Backend* const backend, const QVariantMap& attributes) : type(type), backend(backend), attributes(attributes) { };
+        const G3Type           type;
+        G3Backend* const       backend;
+        g3index                id;
+        QString                name;
+        KMimeType::Ptr         mimetype;
+        G3Item*                parent;
+        QHash<g3index,G3Item*> members;
+        QVariantMap            attributes;
       }; // struct Membes
       Q_OBJECT
       private:
         Members* const m;
       protected:
-        G3Item ( const Entity::G3Type type, G3Backend* const backend, const QVariantMap& data );
+        G3Item ( const G3Type type, G3Backend* const backend, const QVariantMap& data );
       public:
         static G3Item* const instantiate ( G3Backend* const backend, const QVariantMap& data );
         ~G3Item ( );
       signals:
         void signalUDSEntry ( const UDSEntry& entry ) const;
       public:
+        inline const G3Type         type     ( ) const { return m->type; };
         inline const g3index        id       ( ) const { return m->id; };
         inline const QString        name     ( ) const { return m->name; };
         inline const KMimeType::Ptr mimetype ( ) const { return m->mimetype; };
-        inline int                  size            ( bool strict=FALSE ) const { return (Entity::G3Type::ALBUM==m_type.toInt()) ? 0L : attributeMapToken(QLatin1String("entity"),QLatin1String("file_size"),QVariant::Int).toInt(); };
+        inline int                  size            ( bool strict=FALSE ) const { return (G3Type::ALBUM==m->type.toInt()) ? 0L : attributeMapToken(QLatin1String("entity"),QLatin1String("file_size"),QVariant::Int).toInt(); };
         inline bool                 canEdit         ( bool strict=FALSE ) const { return attributeMapToken ( QLatin1String("entity"), QLatin1String("can_edit"), QVariant::Bool, strict ).toBool(); };
         inline const KUrl           restUrl         ( bool strict=FALSE ) const { return KUrl ( attributeToken    (                          QLatin1String("url"),               QVariant::String, strict ).toString() ); };
         inline const KUrl           coverUrl        ( bool strict=FALSE ) const { return KUrl ( attributeMapToken ( QLatin1String("entity"), QLatin1String("album_cover"),       QVariant::String, strict ).toString() ); };

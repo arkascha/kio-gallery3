@@ -16,11 +16,14 @@
 #include <algorithm>
 #include "utility/exception.h"
 #include "gallery3/g3_request.h"
+#include "gallery3/g3_backend.h"
+#include "entity/g3_file.h"
+#include "entity/g3_item.h"
 
 using namespace KIO;
 using namespace KIO::Gallery3;
 
-G3Request::Members::Members ( G3Backend* const backend, KIO::HTTP_METHOD method, const QString& service, const Entity::G3File* const file )
+G3Request::Members::Members ( G3Backend* const backend, KIO::HTTP_METHOD method, const QString& service, const G3File* const file )
   : backend ( backend )
   , method  ( method )
   , service ( service )
@@ -40,17 +43,17 @@ G3Request::Members::Members ( G3Backend* const backend, KIO::HTTP_METHOD method,
 } // G3Request::Members
 
 /**
- * G3Request::G3Request ( G3Backend* const backend, KIO::HTTP_METHOD method, const QString& service, const Entity::G3File* const file )
+ * G3Request::G3Request ( G3Backend* const backend, KIO::HTTP_METHOD method, const QString& service, const G3File* const file )
  *
  * param: G3Backend* const backend (backend associated to the requested g3 system)
  * param: KIO::HTTP_METHOD method (http method to be used)
  * param: const QString& service (service to be called, relative to the REST url)
- * param: const Entity::G3File* file (internal file ressource description, might hold a file for upload)
+ * param: const G3File* file (internal file ressource description, might hold a file for upload)
  * description:
  * offers a generic object holding all aspects and data required while processing a http request to the remote gallery3 system
  * some members are initialized, some basic settings done and a connection to the controlling slave base is established for authentication purposes
  */
-G3Request::G3Request ( G3Backend* const backend, KIO::HTTP_METHOD method, const QString& service, const Entity::G3File* const file )
+G3Request::G3Request ( G3Backend* const backend, KIO::HTTP_METHOD method, const QString& service, const G3File* const file )
   : m ( new G3Request::Members(backend,method,service,file) )
 {
   KDebug::Block block ( "G3Request::G3Request" );
@@ -165,22 +168,22 @@ void G3Request::addQueryItem ( const QString& key, const QString& value, bool sk
 } // G3Request::addQueryItem
 
 /**
- * void G3Request::addQueryItem ( const QString& key, Entity::G3Type value, bool skipIfEmpty )
+ * void G3Request::addQueryItem ( const QString& key, G3Type value, bool skipIfEmpty )
  *
  * param: const QString& key ( http query item key )
- * param: Entity::G3Type value ( http query item value )
+ * param: G3Type value ( http query item value )
  * param: bool skipIfEmpty ( controls if this item will be silently skipped in case of an empty value )
  * escription:
  * adds a single key/value pair to the query item collection in the request object
  * each pair collected by calls to this method will be added as query item later during job setup
  * note, that these items will be specified as part of the request url or its form body, depending on the request method
  */
-void G3Request::addQueryItem ( const QString& key, Entity::G3Type value, bool skipIfEmpty )
+void G3Request::addQueryItem ( const QString& key, G3Type value, bool skipIfEmpty )
 {
   kDebug() << "(<key> <value> <bool>)" << key << value.toString() << skipIfEmpty;
   if ( m->query.contains(key) )
     m->query.remove ( key ); // TODO: throw an error instead ?!?
-  if ( value==Entity::G3Type::NONE )
+  if ( value==G3Type::NONE )
     kDebug() << QString("skipping query item '%1' holding 'NONE' as entity type").arg(key);
   else
   {
@@ -260,16 +263,16 @@ QByteArray G3Request::webFormPostPayload ( const QHash<QString,QString>& query )
 } // G3Request::webFormPostPayload
 
 /**
- * QByteArray G3Request::webFileFormPostPayload ( const QHash<QString,QString>& query, const Entity::G3File* const file )
+ * QByteArray G3Request::webFileFormPostPayload ( const QHash<QString,QString>& query, const G3File* const file )
  *
  * param: const QHash<QString,QString>& query ( set of query items to be sent inside the request )
- * param: const Entity::G3File* const file ( internal file description specifying a file to be uploaded during the request )
+ * param: const G3File* const file ( internal file description specifying a file to be uploaded during the request )
  * return: QByteArray ( http post body )
  * description:
  * constructs a complete http post body holding multi-part form to be sent to a http server
  * this for includes several query items as separate parts and one final file
  */
-QByteArray G3Request::webFileFormPostPayload ( const QHash<QString,QString>& query, const Entity::G3File* const file )
+QByteArray G3Request::webFileFormPostPayload ( const QHash<QString,QString>& query, const G3File* const file )
 {
   kDebug() << "(<query> <file[name]>)" << query << ( file ? file->filename() : "-/-" );
   // write the form data
@@ -694,14 +697,14 @@ bool G3Request::g3Login ( G3Backend* const backend, AuthInfo& credentials )
 } // G3Request::g3Login
 
 /**
- * QList<G3Item*> G3Request::g3GetItems ( G3Backend* const backend, const QStringList& urls, Entity::G3Type type )
+ * QList<G3Item*> G3Request::g3GetItems ( G3Backend* const backend, const QStringList& urls, G3Type type )
  *
  * param: G3Backend* const backend ( G3 backend used for this request )
  * param: const QStringList& urls ( list of rest urls pointing to the requested items )
- * param: Entity::G3Type type ( filters result to items of a specific type if specified )
+ * param: G3Type type ( filters result to items of a specific type if specified )
  * returns: QList<G3Item*> ( list of pointers to valid local item objects )
  */
-QList<G3Item*> G3Request::g3GetItems ( G3Backend* const backend, const QStringList& urls, Entity::G3Type type )
+QList<G3Item*> G3Request::g3GetItems ( G3Backend* const backend, const QStringList& urls, G3Type type )
 {
   KDebug::Block block ( "G3Request::g3GetItems" );
   kDebug() << "(<backend> <urls [count]> <type>)" << backend->toPrintout() << urls.count() << type.toString();
@@ -727,17 +730,17 @@ QList<G3Item*> G3Request::g3GetItems ( G3Backend* const backend, const QStringLi
 } // G3Request::g3GetItems
 
 /**
- * QList<G3Item*> G3Request::g3GetItems ( G3Backend* const backend, g3index id, Entity::G3Type type )
+ * QList<G3Item*> G3Request::g3GetItems ( G3Backend* const backend, g3index id, G3Type type )
  *
  * param: G3Backend* const backend ( G3 backend used for this request )
  * param: g3index id ( numeric id of parent item whos members are requested )
- * param: Entity::G3Type type ( filters resulting item set to items of a specific type if specified )
+ * param: G3Type type ( filters resulting item set to items of a specific type if specified )
  * returns: QList<G3Item*> ( list of valid internal item objects )
  * description:
  * retrieves all members contained in a parent item specified by a numeric id
  * the resulting set of items may be filtered to a specific item type
  */
-QList<G3Item*> G3Request::g3GetItems ( G3Backend* const backend, g3index id, Entity::G3Type type )
+QList<G3Item*> G3Request::g3GetItems ( G3Backend* const backend, g3index id, G3Type type )
 {
   KDebug::Block block ( "G3Request::g3GetItems" );
   kDebug() << "(<backend> <id> <type>)" << backend->toPrintout() << id << type.toString();
@@ -801,21 +804,21 @@ g3index G3Request::g3GetAncestor ( G3Backend* const backend, G3Item* item )
 } // G3Request::g3GetAncestor
 
 /**
- * G3Item* G3Request::g3GetItem ( G3Backend* const backend, g3index id, const QString& scope, const QString& name, bool random, Entity::G3Type type )
+ * G3Item* G3Request::g3GetItem ( G3Backend* const backend, g3index id, const QString& scope, const QString& name, bool random, G3Type type )
  *
  * param: G3Backend* const backend ( G3 backend used for this request )
  * param: g3index id ( numeric item id )
  * param: const QString& scope ( scope the request is to be interpreted in )
  * param: const QString& name ( name acting as a filter for the matching items names )
  * param: bool random ( flag indicating if a random item is returned )
- * param: Entity::G3Type type ( filters retrieved item to a certain type )
+ * param: G3Type type ( filters retrieved item to a certain type )
  * returns: G3Item* ( internal item object )
  * description:
  * retrieves a single item from the remote gallery3 system
  * which item is picked can be controlled by the additional query items
  * a typical request spcifies a 'direct' scope resulting in the retrieval of the item directly specified by the given numerical item id
  */
-G3Item* G3Request::g3GetItem ( G3Backend* const backend, g3index id, const QString& scope, const QString& name, bool random, Entity::G3Type type )
+G3Item* G3Request::g3GetItem ( G3Backend* const backend, g3index id, const QString& scope, const QString& name, bool random, G3Type type )
 {
   KDebug::Block block ( "G3Request::g3GetItem" );
   kDebug() << "(<backend> <id> <scope> <name> <random> <type>)" << backend->toPrintout() << scope << name << random << type.toString();
@@ -832,16 +835,16 @@ G3Item* G3Request::g3GetItem ( G3Backend* const backend, g3index id, const QStri
 } // G3Request::g3GetItem
 
 /**
- * void G3Request::g3PostItem ( G3Backend* const backend, g3index id, const QHash<QString,QString>& attributes, const Entity::G3File* file )
+ * void G3Request::g3PostItem ( G3Backend* const backend, g3index id, const QHash<QString,QString>& attributes, const G3File* file )
  *
  * param: G3Backend* const backend ( G3 backend used for this request )
  * param: g3index id ( numeric item id )
  * param: const QHash<QString,QString>& attributes ( list of item attributes to be changed )
- * param: const Entity::G3File* file ( file to be uploaded as item )
+ * param: const G3File* file ( file to be uploaded as item )
  * description:
  * creates a single item described by a list of attributes and a file uploaded as altered content in case of a photo or movie item
  */
-void G3Request::g3PostItem ( G3Backend* const backend, g3index id, const QHash<QString,QString>& attributes, const Entity::G3File* file )
+void G3Request::g3PostItem ( G3Backend* const backend, g3index id, const QHash<QString,QString>& attributes, const G3File* file )
 {
   KDebug::Block block ( "G3Request::g3PostItem" );
   kDebug() << "(<backend> <id> <attributes[count]> <file>)" << backend->toPrintout() << id << attributes.count()
@@ -904,18 +907,18 @@ void G3Request::g3DelItem ( G3Backend* const backend, g3index id )
 } // G3Request::g3DelItem
 
 /**
- * g3index G3Request::g3SetItem ( G3Backend* const backend, g3index id, const QString& name, Entity::G3Type type, const QByteArray& file )
+ * g3index G3Request::g3SetItem ( G3Backend* const backend, g3index id, const QString& name, G3Type type, const QByteArray& file )
  *
  * param: G3Backend* const backend ( G3 backend used for this request )
  * param: g3index id ( numeric item id )
  * param: const QString& name
- * param: Entity::G3Type type
+ * param: G3Type type
  * param: const QByteArray& file
  * returns: g3index (numeric item id )
  * description:
  * ???
  */
-g3index G3Request::g3SetItem ( G3Backend* const backend, g3index id, const QString& name, Entity::G3Type type, const QByteArray& file )
+g3index G3Request::g3SetItem ( G3Backend* const backend, g3index id, const QString& name, G3Type type, const QByteArray& file )
 {
   KDebug::Block block ( "G3Request::g3SetItem" );
   kDebug() << "(<backend> <id> <name> <type> <file>)" << backend->toPrintout() << id << name << type.toString();

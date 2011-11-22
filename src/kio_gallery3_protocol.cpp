@@ -20,6 +20,7 @@
 #include "gallery3/g3_backend.h"
 #include "kio_gallery3_protocol.h"
 #include "entity/g3_item.h"
+#include "entity/g3_file.h"
 
 using namespace KIO;
 using namespace KIO::Gallery3;
@@ -297,22 +298,22 @@ void KIOGallery3Protocol::get ( const KUrl& targetUrl )
     totalSize ( item->size() );
     switch ( item->type().toInt() )
     {
-      case Entity::G3Type::ALBUM:
+      case G3Type::ALBUM:
         backend->fetchCover ( item );
         finished ( );
         break;
-      case Entity::G3Type::PHOTO:
-      case Entity::G3Type::MOVIE:
+      case G3Type::PHOTO:
+      case G3Type::MOVIE:
         backend->fetchFile ( item );
         finished ( );
         break;
-      case Entity::G3Type::TAG:
-      case Entity::G3Type::COMMENT:
+      case G3Type::TAG:
+      case G3Type::COMMENT:
         backend->fetchFile ( item );
         finished ( );
         break;
       default:
-      case Entity::G3Type::NONE:
+      case G3Type::NONE:
         throw Exception ( Error(ERR_SLAVE_DEFINED),i18n("unknown item type in action 'get'") );
     } // switch type
   }
@@ -437,7 +438,7 @@ void KIOGallery3Protocol::put ( const KUrl& targetUrl, int permissions, KIO::Job
     QString        filename = targetUrl.fileName ( );
     G3Item* parent = backend->itemByPath ( targetUrl.directory() );
     // the backend part handles the upload request
-    Entity::G3File g3file ( filename, mimetype, source );
+    G3File g3file ( filename, mimetype, source );
     backend->createItem ( parent, filename, &g3file );
     // cleanup
     file.deleteLater ( );

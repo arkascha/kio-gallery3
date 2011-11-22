@@ -12,7 +12,7 @@ Name:           kio-gallery3
 License:        GPLv3
 Group:          Utilities/Desktop
 Summary:        KDE IO Slave for file based access to a remote gallery3 server
-Version:        0.1.2
+Version:        0.1.3
 Release:        1
 Source:         %name-%version.tar.bz2
 Url:            http://kde-apps.org/
