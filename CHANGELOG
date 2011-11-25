@@ -1,3 +1,6 @@
+* ??? ??? ?? ???? Christian Reiner: version 0.1.4
+- fix for a few minor memory leaks
+- some code optimizations
 * Tue Nov 22 2011 Christian Reiner: version 0.1.3
 - internal code simplifications as preparation for future extensions
 * Mon Nov 21 2011 Christian Reiner: version 0.1.2

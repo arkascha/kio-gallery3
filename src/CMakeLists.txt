@@ -7,9 +7,9 @@ set ( SRCS json/g3_json.cpp
            entity/g3_item.cpp
            gallery3/g3_backend.cpp
            gallery3/g3_request.cpp
-           kio_gallery3.cpp
-           kio_gallery3_protocol.cpp
-           kio_protocol.cpp )
+           protocol/kio_gallery3_protocol.cpp
+           protocol/kio_protocol.cpp
+           kio_gallery3.cpp )
 
 set ( CMAKE_CXX_FLAGS "-fexceptions" )
 
@@ -24,4 +24,5 @@ install ( FILES   gallery3s.protocol DESTINATION ${SERVICES_INSTALL_DIR} )
 add_subdirectory ( utility )
 add_subdirectory ( entity )
 add_subdirectory ( json )
+add_subdirectory ( protocol )
 add_subdirectory ( gallery3 )

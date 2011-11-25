@@ -11,11 +11,12 @@
 
 #include <QCoreApplication>
 #include <KApplication>
+#include <kcmdlineargs.h>
 #include <kcomponentdata.h>
 #include <kaboutdata.h>
 #include "utility/defines.h"
 #include "utility/exception.h"
-#include "kio_gallery3_protocol.h"
+#include "protocol/kio_gallery3_protocol.h"
 #include "about_gallery3.data"
 
 extern "C" { int KDE_EXPORT kdemain(int argc, char **argv); }
@@ -35,7 +36,7 @@ int kdemain( int argc, char **argv )
 
   // we use a KApplication here cause the background http jobs we start must be able to popup message boxes
 //  QCoreApplication app( argc, argv );
-  KApplication app( NULL, argc, argv, "kio-gallery3", TRUE );
+  KApplication app( NULL, argc, argv, ABOUT_APP_NAME, TRUE );
 
   if (argc != 4)
   {

@@ -1,20 +1,13 @@
 [Protocol]
-type=Application
-name=kio-gallery3
-genericName=KDE IO Slave
-comment=Access to Gallery3 content by standard file operations
 protocol=gallery3
-docPath=kioslave/kio_gallery3.html
-icon=image-x-generic
 tryExec=kio_gallery3
 exec=kio_gallery3
-noDisplay=true
 terminal=false
 class=:internet
 showPreviews=true
 
 source=false
-input=filesystem
+input=none
 output=filesystem
 listing=Name,Type,Size,Date,Access,Link,URL,MimeType
 maxInstancesPerHost=1

@@ -12,7 +12,7 @@ Name:           kio-gallery3
 License:        GPLv3
 Group:          Utilities/Desktop
 Summary:        KDE IO Slave for file based access to a remote gallery3 server
-Version:        0.1.3
+Version:        0.1.4
 Release:        1
 Source:         %name-%version.tar.bz2
 Url:            http://kde-apps.org/
@@ -62,6 +62,11 @@ rm -rf $RPM_BUILD_ROOT
 %_kde_share_dir/services/gallery3s.protocol
 
 %changelog
+* ??? ??? ?? ???? Christian Reiner: version 0.1.4
+- fix for a few minor memory leaks
+- some code optimizations
+* Tue Nov 22 2011 Christian Reiner: version 0.1.3
+- internal code simplifications as preparation for future extensions
 * Mon Nov 21 2011 Christian Reiner: version 0.1.2
 - introduction of d-pointer usage for kde coding compliance
 * Sun Nov 20 2011 Christian Reiner: version 0.1.1

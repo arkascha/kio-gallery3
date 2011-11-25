@@ -18,7 +18,7 @@
 #include <kstandarddirs.h>
 #include "utility/exception.h"
 #include "gallery3/g3_backend.h"
-#include "kio_gallery3_protocol.h"
+#include "protocol/kio_gallery3_protocol.h"
 #include "entity/g3_item.h"
 #include "entity/g3_file.h"
 
@@ -129,12 +129,12 @@ KIOGallery3Protocol::~KIOGallery3Protocol ( )
   try
   {
     kDebug() << "deleting existing backends";
-    QHash<QString,G3Backend*>::const_iterator backend;
-    for ( backend=m->backends.constBegin(); backend!=m->backends.constEnd(); backend++ )
+    while ( ! m->backends.isEmpty() )
     {
+      QHash<QString,G3Backend*>::const_iterator backend = m->backends.constBegin();
       kDebug() << "removing backend" << backend.value()->toPrintout();
-      delete backend.value();
-    }
+      delete m->backends.take ( backend.key() );
+    } // while
     // delete private members
     delete m;
   }
@@ -337,7 +337,7 @@ void KIOGallery3Protocol::listDir ( const KUrl& targetUrl )
       redirection ( redirectUrl );
       finished ( );
     } // if
-    else if ( "/"==targetUrl.path() )
+    else if ( QLatin1String("/")==targetUrl.path() )
     {
       G3Item* item = itemBase ( targetUrl );
       kDebug() << "listing base entries members";
@@ -494,12 +494,12 @@ void KIOGallery3Protocol::stat ( const KUrl& targetUrl )
     if ( targetUrl.path().isEmpty() )
     {
       KUrl _new_url = targetUrl;
-      _new_url.setPath("/");
+      _new_url.setPath(QLatin1String("/"));
       kDebug() << "redirecting to:" << _new_url;
       redirection ( _new_url );
       finished ( );
     }
-    else if ( "/"==targetUrl.path() )
+    else if ( QLatin1String("/")==targetUrl.path() )
     {
       const G3Item* item = itemBase ( targetUrl );
       mimeType  ( item->mimetype()->name() );

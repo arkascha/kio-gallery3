@@ -76,11 +76,14 @@ G3Request::~G3Request ( )
   // delete private members
   delete m;
 /*
-  if ( m->job )
+it appears the jobs are somehow removed by some controller
+trying to delete a job here often leads to a segfault
+  if ( NULL!=m->job )
   {
     kDebug() << "deleting background job";
-    FIXME: deleting the job after it has been executed reproduceably crashes the slave with a segfault
+    //FIXME: deleting the job after it has been executed reproduceably crashes the slave with a segfault
     delete m->job;
+    m->job = NULL;
   }
 */
 } // G3Request::~G3Request
@@ -257,7 +260,7 @@ QByteArray G3Request::webFormPostPayload ( const QHash<QString,QString>& query )
   for ( QHash<QString,QString>::const_iterator it=m->query.constBegin(); it!=m->query.constEnd(); it++ )
     queryItems << QString("%1=%2").arg(it.key()).arg(it.value());
   QByteArray buffer;
-  buffer = queryItems.join("&").toAscii();
+  buffer = queryItems.join(QLatin1String("&")).toAscii();
   kDebug() << "{<buffer[size]>}" << buffer.size();
   return buffer;
 } // G3Request::webFormPostPayload
@@ -362,6 +365,7 @@ void G3Request::setup ( )
       addHeaderItem ( QLatin1String("customHTTPHeader"), QLatin1String("X-Gallery-Request-Method: put") );
       break;
   } // switch request method
+  m->job->removeOnHold ( );
   // add header items if specified
   QHash<QString,QString>::const_iterator it;
   for ( it=m->header.constBegin(); it!=m->header.constEnd(); it++ )

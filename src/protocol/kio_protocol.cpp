@@ -10,7 +10,7 @@
 #include <kmimetype.h>
 #include <kio/netaccess.h>
 #include "utility/exception.h"
-#include "kio_protocol.h"
+#include "protocol/kio_protocol.h"
 
 using namespace KIO;
 using namespace KIO::Gallery3;

@@ -17,7 +17,7 @@
 #include <kio/udsentry.h>
 #include <ktemporaryfile.h>
 #include "utility/defines.h"
-#include "kio_protocol.h"
+#include "protocol/kio_protocol.h"
 
 namespace KIO
 {

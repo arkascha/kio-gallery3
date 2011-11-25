@@ -112,13 +112,21 @@ G3Backend::~G3Backend ( )
   KDebug::Block block ( "G3Backend::~G3Backend" );
   kDebug() << "(<>)";
   // remove all items generated on-the-fly if the base item exists at all
+  kDebug() << "deleting base item";
   if ( m->items.contains(1) )
+  {
     delete itemBase ( );
-  // remove any left-over items (stale)
-  kDebug() << m->items.count() << "stale items left, deleting them";
-  QHash<g3index,G3Item*>::const_iterator item;
-  for ( item=m->items.constBegin(); item!=m->items.constEnd(); item++ )
+    m->items.remove ( 1 );
+  }
+  // remove any orphaned items
+  kDebug() << "removing " << m->items.count() << "orphaned items";
+  while ( ! m->items.isEmpty() )
+  {
+    QHash<g3index,G3Item*>::const_iterator item = m->items.constBegin();
+    kDebug() << "deleting item" << item.value()->toPrintout();
     delete item.value();
+  } // while
+  kDebug() << m->items.count() << "items left after removal of orphans";
   // delete private members
   delete m;
 }
@@ -303,7 +311,7 @@ QList<G3Item*> G3Backend::membersByItemPath ( const QString& path )
   if ( QLatin1String("./")==path )
     return membersByItemPath ( QStringList() );
   else
-    return membersByItemPath ( path.split("/") );
+    return membersByItemPath ( path.split(QLatin1String(QLatin1String("/"))) );
 } // G3Backend::membersByItemPath
 
 /**
@@ -321,7 +329,7 @@ QList<G3Item*> G3Backend::membersByItemPath ( const QString& path )
 QList<G3Item*> G3Backend::membersByItemPath ( const QStringList& breadcrumbs )
 {
   KDebug::Block block ( "G3Backend::membersByItemPath" );
-  kDebug() << "(<breadcrumbs>)" << breadcrumbs.join("|");
+  kDebug() << "(<breadcrumbs>)" << breadcrumbs.join(QLatin1String("|"));
   G3Item* parent = itemByPath ( breadcrumbs );
   QList<G3Item*> items = G3Request::g3GetItems ( this, QStringList(QString("%1/item/%2").arg(m->restUrl.url()).arg(parent->id())) );
   // process url list, generate items and sort them into this backends item cache
@@ -473,6 +481,7 @@ void G3Backend::removeItem ( G3Item* item )
     // we delete the parent folder to create a fresh state
     QStringList breadcrumbs = parent->path();
     delete parent;
+    parent = NULL;
     // now try to get the fresh item, this will re-construct the parent on-the-fly
     parent = itemByPath ( breadcrumbs );
     kDebug() << "deleted item in album" << parent->toPrintout();
@@ -492,7 +501,7 @@ void G3Backend::removeItem ( G3Item* item )
 G3Item* const G3Backend::updateItem ( G3Item* item, const QHash<QString,QString>& attributes )
 {
   KDebug::Block block ( "G3Backend::updateItem" );
-  kDebug() << "(<item> <attributes[keys]>)" << item->toPrintout() << QStringList(attributes.keys()).join(",");
+  kDebug() << "(<item> <attributes[keys]>)" << item->toPrintout() << QStringList(attributes.keys()).join(QLatin1String(","));
   // check for write permissions
   if ( ! item->canEdit() )
     throw Exception ( Error(ERR_WRITE_ACCESS_DENIED),item->toPrintout() );
@@ -501,6 +510,7 @@ G3Item* const G3Backend::updateItem ( G3Item* item, const QHash<QString,QString>
   G3Item* parent = item->parent ( );
   QStringList breadcrumbs = parent->path();
   delete parent;
+  parent = NULL;
   parent = itemByPath ( breadcrumbs );
   // refresh new parent item, if this was a move
   if ( attributes.contains(QLatin1String("parent")) )
@@ -509,6 +519,7 @@ G3Item* const G3Backend::updateItem ( G3Item* item, const QHash<QString,QString>
     parent = itemById ( id );
     QStringList breadcrumbs = parent->path();
     delete parent;
+    parent = NULL;
     parent = itemByPath ( breadcrumbs );
   } // if
   return item;
@@ -536,7 +547,7 @@ G3Item* const G3Backend::createItem  ( G3Item* parent, const QString& name, cons
   // setup the attributes that describe to new entity
   QHash<QString,QString> attributes;
   attributes.insert ( QLatin1String("name"),      name );
-  attributes.insert ( QLatin1String("title"),     name.left(name.lastIndexOf(".")) ); // strip "file name extension", if contained
+  attributes.insert ( QLatin1String("title"),     name.left(name.lastIndexOf(QLatin1String("."))) ); // strip "file name extension", if contained
   if ( file )
   {
     attributes.insert ( QLatin1String("type"),      G3Type(file->mimetype()).toString() );
@@ -552,6 +563,7 @@ G3Item* const G3Backend::createItem  ( G3Item* parent, const QString& name, cons
   // we delete the parent folder to create a fresh start including parent and new member
   QStringList breadcrumbs = parent->path() << name;
   delete parent;
+  parent = NULL;
   // now try to get the fresh item, this will re-construct the parent on-the-fly
   G3Item* item = itemByPath ( breadcrumbs );
   kDebug() << "created item" << item->toPrintout();
