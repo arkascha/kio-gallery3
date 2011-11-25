@@ -7,7 +7,7 @@ set ( SRCS json/g3_json.cpp
            entity/g3_item.cpp
            gallery3/g3_backend.cpp
            gallery3/g3_request.cpp
-           protocol/kio_gallery3_protocol.cpp
+           protocol/kio_protocol_gallery3.cpp
            protocol/kio_protocol.cpp
            kio_gallery3.cpp )
 

@@ -18,7 +18,7 @@
 #include <kstandarddirs.h>
 #include "utility/exception.h"
 #include "gallery3/g3_backend.h"
-#include "protocol/kio_gallery3_protocol.h"
+#include "protocol/kio_protocol_gallery3.h"
 #include "entity/g3_item.h"
 #include "entity/g3_file.h"
 
@@ -551,4 +551,4 @@ Reimplemented in FileProtocol, and HTTPProtocol.
   catch ( Exception &e ) { error( e.getCode(), e.getText() ); }
 } // KIOGallery3Protocol::special
 
-#include "kio_gallery3_protocol.moc"
+#include "kio_protocol_gallery3.moc"

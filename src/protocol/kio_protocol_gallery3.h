@@ -6,8 +6,8 @@
  * $Date: 2011-09-12 09:35:04 +0200 (Mon, 12 Sep 2011) $
  */
 
-#ifndef KIO_GALLERY3_PROTOCOL_H
-#define KIO_GALLERY3_PROTOCOL_H
+#ifndef KIO_PROTOCOL_GALLERY3_H
+#define KIO_PROTOCOL_GALLERY3_H
 
 #include <QtCore/QMutex>
 #include <QString>
@@ -88,4 +88,4 @@ namespace KIO
   } // namespace Gallery3
 } // namespace KIO
 
-#endif // KIO_GALLERY3_PROTOCOL_H
+#endif // KIO_PROTOCOL_GALLERY3_H
