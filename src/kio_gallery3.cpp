@@ -17,7 +17,7 @@
 #include "utility/defines.h"
 #include "utility/exception.h"
 #include "protocol/kio_protocol_gallery3.h"
-#include "about_gallery3.data"
+#include "gallery3.about"
 
 extern "C" { int KDE_EXPORT kdemain(int argc, char **argv); }
 int kdemain( int argc, char **argv )
