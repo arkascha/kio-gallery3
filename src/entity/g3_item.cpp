@@ -19,7 +19,7 @@
 #include <klocale.h>
 #include <kdatetime.h>
 #include "utility/exception.h"
-#include "protocol/kio_gallery3_protocol.h"
+#include "protocol/kio_protocol_gallery3.h"
 #include "gallery3/g3_backend.h"
 #include "gallery3/g3_request.h"
 #include "entity/g3_item.h"
