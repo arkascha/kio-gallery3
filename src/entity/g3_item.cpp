@@ -6,6 +6,15 @@
  * $Date: 2011-09-12 09:35:04 +0200 (Mon, 12 Sep 2011) $
  */
 
+/*!
+ * @file
+ * Implements the methods of class G3Item and the classes derived from that
+ * Such an item mirrors an item contained inside the remote Gallery3 system
+ * in the local hierarchical object structure
+ * @see G3Item
+ * @author Christian Reiner
+ */
+
 #include <QObject>
 #include <QCryptographicHash>
 #include <QVariant>
@@ -27,6 +36,19 @@
 using namespace KIO;
 using namespace KIO::Gallery3;
 
+/*!
+ * G3Item* const G3Item::instantiate ( G3Backend* const backend, const QVariantMap& attributes )
+ * @brief Instantiates an item based in the attributes provided 
+ * @param  backend    pointer to a validated backend required for communication with the remote Gallery3 system
+ * @param  attributes the items technical description as retrieved from the remote Gallery3 system
+ * @return
+ * the created item object that is already integrated into the items hierarchy in backend and parent item
+ * Creates a fresh item object by interpreting the attributes as retrieed from the remote Gallery3 system
+ * The object is automatically integrated into the locally cached items hierarchy (backend and parent item)
+ * note that it is always an object of a class derived from G3Item that is instanciated, not a G3Item object itself
+ * @see G3Item
+ * @author Christian Reiner
+ */
 G3Item* const G3Item::instantiate ( G3Backend* const backend, const QVariantMap& attributes )
 {
   KDebug::Block block ( "G3Item::instantiate" );
@@ -51,23 +73,30 @@ G3Item* const G3Item::instantiate ( G3Backend* const backend, const QVariantMap&
   switch ( type.toInt() )
   {
     case G3Type::ALBUM:
-      return new AlbumEntity   ( backend, attributes );
+      return new G3AlbumItem   ( backend, attributes );
     case G3Type::MOVIE:
-      return new MovieEntity   ( backend, attributes );
+      return new G3MovieItem   ( backend, attributes );
     case G3Type::PHOTO:
-      return new PhotoEntity   ( backend, attributes );
+      return new G3PhotoItem   ( backend, attributes );
     case G3Type::TAG:
-      return new TagEntity     ( backend, attributes );
+      return new G3TagItem     ( backend, attributes );
     case G3Type::COMMENT:
-      return new CommentEntity ( backend, attributes );
+      return new G3CommentItem ( backend, attributes );
     default:
       throw Exception ( Error(ERR_INTERNAL),
                         i18n("failed to instantiate entity because of an unknown item type '%1'").arg(type.toString()) );
   } // // switch
 } // G3Item::instantiate
 
-/**
+/*!
+ * G3Item::G3Item ( const G3Type type, G3Backend* const backend, const QVariantMap& attributes )
+ * @brief Constructor
+ * @param type       the type of object, since it is always a derived class that an object is generated from
+ * @param backend    the object will be integrated into the items hierarchy of this backend
+ * @param attributes the items technical description as retrieved from the remote Gallery3 system
  * This constructs an item object that describes exactly one single node inside the gallery.
+ * @see G3Item
+ * @author Christian Reiner
  */
 G3Item::G3Item ( const G3Type type, G3Backend* const backend, const QVariantMap& attributes )
   : m ( new G3Item::Members(type,backend,attributes) )
@@ -109,9 +138,13 @@ G3Item::G3Item ( const G3Type type, G3Backend* const backend, const QVariantMap&
   } // else
 } // G3Item::G3Item
 
-/**
+/*!
+ * G3Item::~G3Item()
+ * @brief Destructor
  * Delete all members as registered inside this object
  * Deregister this item as child in its parent
+ * @see G3Item
+ * @author Christian Reiner
  */
 G3Item::~G3Item()
 {
@@ -138,6 +171,22 @@ G3Item::~G3Item()
 
 //==========
 
+/*!
+ * const QVariant G3Item::attributeToken ( const QString& attribute, QVariant::Type type, bool strict ) const
+ * @brief Extracts an attributes from the technical item description
+ * @param  attribute name of attribute to be extracted
+ * @param  type      type of the attribute to be extracted
+ * @param  strict    insist on existance or throw exception instead
+ * @return           the extracted attribute in form of a QVariant
+ * Extracts a single attribute of the items description, the attribute being
+ * identified by its name. In addition the the existance pf the requrested
+ * attribute the methods tests if the attribute can be converted to the
+ * requested type. In case the attribute does not exist an empty value is
+ * returned, except if the strict parameter was set to TRUE, in that case an
+ * exception is thrown. 
+ * @see G3Item
+ * @author Christian Reiner
+ */
 const QVariant G3Item::attributeToken ( const QString& attribute, QVariant::Type type, bool strict ) const
 {
   kDebug() << "(<attribute> <type> <strict>)" << attribute << type << strict;
@@ -169,6 +218,23 @@ const QVariant G3Item::attributeString ( const QString& attribute, bool strict )
   return attributeToken ( attribute, QVariant::String, strict );
 } // G3Item::attributeMap
 
+/*!
+ * const QVariant G3Item::attributeMapToken ( const QString& attribute, const QString& token, QVariant::Type type, bool strict ) const
+ * @brief Extracts a singel item from an attribute of the technical item description
+ * @param  attribute name of attribute to be extracted
+ * @param  token     name of token inside attribute
+ * @param  type      type of the attribute to be extracted
+ * @param  strict    insist on existance or throw exception instead
+ * @return           the extracted attribute in form of a QVariant
+ * Extracts a singel troken from inside an attribute contained in the items
+ * technical description as retrieved from the remote Gallery3 system. In
+ * addition to the existance of attribute and token the method checks if the
+ * value can be converted to the requested type. If the attribute or token
+ * does not exist an empty value will be returned, except if the strict
+ * parameter was set to TRUE, in that case an exception is thrown.
+ * @see G3Item
+ * @author Christian Reiner
+ */
 const QVariant G3Item::attributeMapToken ( const QString& attribute, const QString& token, QVariant::Type type, bool strict ) const
 {
   kDebug() << "(<attribute> <token> <type> <strict>)" << attribute << token << type << strict;
@@ -190,6 +256,14 @@ const QVariant G3Item::attributeMapToken ( const QString& attribute, const QStri
 
 //==========
 
+/*!
+ * void G3Item::pushMember ( G3Item* item )
+ * @brief Accepts a new member item
+ * @param item: item to be accepted as a new member inside this item
+ * Accepts a new item as member inside the current album. 
+ * @see G3Item
+ * @author Christian Reiner
+ */
 void G3Item::pushMember ( G3Item* item )
 {
   kDebug() << "(<this> <item>)" << toPrintout() << item->toPrintout();
@@ -201,11 +275,14 @@ void G3Item::pushMember ( G3Item* item )
   item->m->parent = this;
 } // G3Item::pushMember
 
-/**
- * G3Item::popMember
- * returns: G3Item*: pointer to item object that has been removed
- * param: G3Item* item: pointer to an item object to be removed
- * description: shortcut & convenience method to remove a given object from the list of members
+/*!
+ * G3Item* G3Item::popMember ( G3Item* item )
+ * @brief Removes a member item
+ * @param  item pointer to an item object to be removed
+ * @return      pointer to item object that has been removed
+ * Shortcut & convenience method to remove a given object from the members list
+ * @see G3Item
+ * @author Christian Reiner
  */
 G3Item* G3Item::popMember ( G3Item* item )
 {
@@ -213,12 +290,16 @@ G3Item* G3Item::popMember ( G3Item* item )
   return popMember ( item->id() );
 } // G3Item::popMember
 
-/**
- * G3Item::popMember
- * return: G3Item*: pointer to the item object that has been removed
- * param: g3index id: id of item object to be removed
- * description: removes a specific item object from the list of members. Not, that the object is NOT deleted,
- *              it is merely removed from the list and a pointer to that object is returned
+/*!
+ * G3Item* G3Item::popMember ( g3index id )
+ * @brief Removes a member item
+ * @param  id numeric id of item object to be removed
+ * @return    pointer to the item object that has been removed
+ * Removes a specific item object from the list of members. Not, that the
+ * object is NOT deleted, it is merely removed from the list and a pointer to
+ * that object is returned
+ * @see G3Item
+ * @author Christian Reiner
  */
 G3Item* G3Item::popMember ( g3index id )
 {
@@ -233,6 +314,14 @@ G3Item* G3Item::popMember ( g3index id )
                     i18n("attempt to remove non-existing member item with id '%1'").arg(id) );
 } // G3Item::popMember
 
+/*!
+ * void G3Item::setParent ( G3Item* parent )
+ * @brief Sets an items parent (album)
+ * @param parent the parent item the item is to be associate with
+ * Associates the item to a new parent item. 
+ * @see G3Item
+ * @author Christian Reiner
+ */
 void G3Item::setParent ( G3Item* parent )
 {
   kDebug() << "(<parent>)" << parent->toPrintout();
@@ -241,6 +330,17 @@ void G3Item::setParent ( G3Item* parent )
 
 //==========
 
+/*!
+ * G3Item* G3Item::member ( const QString& name )
+ * @brief Provides a member item
+ * @param  name name of the requested item
+ * @return      pointer to the requested member item
+ * Requests an item object specified by its unique name. The item will be
+ * created (retrieved) if it does not (yet) exist locally or an exception will
+ * be thrown in case the item does not exist inside the remote Gallery3 system.
+ * @see G3Item
+ * @author Christian Reiner
+ */
 G3Item* G3Item::member ( const QString& name )
 {
   KDebug::Block block ( "G3Item::member" );
@@ -256,6 +356,17 @@ G3Item* G3Item::member ( const QString& name )
   throw Exception ( Error(ERR_DOES_NOT_EXIST), name );
 } // G3Item::getMember
 
+/*!
+ * G3Item* G3Item::member ( g3index id )
+ * @brief Provides a member item
+ * @param  id numerical id of the requested item
+ * @return    pointer to the requested member items
+ * Requests an item object specified by its numerical id. The item will be
+ * created (retrieved) if it does not (yet) exist locally or an exception will
+ * be thrown in case the item does not exist inside the remote Gallery3 system.
+ * @see G3Item
+ * @author Christian Reiner
+ */
 G3Item* G3Item::member ( g3index id )
 {
   KDebug::Block block ( "G3Item::member" );
@@ -272,6 +383,15 @@ G3Item* G3Item::member ( g3index id )
     throw Exception ( Error(ERR_DOES_NOT_EXIST), i18n("item with id '%1'").arg(id) );
 } // G3Item::member
 
+/*!
+ * QHash<g3index,G3Item*> G3Item::members ( )
+ * @brief Provides a list of all member items
+ * @return dictionary of member items
+ * Returns a copy of the dictionary of member items associated with this items
+ * The member item objects will be created or re-created as required
+ * @see G3Item
+ * @author Christian Reiner
+ */
 QHash<g3index,G3Item*> G3Item::members ( )
 {
   KDebug::Block block ( "G3Item::members" );
@@ -280,6 +400,16 @@ QHash<g3index,G3Item*> G3Item::members ( )
   return m->members;
 } // G3Item::members
 
+/*!
+ * bool G3Item::containsMember ( const QString& name )
+ * @brief Decides if a member item exists
+ * @param  name name of the requested item
+ * @return      wether the requested item does exist or not
+ * Returns of the requested item does exist inside the parent item (album)
+ * Note that the list of member items will be refreshed as required
+ * @see G3Item
+ * @author Christian Reiner
+ */
 bool G3Item::containsMember ( const QString& name )
 {
   KDebug::Block block ( "G3Item::containsMember" );
@@ -302,6 +432,16 @@ bool G3Item::containsMember ( const QString& name )
   } // catch
 }
 
+/*!
+ * bool G3Item::containsMember ( g3index id )
+ * @brief Decides if a member item exists
+ * @param  id numeric if of the requested item
+ * @return    wether the requested item does exist or not
+ * Returns of the requested item does exist inside the parent item (album). 
+ * Note that the list of member items will be refreshed as required. 
+ * @see G3Item
+ * @author Christian Reiner
+ */
 bool G3Item::containsMember ( g3index id )
 {
   KDebug::Block block ( "G3Item::containsMember" );
@@ -310,6 +450,15 @@ bool G3Item::containsMember ( g3index id )
   return m->members.contains ( id );
 }
 
+/*!
+ * int G3Item::countMembers ( )
+ * @brief Counts the member items
+ * @return number of member items inside the parent item (album)
+ * Returns the number of items contained inside a parent item (album). 
+ * note that the list of items is refreshed and all items are instanciated. 
+ * @see G3Item
+ * @author Christian Reiner
+ */
 int G3Item::countMembers ( )
 {
   KDebug::Block block ( "G3Item::countMembers" );
@@ -318,6 +467,14 @@ int G3Item::countMembers ( )
   return m->members.count();
 } // G3Item::countMembers
 
+/*!
+ * void G3Item::buildMemberItems ( )
+ * @brief Creates all member items as specified in the items description
+ * Instanciates all member items contained inside a parent item (album).
+ * Note that items already existing will not be re-created.
+ * @see G3Item
+ * @author Christian Reiner
+ */
 void G3Item::buildMemberItems ( )
 {
   KDebug::Block block ( "G3Item::buildMemberItems" );
@@ -366,6 +523,14 @@ void G3Item::buildMemberItems ( )
 
 //==========
 
+/*!
+ * QStringList G3Item::path ( ) const
+ * @brief Provides an items path
+ * @return path in form of a list of breadcrumbs
+ * Returns an items path inside the items hierarchy in form of a breadcrumb list. 
+ * @see G3Item
+ * @author Christian Reiner
+ */
 QStringList G3Item::path ( ) const
 {
   KDebug::Block block ( "G3Item::path" );
@@ -379,6 +544,14 @@ QStringList G3Item::path ( ) const
   return QStringList();
 } // G3Item::path
 
+/*!
+ * G3Item* G3Item::parent ( ) const
+ * @brief Provides an items parent item
+ * @return pointer to parent item
+ * Returns the parent item that contains this item
+ * @see G3Item
+ * @author Christian Reiner
+ */
 G3Item* G3Item::parent ( ) const
 {
   kDebug() << "(<>)";
@@ -387,12 +560,31 @@ G3Item* G3Item::parent ( ) const
 
 //==========
 
+/*!
+ * const G3Item& G3Item::operator<< ( G3Item& member )
+ * @brief Accepts a new member item
+ * @param  member member item to be accepted
+ * @return        item accepting the new member item
+ * Accepts a new item as new member item inside a given item (album)
+ * @see G3Item
+ * @author Christian Reiner
+ */
 const G3Item& G3Item::operator<< ( G3Item& member )
 {
   kDebug() << "(<this> <item>)" << toPrintout() << "<<" << member.toPrintout();
   pushMember ( &member );
   return *this;
 } // operator<<
+
+/*!
+ * const G3Item& G3Item::operator<< ( G3Item* member )
+ * @brief Accepts a new member item
+ * @param  member member item to be accepted
+ * @return        item accepting the new member item
+ * Accepts a new item as new member item inside a given item (album)
+ * @see G3Item
+ * @author Christian Reiner
+ */
 const G3Item& G3Item::operator<< ( G3Item* member )
 {
   kDebug() << "(<this> <item>)" << toPrintout() << "<<" << member->toPrintout();
@@ -402,12 +594,27 @@ const G3Item& G3Item::operator<< ( G3Item* member )
 
 //==========
 
+/*!
+ * const QString G3Item::toPrintout ( ) const
+ * @brief Human readable representation of an item
+ * @return readable presentation of the item
+ * Returns a human readable presentation of the item, typically used to be
+ * cited in debug outputs or log files. 
+ * @see G3Item
+ * @author Christian Reiner
+ */
 const QString G3Item::toPrintout ( ) const
 {
   return QString("G3Item ('%1' [%2])").arg(name()).arg(id());
 }
 
-/**
+/*!
+ * const UDSEntry G3Item::toUDSEntry ( ) const
+ * @brief Publish item as UDS entry
+ * @return UDSEntry describing the item object
+ * Generates and returns a UDSEntry that describes the item object
+ * @see G3Item
+ * @author Christian Reiner
  */
 const UDSEntry G3Item::toUDSEntry ( ) const
 {
@@ -462,7 +669,16 @@ const UDSEntry G3Item::toUDSEntry ( ) const
   return entry;
 } // G3Item::toUDSEntry
 
-/**
+/*!
+ * const UDSEntryList G3Item::toUDSEntryList ( bool signalEntries ) const
+ * @brief Publish items members as UDS entries
+ * @param signalEntries output entries via signal or collected at the end
+ * Generates a list of UDSEntries of all member items contained.
+ * The flag 'signalEntries' results in single UDSentries being emitted via the
+ * signal 'signalUDSEntry'. If not set all entries will be returned in form of
+ * a UDSEntrylist at the end of the method. 
+ * @see G3Item
+ * @author Christian Reiner
  */
 const UDSEntryList G3Item::toUDSEntryList ( bool signalEntries ) const
 {
@@ -481,6 +697,16 @@ const UDSEntryList G3Item::toUDSEntryList ( bool signalEntries ) const
   return list;
 } // G3Item::toUDSEntryList
 
+/*!
+ * const QHash<QString,QString> G3Item::toAttributes ( ) const
+ * @brief Provides the most basic attributes of the item
+ * @return dictionary of items attributes
+ * Returns a dictionary (hash) of the basic attributes that identify an item, 
+ * typically used during the creation of a new item inside the remote Gallery3
+ * system.
+ * @see G3Item
+ * @author Christian Reiner
+ */
 const QHash<QString,QString> G3Item::toAttributes ( ) const
 {
   KDebug::Block block ( "G3Item::toAttributes" );
@@ -494,39 +720,84 @@ const QHash<QString,QString> G3Item::toAttributes ( ) const
 
 //==========
 
-AlbumEntity::AlbumEntity ( G3Backend* const backend, const QVariantMap& attributes )
+/*!
+ * G3AlbumItem::G3AlbumItem ( G3Backend* const backend, const QVariantMap& attributes )
+ * @brief Constructor
+ * @param backend    backend that contains this item
+ * @param attributes attributes describing the item
+ * Constructs a new item of type 'album' described by the specified attributes
+ * @see G3Item
+ * @author Christian Reiner
+ */
+G3AlbumItem::G3AlbumItem ( G3Backend* const backend, const QVariantMap& attributes )
   : G3Item ( G3Type::ALBUM, backend, attributes )
 {
-  KDebug::Block block ( "AlbumEntity::AlbumEntity" );
+  KDebug::Block block ( "G3AlbumItem::G3AlbumItem" );
   kDebug() << "(<backend> <attributes>)" << backend->toPrintout() << QStringList(attributes.keys()).join(QLatin1String(","));
-} // AlbumEntity::AlbumEntity
+} // G3AlbumItem::G3AlbumItem
 
-MovieEntity::MovieEntity ( G3Backend* const backend, const QVariantMap& attributes )
+/*!
+ * G3MovieItem::G3MovieItem ( G3Backend* const backend, const QVariantMap& attributes )
+ * @brief Constructor
+ * @param backend backend that contains this item
+ * @param attributes attributes describing the item
+ * Constructs a new item of type 'movie' described by the specified attributes
+ * @see G3Item
+ * @author Christian Reiner
+ */
+G3MovieItem::G3MovieItem ( G3Backend* const backend, const QVariantMap& attributes )
   : G3Item ( G3Type::MOVIE, backend, attributes )
 {
-  KDebug::Block block ( "MovieEntity::MovieEntity" );
+  KDebug::Block block ( "G3MovieItem::G3MovieItem" );
   kDebug() << "(<backend> <attributes>)" << backend->toPrintout() << QStringList(attributes.keys()).join(QLatin1String(","));
-} // MovieEntity::MovieEntity
+} // G3MovieItem::G3MovieItem
 
-PhotoEntity::PhotoEntity ( G3Backend* const backend, const QVariantMap& attributes )
+/*!
+ * G3PhotoItem::G3PhotoItem ( G3Backend* const backend, const QVariantMap& attributes )
+ * @brief Constructor
+ * @param backend backend that contains this item
+ * @param attributes attributes describing the item
+ * Constructs a new item of type 'photo' described by the specified attributes
+ * @see G3Item
+ * @author Christian Reiner
+ */
+G3PhotoItem::G3PhotoItem ( G3Backend* const backend, const QVariantMap& attributes )
   : G3Item ( G3Type::PHOTO, backend, attributes )
 {
-  KDebug::Block block ( "PhotoEntity::PhotoEntity" );
+  KDebug::Block block ( "G3PhotoItem::G3PhotoItem" );
   kDebug() << "(<backend> <attributes>)" << backend->toPrintout() << QStringList(attributes.keys()).join(QLatin1String(","));
-} // PhotoEntity::PhotoEntity
+} // G3PhotoItem::G3PhotoItem
 
-TagEntity::TagEntity ( G3Backend* const backend, const QVariantMap& attributes )
+/*!
+ * G3TagItem::G3TagItem ( G3Backend* const backend, const QVariantMap& attributes )
+ * @brief Constructor
+ * @param backend backend that contains this item
+ * @param attributes attributes describing the item
+ * Constructs a new item of type 'tag' described by the specified attributes
+ * @see G3Item
+ * @author Christian Reiner
+ */
+G3TagItem::G3TagItem ( G3Backend* const backend, const QVariantMap& attributes )
   : G3Item ( G3Type::TAG, backend, attributes )
 {
-  KDebug::Block block ( "TagEntity::TagEntity" );
+  KDebug::Block block ( "G3TagItem::G3TagItem" );
   kDebug() << "(<backend> <attributes>)" << backend->toPrintout() << QStringList(attributes.keys()).join(QLatin1String(","));
-} // TagEntity::TagEntity
+} // G3TagItem::G3TagItem
 
-CommentEntity::CommentEntity ( G3Backend* const backend, const QVariantMap& attributes )
+/*!
+ * G3CommentItem::G3CommentItem ( G3Backend* const backend, const QVariantMap& attributes )
+ * @brief Constructor
+ * @param backend backend that contains this item
+ * @param attributes attributes describing the item
+ * Constructs a new item of type 'comment' described by the specified attributes
+ * @see G3Item
+ * @author Christian Reiner
+ */
+G3CommentItem::G3CommentItem ( G3Backend* const backend, const QVariantMap& attributes )
   : G3Item ( G3Type::COMMENT, backend, attributes )
 {
-  KDebug::Block block ( "CommentEntity::CommentEntity" );
+  KDebug::Block block ( "G3CommentItem::G3CommentItem" );
   kDebug() << "(<backend> <attributes>)" << backend->toPrintout() << QStringList(attributes.keys()).join(QLatin1String(","));
-} // CommentEntity::CommentEntity
+} // G3CommentItem::G3CommentItem
 
 #include "entity/g3_item.moc"

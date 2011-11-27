@@ -6,6 +6,12 @@
  * $Date: 2011-08-13 13:08:50 +0200 (Sat, 13 Aug 2011) $
  */
 
+/*!
+ * @file
+ * Defines a wrapper around the QJson library. 
+ * @author Christian Reiner
+ */
+
 #ifndef G3_JSON_H
 #define G3_JSON_H
 
@@ -18,6 +24,12 @@ namespace KIO
   namespace Gallery3
   {
 
+    /*!
+     * @class G3JsonParser
+     * @brief Wrapper around QJson Parser
+     * Wraps the QJson libraries parsing functionality for convenience
+     * @author Christian Reiner
+     */
     class G3JsonParser
     : protected QJson::Parser
     {
@@ -26,6 +38,12 @@ namespace KIO
         QVariant g3parse ( const QByteArray& jsonData );
     }; // class KIOGallery3Json
 
+    /*!
+     * @class G3JsonSerializer
+     * @brief Wrapper around QJson Serializer
+     * Wraps the QJson libraries serializing functionality for convenience
+     * @author Christian Reiner
+     */
     class G3JsonSerializer
     : protected QJson::Serializer
     {

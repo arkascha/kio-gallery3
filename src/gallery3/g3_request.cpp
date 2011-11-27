@@ -6,6 +6,13 @@
  * $Date: 2011-08-13 13:08:50 +0200 (Sat, 13 Aug 2011) $
  */
 
+/*!
+ * @file
+ * @brief Implements the methods of class G3Request
+ * @see G3Request
+ * @author Christian Reiner
+ */
+
 #include <QBuffer>
 #include <QDataStream>
 #include <QByteArray>
@@ -23,6 +30,14 @@
 using namespace KIO;
 using namespace KIO::Gallery3;
 
+/*!
+ * G3Request::Members::Members ( G3Backend* const backend, KIO::HTTP_METHOD method, const QString& service, const G3File* const file )
+ * @brief Constructor
+ * Constructor for the private members class for G3Request
+ * @see G3Request
+ * @see G3Reqeust::Members
+ * @author Christian Reiner
+ */
 G3Request::Members::Members ( G3Backend* const backend, KIO::HTTP_METHOD method, const QString& service, const G3File* const file )
   : backend ( backend )
   , method  ( method )
@@ -42,16 +57,17 @@ G3Request::Members::Members ( G3Backend* const backend, KIO::HTTP_METHOD method,
   boundary = KRandom::randomString(42+13).toAscii();
 } // G3Request::Members
 
-/**
+/*!
  * G3Request::G3Request ( G3Backend* const backend, KIO::HTTP_METHOD method, const QString& service, const G3File* const file )
- *
- * param: G3Backend* const backend (backend associated to the requested g3 system)
- * param: KIO::HTTP_METHOD method (http method to be used)
- * param: const QString& service (service to be called, relative to the REST url)
- * param: const G3File* file (internal file ressource description, might hold a file for upload)
- * description:
- * offers a generic object holding all aspects and data required while processing a http request to the remote gallery3 system
- * some members are initialized, some basic settings done and a connection to the controlling slave base is established for authentication purposes
+ * @brief Constructor
+ * @param backend backend associated to the requested g3 system
+ * @param method  http method to be used
+ * @param service service to be called, relative to the REST url
+ * @param file    internal file ressource description, might hold a file for upload
+ * Offers a generic object holding all aspects and data required while processing a http request to the remote gallery3 system. 
+ * Some members are initialized, some basic settings done and a connection to the controlling slave base is established for authentication purposes.
+ * @see G3Request
+ * @author Christian Reiner
  */
 G3Request::G3Request ( G3Backend* const backend, KIO::HTTP_METHOD method, const QString& service, const G3File* const file )
   : m ( new G3Request::Members(backend,method,service,file) )
@@ -69,7 +85,13 @@ G3Request::G3Request ( G3Backend* const backend, KIO::HTTP_METHOD method, const 
             backend->parent(), SLOT(slotRequestAuthInfo(G3Backend*,AuthInfo&,int)) );
 } // G3Request::G3Request
 
-
+/*!
+ * G3Request::~G3Request ( )
+ *@brief Destructor
+ * Destructor of class G3Request
+ * @see G3Request
+ * @author Christian Reiner
+ */
 G3Request::~G3Request ( )
 {
   kDebug();
@@ -81,7 +103,7 @@ trying to delete a job here often leads to a segfault
   if ( NULL!=m->job )
   {
     kDebug() << "deleting background job";
-    //FIXME: deleting the job after it has been executed reproduceably crashes the slave with a segfault
+    //! @todo fixme: deleting the job after it has been executed reproduceably crashes the slave with a segfault
     delete m->job;
     m->job = NULL;
   }
@@ -90,15 +112,16 @@ trying to delete a job here often leads to a segfault
 
 //==========
 
-/**
+/*!
  * int G3Request::httpStatusCode ( )
- *
- * returns: int ( http status code as defined by the RFCs )
- * exception: ERR_SLAVE_DEFINED ( in case no valid http status code could be extracted )
- * description:
- * extracts a standard http status code from any request result after processing a job
- * note that a job may well return without error when being run, since those errors only refer to processing problems
+ * @brief HTTP status code of request
+ * @return    http status code as defined by the RFCs
+ * @exception ERR_SLAVE_DEFINED in case no valid http status code could be extracted
+ * Extracts a standard http status code from any request result after processing a job. 
+ * Note that a job may well return without error when being run, since those errors only refer to processing problems. 
  * http status codes refer to the protocol and content level, this is not handled by the method return value
+ * @see G3Request
+ * @author Christian Reiner
  */
 int G3Request::httpStatusCode ( )
 {
@@ -114,7 +137,16 @@ int G3Request::httpStatusCode ( )
     throw Exception ( Error(ERR_SLAVE_DEFINED), i18n("No http status provided in response") );
 } // G3Request::httpStatusCode
 
-
+/*!
+ * bool G3Request::retryWithChangedCredentials ( int attempt )
+ * @brief Decide about retry after an error 403: authentication required
+ * @param  attempt insicates how many attempts of this authentication request have been made before
+ * @return         TRUE if credentials have been modified, FALSE otherwise
+ * Wraps the execution of an authentication attempt against the remote Gallery3 system.
+ * Signals if it makes sense to retry the request because of successfully changed credentials. 
+ * @see G3Request
+ * @author Christian Reiner
+ */
 bool G3Request::retryWithChangedCredentials ( int attempt )
 {
   kDebug() << "(<attempt>)" << attempt;
@@ -123,14 +155,15 @@ bool G3Request::retryWithChangedCredentials ( int attempt )
   return m->backend->credentials().isModified();
 } // G3Request::retryWithChangedCredentials
 
-/**
+/*!
  * void G3Request::addHeaderItem ( const QString& key, const QString& value )
- *
- * param: const QString& key ( http header key )
- * param: const QString& value ( http header value )
- * description:
- * adds a single key/value pair to the header item collection in the request object
- * each pair collected by calls to this method will be specified as http header entries later during job setup
+ * @brief Adds a single header item to a request
+ * @param key   http header key
+ * @param value http header value
+ * Adds a single key/value pair to the header item collection in the request object. 
+ * Each pair collected by calls to this method will be specified as http header entries later during job setup. 
+ * @see G3Request
+ * @author Christian Reiner
  */
 void G3Request::addHeaderItem ( const QString& key, const QString& value )
 {
@@ -142,27 +175,28 @@ void G3Request::addHeaderItem ( const QString& key, const QString& value )
     content = QString("%1\r\n%2").arg(m->header[key]).arg(value.trimmed());
   else
     content = value;
-  // TODO: some plausibility checks might be good here...
+  //! @todo: some plausibility checks might be good here...
   m->header.insert ( key, content );
   kDebug() << "{<>}";
 } // G3Request::addHeaderItem
 
-/**
+/*!
  * void G3Request::addQueryItem ( const QString& key, const QString& value, bool skipIfEmpty )
- *
- * param: const QString& key ( http query item key )
- * param: const QString& value ( http query item value )
- * param: bool skipIfEmpty ( controls if this item will be silently skipped in case of an empty value )
- * escription:
- * adds a single key/value pair to the query item collection in the request object
- * each pair collected by calls to this method will be added as query item later during job setup
- * note, that these items will be specified as part of the request url or its form body, depending on the request method
+ * @brief Adds a string as single query item to the request
+ * @param key         http query item key
+ * @param http        query item value
+ * @param skipIfEmpty controls if this item will be silently skipped in case of an empty value
+ * Adds a single key/value pair to the query item collection in the request object. 
+ * Each pair collected by calls to this method will be added as query item later during job setup. 
+ * Note, that these items will be specified as part of the request url or its form body, depending on the request method. 
+ * @see G3Request
+ * @author Christian Reiner
  */
 void G3Request::addQueryItem ( const QString& key, const QString& value, bool skipIfEmpty )
 {
   kDebug() << "(<key> <value> <bool>)" << key << value << skipIfEmpty;
   if ( m->query.contains(key) )
-    m->query.remove ( key ); // TODO: throw an error instead ?!?
+    m->query.remove ( key ); //! @todo: throw an error instead ?!?
   if ( value.isEmpty() )
     kDebug() << QString("skipping query item '%1'").arg(key);
   else
@@ -170,22 +204,24 @@ void G3Request::addQueryItem ( const QString& key, const QString& value, bool sk
   kDebug() << "{<>}";
 } // G3Request::addQueryItem
 
-/**
+/*!
  * void G3Request::addQueryItem ( const QString& key, G3Type value, bool skipIfEmpty )
- *
- * param: const QString& key ( http query item key )
- * param: G3Type value ( http query item value )
- * param: bool skipIfEmpty ( controls if this item will be silently skipped in case of an empty value )
- * escription:
- * adds a single key/value pair to the query item collection in the request object
- * each pair collected by calls to this method will be added as query item later during job setup
- * note, that these items will be specified as part of the request url or its form body, depending on the request method
+ * @brief Add G3Type as single query item to the request
+ * @param key         http query item key
+ * @param value       http query item value
+ * @param skipIfEmpty controls if this item will be silently skipped in case of an empty value
+ * Adds a single key/value pair to the query item collection in the request object. 
+ * Each pair collected by calls to this method will be added as query item later during job setup. 
+ * Note, that these items will be specified as part of the request url or its form body, depending on the request method. 
+ * @see G3Request
+ * @see G3Type
+ * @author Christian Reiner
  */
 void G3Request::addQueryItem ( const QString& key, G3Type value, bool skipIfEmpty )
 {
   kDebug() << "(<key> <value> <bool>)" << key << value.toString() << skipIfEmpty;
   if ( m->query.contains(key) )
-    m->query.remove ( key ); // TODO: throw an error instead ?!?
+    m->query.remove ( key ); //! @todo: throw an error instead ?!?
   if ( value==G3Type::NONE )
     kDebug() << QString("skipping query item '%1' holding 'NONE' as entity type").arg(key);
   else
@@ -196,17 +232,18 @@ void G3Request::addQueryItem ( const QString& key, G3Type value, bool skipIfEmpt
   kDebug() << "{<>}";
 } // G3Request::addQueryItem
 
-/**
+/*!
  * void G3Request::addQueryItem ( const QString& key, const QStringList& values, bool skipIfEmpty )
- *
- * param: const QString& key ( http query item key )
- * param: const QStringList& values ( list of http query item values )
- * param: bool skipIfEmpty ( controls if this item will be silently skipped in case of an empty value )
- * escription:
- * adds a list of key/value pairs to the query item collection in the request object
- * all values will be added in form of a multi-line value as a single item identified by the key (http protocol standard)
- * each pair collected by calls to this method will be added as query item later during job setup
- * note, that these items will be specified as part of the request url or its form body, depending on the request method
+ * @brief Adds a list of strings as a single query item to the request
+ * @param key         http query item key
+ * @param values      list of http query item values
+ * @param skipIfEmpty controls if this item will be silently skipped in case of an empty value
+ * Adds a list of key/value pairs to the query item collection in the request object. 
+ * All values will be added in form of a multi-line value as a single item identified by the key (http protocol standard). 
+ * Each pair collected by calls to this method will be added as query item later during job setup. 
+ * Note, that these items will be specified as part of the request url or its form body, depending on the request method. 
+ * @see G3Request
+ * @author Christian Reiner
  */
 void G3Request::addQueryItem ( const QString& key, const QStringList& values, bool skipIfEmpty )
 {
@@ -225,15 +262,16 @@ void G3Request::addQueryItem ( const QString& key, const QStringList& values, bo
 
 //==========
 
-/**
+/*!
  * KUrl G3Request::webUrlWithQueryItems ( KUrl url, const QHash<QString,QString>& query )
- *
- * param: KUrl url ( plain request url )
- * param: const QHash<QString,QString>& query ( collection of query items )
- * return: KUrl ( final request url including the query part )
- * description:
+ * @brief Creates the final http get url including all query items
+ * @param  url   plain request url
+ * @param  query collection of query items
+ * @return       final request url including the query part 
  * constructs the final url to be requested in case of a http get or head method
  * this is the plain request url enriched by all query items being specified in the part of the url
+ * @see G3Request
+ * @author Christian Reiner
  */
 KUrl G3Request::webUrlWithQueryItems ( KUrl url, const QHash<QString,QString>& query )
 {
@@ -244,13 +282,14 @@ KUrl G3Request::webUrlWithQueryItems ( KUrl url, const QHash<QString,QString>& q
   return url;
 } // G3Request::webUrlWithQueryItems
 
-/**
+/*!
  * QByteArray G3Request::webFormPostPayload ( const QHash<QString,QString>& query )
- *
- * param: const QHash<QString,QString>& queryItems
- * return: QByteArray ( http post body )
- * description:
- * constructs a complete http post body holding the content of a html form to be sent to a http server
+ * @brief Contructs a http post body holding all query items
+ * @param  queryItems dictionary of query items
+ * @return            http post body
+ * Constructs a complete http post body holding the content of a html form to be sent to a http server
+ * @see G3Request
+ * @author Christian Reiner
  */
 QByteArray G3Request::webFormPostPayload ( const QHash<QString,QString>& query )
 {
@@ -265,15 +304,16 @@ QByteArray G3Request::webFormPostPayload ( const QHash<QString,QString>& query )
   return buffer;
 } // G3Request::webFormPostPayload
 
-/**
+/*!
  * QByteArray G3Request::webFileFormPostPayload ( const QHash<QString,QString>& query, const G3File* const file )
- *
- * param: const QHash<QString,QString>& query ( set of query items to be sent inside the request )
- * param: const G3File* const file ( internal file description specifying a file to be uploaded during the request )
- * return: QByteArray ( http post body )
- * description:
- * constructs a complete http post body holding multi-part form to be sent to a http server
- * this for includes several query items as separate parts and one final file
+ * @brief Constructs a multipart http post body holding all query items and a file to be uploaded
+ * @param query set of query items to be sent inside the request
+ * @param file  internal file description specifying a file to be uploaded during the request
+ * @return      http post body
+ * Constructs a complete http post body holding multi-part form to be sent to a http server. 
+ * This for includes several query items as separate parts and one final file. 
+ * @see G3Request
+ * @author Christian Reiner
  */
 QByteArray G3Request::webFileFormPostPayload ( const QHash<QString,QString>& query, const G3File* const file )
 {
@@ -308,12 +348,13 @@ QByteArray G3Request::webFileFormPostPayload ( const QHash<QString,QString>& que
 
 //==========
 
-/**
+/*!
  * void G3Request::setup ( )
- *
- * description:
- * constructs a KIO::TransferJob as required for the specific request to the remote gallery3 system
- * the job is enriched with all query items, files and header entries as required for the final processing of the job
+ * @brief Prepares a request by constructing the http job
+ * Constructs a KIO::TransferJob as required for the specific request to the remote gallery3 system. 
+ * The job is enriched with all query items, files and header entries as required for the final processing of the job. 
+ * @see G3Request
+ * @author Christian Reiner
  */ 
 void G3Request::setup ( )
 {
@@ -373,13 +414,14 @@ void G3Request::setup ( )
   kDebug() << "{<>}";
 } // G3Request::setup
 
-/**
+/*!
  * void G3Request::process ( )
- *
- * exception: ERR_SLAVE_DEFINED ( in case of a failure on method level (NOT protocol level) )
- * description:
- * processes a jbo that has been setup completely before
- * attempts to retry the job after requesting authentication information in case of a http-403 from the server
+ * @brief Processes a prepared request
+ * @exception ERR_SLAVE_DEFINED in case of a failure on method level (NOT protocol level)
+ * Processes a jbo that has been setup completely before. 
+ * Attempts to retry the job after requesting authentication information in case of a http-403 from the server. 
+ * @see G3Request
+ * @author Christian Reiner
  */
 void G3Request::process ( )
 {
@@ -393,7 +435,7 @@ void G3Request::process ( )
   {
     // if status is 403 this is a retry after a failed attempt
     // we simply construct a fresh job by calling setup again...
-    // TODO: required at all ? or can a job simply be run several times ?
+    //! @todo: required at all ? or can a job simply be run several times ?
     if ( 403==m->status )
     {
       kDebug() << "resetting job for a new trial";
@@ -415,13 +457,14 @@ void G3Request::process ( )
   kDebug() << "{<>}"; 
 } // G3Request::process
 
-/**
+/*!
  * void G3Request::evaluate ( )
- *
- * exception: ERR_SLAVE_DEFINED ( in case of unexpected content syntax, that is non-json-encoded content )
- * description:
- * evaluates the received result payload of a preceding processed job on a generic level
- * provides the json-parsed payload in form of a QVariant
+ * @brief Evaluates the reply received after a request
+ * @exception ERR_SLAVE_DEFINED in case of unexpected content syntax, that is non-json-encoded content
+ * Evaluates the received result payload of a preceding processed job on a generic level. 
+ * Provides the json-parsed payload in form of a QVariant. 
+ * @see G3Request
+ * @author Christian Reiner
  */
 void G3Request::evaluate ( )
 {
@@ -467,13 +510,14 @@ void G3Request::evaluate ( )
 
 //==========
 
-/**
+/*!
  * QString G3Request::toString ( )
- *
- * returns: QString ( the string as extracted from the result payload )
- * exception: ERR_SLAVE_DEFINED ( in case the payload did not carry a plain string as expected )
- * description: 
- * converts the request result payload into a valid QString
+ * @brief Converts the requests reply into a string
+ * @return the string as extracted from the result payload
+ * @exception ERR_SLAVE_DEFINED in case the payload did not carry a plain string as expected
+ * Converts the request result payload into a valid QString. 
+ * @see G3Request
+ * @author Christian Reiner
  */
 QString G3Request::toString ( )
 {
@@ -485,14 +529,15 @@ QString G3Request::toString ( )
   return string;
 } // G3Request::toString
 
-/**
+/*!
  * G3Item* G3Request::toItem ( QVariant& entry )
- *
- * param: QVariant& entry ( a single entry as extracted from a result payload holding multiple entries )
- * returns: G3Item* ( pointer to an internal item object )
- * exception: ERR_SLAVE_DEFINED ( in case the entry does not hold a valid item description as expected )
- * description:
- * converts the specified entry into an internal G3Item object
+ * @brief Converts a requests reply into a local item object
+ * @param entry a single entry as extracted from a result payload holding multiple entries
+ * @return pointer to an internal item object
+ * @exception ERR_SLAVE_DEFINED in case the entry does not hold a valid item description as expected
+ * Converts the specified entry into an internal G3Item object
+ * @see G3Request
+ * @author Christian Reiner
  */
 G3Item* G3Request::toItem ( QVariant& entry )
 {
@@ -506,13 +551,14 @@ G3Item* G3Request::toItem ( QVariant& entry )
   return item;
 } // G3Request::toItem
 
-/**
+/*!
  * QList<G3Item*> G3Request::toItems ( )
- *
- * returns: QList<G3Item*> ( list of pointers to item objects )
- * exception: ERR_SLAVE_DEFINED ( in case the result payload did not hold a list of entries as expected )
- * description:
- * converts the result payload into a list of internal G3Item objects
+ * @brief Converts a requests reply into a list of local item objects
+ * @return list of pointers to item objects
+ * @exception ERR_SLAVE_DEFINED in case the result payload did not hold a list of entries as expected
+ * Converts the result payload into a list of internal G3Item objects. 
+ * @see G3Request
+ * @author Christian Reiner
  */
 QList<G3Item*> G3Request::toItems ( )
 {
@@ -543,14 +589,15 @@ QList<G3Item*> G3Request::toItems ( )
   return items;
 } // G3Request::toItems
 
-/**
+/*!
  * g3index G3Request::toItemId ( QVariant& entry )
- *
- * param: QVariant& entry
- * returns: g3index ( numeric item id )
- * exception: ERR_SLAVE_DEFINED ( in case the result payload does not hold a valid item id as expected )
- * description:
- * converts the result payload into a valid internal numerical G3Item id
+ * @brief Converts a requests reply into a numeric item id
+ * @param     entry             technical description that should contain a single item entity
+ * @return                      g3index numeric item id
+ * @exception ERR_SLAVE_DEFINED in case the result payload does not hold a valid item id as expected
+ * Converts the result payload into a valid internal numerical G3Item id. 
+ * @see G3Request
+ * @author Christian Reiner
  */
 g3index G3Request::toItemId ( QVariant& entry )
 {
@@ -580,13 +627,14 @@ g3index G3Request::toItemId ( QVariant& entry )
 
 //==========
 
-/**
+/*!
  * QList<g3index> G3Request::toItemIds ( )
- *
- * returns: QList<g3index> ( list of item ids )
- * exception: ERR_SLAVE_DEFINED ( in case the result payload does not hold a list of item ids as expected )
- * description:
- * converts the result payload into a list of internal numeric item ids
+ * @brief Converts a requests reply into a list of numeric item ids
+ * @return list of item ids
+ * @exception ERR_SLAVE_DEFINED in case the result payload does not hold a list of item ids as expected
+ * Converts the result payload into a list of internal numeric item ids. 
+ * @see G3Request
+ * @author Christian Reiner
  */
 QList<g3index> G3Request::toItemIds ( )
 {
@@ -619,15 +667,16 @@ QList<g3index> G3Request::toItemIds ( )
 
 //==========
 
-/**
+/*!
  * bool G3Request::g3Check ( G3Backend* const backend )
- *
- * param: G3Backend* const backend ( G3 backend used for this request )
- * returns: bool ( indication, if the given url does in fast exist and is usable as a REST API url )
- * description:
- * tests if the backend refers to an existing REST API urlencoded
- * this is done by issuing a http head request to the url and evaluating the received return code
- * no reply payload is received or evaluated except the http headers carrying the response code
+ * @brief Checks the existance of the RESTful API of a remote Gallery3 system
+ * @param backend backend used for this request
+ * @return        indication, if the given url does in fast exist and is usable as a REST API url
+ * Tests if the backend refers to an existing REST API urlencoded. 
+ * This is done by issuing a http head request to the url and evaluating the received return code. 
+ * No reply payload is received or evaluated except the http headers carrying the response code. 
+ * @see G3Request
+ * @author Christian Reiner
  */
 bool G3Request::g3Check ( G3Backend* const backend )
 {
@@ -660,16 +709,17 @@ bool G3Request::g3Check ( G3Backend* const backend )
   } // catch
 } // G3Request::g3Check
 
-/**
+/*!
  * bool G3Request::g3Login ( G3Backend* const backend, AuthInfo& credentials )
- *
- * param: G3Backend* const backend ( G3 backend used for this request )
- * param: AuthInfo& credentials ( authentication credentials as prepared, cached or requested before )
- * returns: bool ( indicates if the login attempt has succeeded )
- * description:
- * performs a login to the remote gallery3 system by issuing a single login request
- * in case of a success the result payload holds a valid and user specific 'remote access key' stored and cached in the credentials structure
- * this key acts as an authentication key (kind of a long-term session key) for all subsequent requests to the gallery3 system
+ * @brief performs a login to a remote Gallery3 system
+ * @param backend     backend used for this request
+ * @param credentials authentication credentials as prepared, cached or requested before
+ * @return            indicates if the login attempt has succeeded 
+ * Performs a login to the remote gallery3 system by issuing a single login request. 
+ * In case of a success the result payload holds a valid and user specific 'remote access key' stored and cached in the credentials structure. 
+ * This key acts as an authentication key (kind of a long-term session key) for all subsequent requests to the gallery3 system. 
+ * @see G3Request
+ * @author Christian Reiner
  */
 bool G3Request::g3Login ( G3Backend* const backend, AuthInfo& credentials )
 {
@@ -700,13 +750,15 @@ bool G3Request::g3Login ( G3Backend* const backend, AuthInfo& credentials )
   return TRUE;
 } // G3Request::g3Login
 
-/**
+/*!
  * QList<G3Item*> G3Request::g3GetItems ( G3Backend* const backend, const QStringList& urls, G3Type type )
- *
- * param: G3Backend* const backend ( G3 backend used for this request )
- * param: const QStringList& urls ( list of rest urls pointing to the requested items )
- * param: G3Type type ( filters result to items of a specific type if specified )
- * returns: QList<G3Item*> ( list of pointers to valid local item objects )
+ * @brief Retrieves a list of specified items from a remote Gallery3 system
+ * @param backend backend used for this request
+ * @param urls    list of rest urls pointing to the requested items
+ * @param type    filters result to items of a specific type if specified
+ * @return        list of pointers to valid local item objects
+ * @see G3Request
+ * @author Christian Reiner
  */
 QList<G3Item*> G3Request::g3GetItems ( G3Backend* const backend, const QStringList& urls, G3Type type )
 {
@@ -733,16 +785,17 @@ QList<G3Item*> G3Request::g3GetItems ( G3Backend* const backend, const QStringLi
   return items;
 } // G3Request::g3GetItems
 
-/**
+/*!
  * QList<G3Item*> G3Request::g3GetItems ( G3Backend* const backend, g3index id, G3Type type )
- *
- * param: G3Backend* const backend ( G3 backend used for this request )
- * param: g3index id ( numeric id of parent item whos members are requested )
- * param: G3Type type ( filters resulting item set to items of a specific type if specified )
- * returns: QList<G3Item*> ( list of valid internal item objects )
- * description:
- * retrieves all members contained in a parent item specified by a numeric id
- * the resulting set of items may be filtered to a specific item type
+ * @brief Retrieves a list of items being members of a given item from a remote Gallery3 system
+ * @param backend G3 backend used for this request
+ * @param id      numeric id of parent item whos members are requested
+ * @param type    filters resulting item set to items of a specific type if specified
+ * @return        list of valid internal item objects
+ * Retrieves all members contained in a parent item specified by a numeric id. 
+ * The resulting set of items may be filtered to a specific item type. 
+ * @see G3Request
+ * @author Christian Reiner
  */
 QList<G3Item*> G3Request::g3GetItems ( G3Backend* const backend, g3index id, G3Type type )
 {
@@ -753,14 +806,15 @@ QList<G3Item*> G3Request::g3GetItems ( G3Backend* const backend, g3index id, G3T
   return g3GetItems ( backend, QStringList(url.url()), type );
 } // G3Request::g3GetItems
 
-/**
+/*!
  * QList<g3index> G3Request::g3GetAncestors ( G3Backend* const backend, G3Item* item )
- *
- * param: G3Backend* const backend ( G3 backend used for this request )
- * param: G3Item* item ( item whos ancestors are requested )
- * returns: QList<g3index> ( list of numeric item ids of ancestors )
- * description:
- * retrieves a list of numeric item ids for all items being an ancestor to the requested item
+ * @brief Retrieves the path of anchestors of a specified item from a remote Gallery3 system
+ * @param backend backend used for this request
+ * @param item    item whos ancestors are requested
+ * @return        list of numeric item ids of ancestors
+ * Retrieves a list of numeric item ids for all items being an ancestor to the requested item. 
+ * @see G3Request
+ * @author Christian Reiner
  */
 QList<g3index> G3Request::g3GetAncestors ( G3Backend* const backend, G3Item* item )
 {
@@ -776,14 +830,15 @@ QList<g3index> G3Request::g3GetAncestors ( G3Backend* const backend, G3Item* ite
   return list;
 } // G3Request::g3GetAncestors
 
-/**
+/*!
  * g3index G3Request::g3GetAncestors ( G3Backend* const backend, G3Item* item )
- *
- * param: G3Backend* const backend ( G3 backend used for this request )
- * param: G3Item* item ( item whos ancestors are requested )
- * returns: g3index ( numeric item id of ancestor )
- * description:
- * retrieves the numeric item id for the item being the direct ancestor to the requested item
+ * @brief Retrieves the path of anchestors of a specified item from a remote Gallery3 system
+ * @param  backend backend used for this request
+ * @param  item    item whos ancestors are requested
+ * @return         numeric item id of ancestor (g3index)
+ * Retrieves the numeric item id for the item being the direct ancestor to the requested item. 
+ * @see G3Request
+ * @author Christian Reiner
  */
 g3index G3Request::g3GetAncestor ( G3Backend* const backend, G3Item* item )
 {
@@ -807,20 +862,21 @@ g3index G3Request::g3GetAncestor ( G3Backend* const backend, G3Item* item )
   } // switch
 } // G3Request::g3GetAncestor
 
-/**
+/*!
  * G3Item* G3Request::g3GetItem ( G3Backend* const backend, g3index id, const QString& scope, const QString& name, bool random, G3Type type )
- *
- * param: G3Backend* const backend ( G3 backend used for this request )
- * param: g3index id ( numeric item id )
- * param: const QString& scope ( scope the request is to be interpreted in )
- * param: const QString& name ( name acting as a filter for the matching items names )
- * param: bool random ( flag indicating if a random item is returned )
- * param: G3Type type ( filters retrieved item to a certain type )
- * returns: G3Item* ( internal item object )
- * description:
- * retrieves a single item from the remote gallery3 system
- * which item is picked can be controlled by the additional query items
- * a typical request spcifies a 'direct' scope resulting in the retrieval of the item directly specified by the given numerical item id
+ * @brief Retrieves a single item specified by its numerical id
+ * @param   backend backend used for this request
+ * @param   id      numeric item id
+ * @param   scope   scope the request is to be interpreted in
+ * @param   name    name acting as a filter for the matching items names
+ * @param   random  flag indicating if a random item is returned
+ * @param   type    filters retrieved item to a certain type
+ * @returns         internal item object
+ * Retrieves a single item from the remote gallery3 system. 
+ * Which item is picked can be controlled by the additional query items.
+ * A typical request spcifies a 'direct' scope resulting in the retrieval of the item directly specified by the given numerical item id. 
+ * @see G3Request
+ * @author Christian Reiner
  */
 G3Item* G3Request::g3GetItem ( G3Backend* const backend, g3index id, const QString& scope, const QString& name, bool random, G3Type type )
 {
@@ -838,15 +894,16 @@ G3Item* G3Request::g3GetItem ( G3Backend* const backend, g3index id, const QStri
   return item;
 } // G3Request::g3GetItem
 
-/**
+/*!
  * void G3Request::g3PostItem ( G3Backend* const backend, g3index id, const QHash<QString,QString>& attributes, const G3File* file )
- *
- * param: G3Backend* const backend ( G3 backend used for this request )
- * param: g3index id ( numeric item id )
- * param: const QHash<QString,QString>& attributes ( list of item attributes to be changed )
- * param: const G3File* file ( file to be uploaded as item )
- * description:
- * creates a single item described by a list of attributes and a file uploaded as altered content in case of a photo or movie item
+ * @brief Creates a new item inside the remote Gallery3 system
+ * @param backend    backend used for this request
+ * @param id         numeric item id
+ * @param attributes list of item attributes to be changed
+ * @param file       file to be uploaded as item
+ * Creates a single item described by a list of attributes and a file uploaded as altered content in case of a photo or movie item. 
+ * @see G3Request
+ * @author Christian Reiner
  */
 void G3Request::g3PostItem ( G3Backend* const backend, g3index id, const QHash<QString,QString>& attributes, const G3File* file )
 {
@@ -865,15 +922,16 @@ void G3Request::g3PostItem ( G3Backend* const backend, g3index id, const QHash<Q
   request.evaluate     ( );
 } // G3Request::g3PostItem
 
-/**
+/*!
  * void G3Request::g3PutItem ( G3Backend* const backend, g3index id, const QHash<QString,QString>& attributes )
- *
- * param: G3Backend* const backend ( G3 backend used for this request )
- * param: g3index id ( numeric item id )
- * param: const QHash<QString,QString>& attributes ( list of attributes describing the item )
- * description:
- * updates a single item that already exists in the remote gallery3 system
- * a list of attributes holds the changes to be altered
+ * @brief Updates an existing item inside a remote Gallery3 system
+ * @param backend    backend used for this request
+ * @param id         numeric item id
+ * @param attributes list of attributes describing the item
+ * Updates a single item that already exists in the remote gallery3 system. 
+ * A list of attributes holds the changes to be altered. 
+ * @see G3Request
+ * @author Christian Reiner
  */
 void G3Request::g3PutItem ( G3Backend* const backend, g3index id, const QHash<QString,QString>& attributes )
 {
@@ -891,13 +949,14 @@ void G3Request::g3PutItem ( G3Backend* const backend, g3index id, const QHash<QS
   request.evaluate     ( );
 } // G3Request::g3PutItem
 
-/**
+/*!
  * void G3Request::g3DelItem ( G3Backend* const backend, g3index id )
- *
- * param: G3Backend* const backend ( G3 backend used for this request )
- * param: g3index id ( numeric item id )
- * description:
- * permanently deletes an existing item in the remote gallery3 system
+ * @brief Deletes an item inside a remote Gallery3 system
+ * @param backend backend used for this request
+ * @param id      numeric item id
+ * Permanently deletes an existing item in the remote gallery3 system. 
+ * @see G3Request
+ * @author Christian Reiner
  */
 void G3Request::g3DelItem ( G3Backend* const backend, g3index id )
 {
@@ -910,17 +969,18 @@ void G3Request::g3DelItem ( G3Backend* const backend, g3index id )
   kDebug() << "{<>}";
 } // G3Request::g3DelItem
 
-/**
+/*!
  * g3index G3Request::g3SetItem ( G3Backend* const backend, g3index id, const QString& name, G3Type type, const QByteArray& file )
- *
- * param: G3Backend* const backend ( G3 backend used for this request )
- * param: g3index id ( numeric item id )
- * param: const QString& name
- * param: G3Type type
- * param: const QByteArray& file
- * returns: g3index (numeric item id )
- * description:
- * ???
+ * @brief Creates a new item inside a remote Gallery3 system
+ * @param backend backend used for this request
+ * @param id      numeric item id
+ * @param name    name of item to create
+ * @param type    type of item to create
+ * @param file    file to be uploaded as required for the item creation
+ * @return        numeric item id (g3index)
+ * Creates a new item inside the remote Gallery3 system
+ * @see G3Request
+ * @author Christian Reiner
  */
 g3index G3Request::g3SetItem ( G3Backend* const backend, g3index id, const QString& name, G3Type type, const QByteArray& file )
 {
@@ -937,6 +997,14 @@ g3index G3Request::g3SetItem ( G3Backend* const backend, g3index id, const QStri
   return index;
 } // G3Request::g3SetItem
 
+/*!
+ * void G3Request::g3FetchObject ( G3Backend* const backend, const KUrl& url )
+ * @brief Retrieves the file represented by an item inside a remote Gallery3 system
+ * @param backend backend used for this request
+ * @param url     url of the object represented by the remote item, a file
+ * @see G3Request
+ * @author Christian Reiner
+ */
 void G3Request::g3FetchObject ( G3Backend* const backend, const KUrl& url )
 {
   KDebug::Block block ( "G3Request::g3FetchObject" );

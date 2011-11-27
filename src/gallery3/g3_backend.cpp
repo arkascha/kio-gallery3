@@ -6,6 +6,12 @@
  * $Date: 2011-09-12 09:35:04 +0200 (Mon, 12 Sep 2011) $
  */
 
+/*!
+ * @file
+ * @brief Implements all methods of class G3Backend
+ * @see G3Backend
+ * @author Christian Reiner
+ */
 #include <klocalizedstring.h>
 #include "utility/exception.h"
 #include "gallery3/g3_backend.h"
@@ -16,18 +22,19 @@
 using namespace KIO;
 using namespace KIO::Gallery3;
 
-/**
- * G3Backend* const G3Backend::detectBase ( const KUrl& url )
- *
- * param: const KUrl& url (url of requested base inside the galleries hierarchy)
- * returns: pointer to a validated and unique backend object
- * description:
- * detects and returns the position (url) of the G3-API based on any given
- * strategy: the REST API must be some base folder of the requested url
+/*!
+ * G3Backend* const G3Backend::instantiate ( QObject* parent, QHash<QString,G3Backend*>& backends, KUrl g3Url )
+ * @brief Instantiates a new backend object
+ * @param url url of requested base inside the galleries hierarchy
+ * @return    pointer to a validated and unique backend object
+ * Detects and returns the position (url) of the G3-API based on any given
+ * Strategy: the REST API must be some base folder of the requested url
  *           so we test each breadcrump one by one (shortening the url) until we find the service
- * note: this appears horrible, but there are two reasons for this:
+ * Note: this appears horrible, but there are two reasons for this:
  * 1.) our slave might be re-used to access more than one single gallery
  * 2.) there might be more than one gallery sharing the same start url
+ * @see G3Backend
+ * @author Christian Reiner
  */
 G3Backend* const G3Backend::instantiate ( QObject* parent, QHash<QString,G3Backend*>& backends, KUrl g3Url )
 {
@@ -65,12 +72,13 @@ G3Backend* const G3Backend::instantiate ( QObject* parent, QHash<QString,G3Backe
   throw Exception ( Error(ERR_SLAVE_DEFINED),i18n("No usable G3-API service found") );
 } // G3Backend::instantiate
 
-/**
- * G3Backend::G3Backend
- *
- * param: const KUrl& g3Url (url of the galleries web root)
- * description:
- * stores the derived REST API url and handles the requested protocol (http or https)
+/*!
+ * G3Backend::G3Backend ( QObject* parent, const KUrl& g3Url )
+ * @brief Constructor
+ * @param g3Url url of the galleries web root
+ * Stores the derived REST API url and handles the requested protocol
+ * @see G3Backend
+ * @author Christian Reiner
  */
 G3Backend::G3Backend ( QObject* parent, const KUrl& g3Url )
   : QObject ( parent )
@@ -101,11 +109,13 @@ G3Backend::G3Backend ( QObject* parent, const KUrl& g3Url )
   }
 }
 
-/**
- * G3Backend::~G3Backend
- *
- * description:
- * recursively deletes all registered items associated to this backend by deleting the base item
+/*!
+ * G3Backend::~G3Backend ( )
+ * @brief Desctructor
+ * Recursively deletes all registered items associated to this backend by
+ * deleting the base item
+ * @see G3Backend
+ * @author Christian Reiner
  */
 G3Backend::~G3Backend ( )
 {
@@ -133,8 +143,12 @@ G3Backend::~G3Backend ( )
 
 //==========
 
-/**
- * const UDSEntry G3Backend::toUDSEntry
+/*!
+ * const UDSEntry G3Backend::toUDSEntry ( )
+ * @brief Publishes a backend locally
+ * @return UDS description of this backend as base folder
+ * @see G3Backend
+ * @author Christian Reiner
  */
 const UDSEntry G3Backend::toUDSEntry ( )
 {
@@ -143,8 +157,12 @@ const UDSEntry G3Backend::toUDSEntry ( )
   return itemBase()->toUDSEntry();
 } // G3Backend::toUDSEntry
 
-/**
- * const UDSEntryList G3Backend::toUDSEntryList
+/*!
+ * const UDSEntryList G3Backend::toUDSEntryList ( )
+ * @brief Publishes a backends base item locally
+ * @return a list holding the base item as UDS entry
+ * @see G3Backend
+ * @author Christian Reiner
  */
 const UDSEntryList G3Backend::toUDSEntryList ( )
 {
@@ -155,12 +173,13 @@ const UDSEntryList G3Backend::toUDSEntryList ( )
   return list;
 } // G3Backend::toUDSEntryList
 
-/**
- * G3Backend::toPrintout
- *
- * returns: const QString (string description of the backend)
- * description:
- * a human readable description of the backend, mostly for debugging & logging purposes
+/*!
+ * const QString G3Backend::toPrintout ( ) const
+ * @brief Human readable representation of a backend
+ * @return string description of the backend
+ * A human readable description of the backend, mostly for debugging purposes
+ * @see G3Backend
+ * @author Christian Reiner
  */
 const QString G3Backend::toPrintout ( ) const
 {
@@ -169,13 +188,14 @@ const QString G3Backend::toPrintout ( ) const
 
 //==========
 
-/**
- * G3Item* G3Backend::itemBase
- *
- * returns: G3Item* (the base (root) item of the assiciated gallery)
- * description:
- * each gallery has only one and exactly one base item
- * this item acts as root of the items hierarchy
+/*!
+ * G3Item* G3Backend::itemBase ( )
+ * @brief Provides the base item inside a backends item hierarchy
+ * @return the base (root) item of the assiciated gallery
+ * Each gallery has only one and exactly one base item. 
+ * This item acts as root of the items hierarchy. 
+ * @see G3Backend
+ * @author Christian Reiner
  */
 G3Item* G3Backend::itemBase ( )
 {
@@ -184,15 +204,17 @@ G3Item* G3Backend::itemBase ( )
   return itemById ( 1 );
 } // G3Backend::itemBase
 
-/**
+/*!
  * G3Item* G3Backend::itemById ( g3index id )
- *
- * param: g3index (numeric item id)
- * returns: G3Item* (pointer to the item associated with the given id)
- * description:
- * the method blindly returns an existing, previously registered item
- * in case no such item exists it starts an attempt to retrieve the item
- * in that case the item is automatically registered and integrated into the items hierarchy
+ * @brief Provides or creates an item inside the backends item hierarchy
+ * @param  g3index numeric item id
+ * @return         pointer to the item associated with the given id
+ * The method blindly returns an existing, previously registered item. 
+ * In case no such item exists it starts an attempt to retrieve the item. 
+ * In that case the item is automatically registered and integrated into the
+ * items hierarchy. 
+ * @see G3Backend
+ * @author Christian Reiner
  */
 G3Item* G3Backend::itemById ( g3index id )
 {
@@ -204,15 +226,17 @@ G3Item* G3Backend::itemById ( g3index id )
   return item ( id );
 } // G3Backend::itemById
 
-/**
+/*!
  * G3Item* G3Backend::itemByUrl ( const KUrl& itemUrl )
- *
- * param: const KUrl& (local item url inside the local folder hierarchy)
- * returns: G3Item* (pointer to the item associated with the given url)
- * description:
- * will walk through the folder hierarchy as presented by the set of registered items
- * in case a subpath of the given url does not map onto previously registered items
- * those items will be retrieved, registered and integrated into the local hierarchy
+ * @brief Provides or creates an item inside the backends item hierarchy
+ * @param itemUrl local item url inside the local folder hierarchy
+ * @return        pointer to the item associated with the given url
+ * Walks through the folder hierarchy as presented by the set of registered
+ * items, in case a subpath of the given url does not map onto previously
+ * registered items. Those items will be retrieved, registered and integrated
+ * into the local hierarchy. 
+ * @see G3Backend
+ * @author Christian Reiner
  */
 G3Item* G3Backend::itemByUrl ( const KUrl& itemUrl )
 {
@@ -222,15 +246,17 @@ G3Item* G3Backend::itemByUrl ( const KUrl& itemUrl )
   return itemByPath ( itemPath );
 } // G3Backend::itemByUrl
 
-/**
+/*!
  * G3Item* G3Backend::itemByPath ( const QString& path )
- *
- * param: const QString& (local item path inside the local folder hierarchy)
- * returns: G3Item* (pointer to the item associated with the given url)
- * description:
- * will walk through the folder hierarchy as presented by the set of registered items
- * in case a subpath of the given url does not map onto previously registered items
- * those items will be retrieved, registered and integrated into the local hierarchy
+ * @brief Provides or creates an item inside a backends item hierarchy
+ * @param path local item path inside the local folder hierarchy
+ * @return     pointer to the item associated with the given url
+ * Walks through the folder hierarchy as presented by the set of registered
+ * items, in case a subpath of the given url does not map onto previously
+ * registered items. Those items will be retrieved, registered and integrated
+ * into the local hierarchy. 
+ * @see G3Backend
+ * @author Christian Reiner
  */
 G3Item* G3Backend::itemByPath ( const QString& path )
 {
@@ -240,15 +266,17 @@ G3Item* G3Backend::itemByPath ( const QString& path )
   return itemByPath ( breadcrumbs );
 } // G3Backend::itemByPath
 
-/**
+/*!
  * G3Item* G3Backend::itemByPath ( const QStringList& breadcrumbs )
- *
- * param: const QStringList& (local item path as breadcrumbs inside the local folder hierarchy)
- * returns: G3Item* (pointer to the item associated with the given url)
- * description:
- * will walk through the folder hierarchy as presented by the set of registered items
- * in case a subpath of the given url does not map onto previously registered items
- * those items will be retrieved, registered and integrated into the local hierarchy
+ * @brief Provides or creates an item inside a backends item hierarchy
+ * @param breadcrumbs local item pathinside the folder hierarchy
+ * @return            pointer to the item associated with the given url
+ * Walks through the folder hierarchy as presented by the set of registered
+ * items, in case a subpath of the given url does not map onto previously
+ * registered items. Those items will be retrieved, registered and integrated
+ * into the local hierarchy. 
+ * @see G3Backend
+ * @author Christian Reiner
  */
 G3Item* G3Backend::itemByPath ( const QStringList& breadcrumbs )
 {
@@ -266,15 +294,18 @@ G3Item* G3Backend::itemByPath ( const QStringList& breadcrumbs )
   return item;
 } // G3Backend::itemByPath
 
-/**
+/*!
  * QList<G3Item*> G3Backend::membersByItemId ( g3index id )
- *
- * param: g3index (numeric item id)
- * returns: QList<G3Item*> (list of pointers to registered member item objects)
- * description:
- * will return all members of a given parent item by looking at the 'members' attribute inside the item description
- * any members registered that are not listed in the attribute are deleted
- * any members not (yet) registered but listed in the attribute are retrieved, registered and integrated into the item hierarchy
+ * @brief Provides a list of all member items of an item inside the backends item hierarchy
+ * @param  id numeric item id
+ * @return    list of pointers to registered member item objects
+ * Will return all members of a given parent item by looking at the 'members'
+ * attribute inside the item description. 
+ * Any members registered that are not listed in the attribute are deleted
+ * Any members not (yet) registered but listed in the attribute are retrieved,
+ * registered and integrated into the item hierarchy. 
+ * @see G3Backend
+ * @author Christian Reiner
  */
 QList<G3Item*> G3Backend::membersByItemId ( g3index id )
 {
@@ -292,17 +323,21 @@ QList<G3Item*> G3Backend::membersByItemId ( g3index id )
   return items;
 } // G3Backend::membersByItemId
 
-/**
+/*!
  * QList<G3Item*> G3Backend::membersByItemPath ( const QString& path )
- *
- * param: const QString& (path of item in local folder hierarchy)
- * returns: QList<G3Item*> (list of pointers to registered member item objects)
- * description:
- * will return all members of a parent item by looking at the 'members' attribute inside the item description
- * the parent item is identified by its path inside the local folder hierary
- * any missing subfolders leading to the parent item will be retrieved, registered and integrated ino the item hierarchy
- * any members registered that are not listed in the attribute are deleted
- * any members not (yet) registered but listed in the attribute are retrieved, registered and integrated into the item hierarchy
+ * @brief Provides a list of all member items of an item inside the backends item hierarchy
+ * @param path path of item in local folder hierarchy
+ * @return     list of pointers to registered member item objects
+ * Will return all members of a parent item by looking at the 'members'
+ * attribute inside the item description. The parent item is identified by its
+ * path inside the local folder hierary. 
+ * Any missing subfolders leading to the parent item will be retrieved,
+ * registered and integrated ino the item hierarchy. 
+ * Any members registered that are not listed in the attribute are deleted. 
+ * Any members not (yet) registered but listed in the attribute are retrieved,
+ * registered and integrated into the item hierarchy. 
+ * @see G3Backend
+ * @author Christian Reiner
  */
 QList<G3Item*> G3Backend::membersByItemPath ( const QString& path )
 {
@@ -314,17 +349,21 @@ QList<G3Item*> G3Backend::membersByItemPath ( const QString& path )
     return membersByItemPath ( path.split(QLatin1String(QLatin1String("/"))) );
 } // G3Backend::membersByItemPath
 
-/**
+/*!
  * QList<G3Item*> G3Backend::membersByItemPath ( const QStringList& breadcrumbs )
- *
- * param: const QStringList& (path of item as breadcrumbs in local folder hierarchy)
- * returns: QList<G3Item*> (list of pointers to registered member item objects)
- * description:
- * will return all members of a parent item by looking at the 'members' attribute inside the item description
- * the parent item is identified by its path inside the local folder hierary
- * any missing subfolders leading to the parent item will be retrieved, registered and integrated ino the item hierarchy
- * any members registered that are not listed in the attribute are deleted
- * any members not (yet) registered but listed in the attribute are retrieved, registered and integrated into the item hierarchy
+ * @brief Provides a list of all member items of an item inside the backends item hierarchy
+ * @param breadcrumbs path of item as breadcrumbs in local folder hierarchy
+ * @return            list of pointers to registered member item objects
+ * Will return all members of a parent item by looking at the 'members'
+ * attribute inside the item description. The parent item is identified by its
+ * path inside the local folder hierary. 
+ * Any missing subfolders leading to the parent item will be retrieved,
+ * registered and integrated ino the item hierarchy. 
+ * Any members registered that are not listed in the attribute are deleted. 
+ * Any members not (yet) registered but listed in the attribute are retrieved,
+ * registered and integrated into the item hierarchy. 
+ * @see G3Backend
+ * @author Christian Reiner
  */
 QList<G3Item*> G3Backend::membersByItemPath ( const QStringList& breadcrumbs )
 {
@@ -344,14 +383,16 @@ QList<G3Item*> G3Backend::membersByItemPath ( const QStringList& breadcrumbs )
 
 //==========
 
-/**
+/*!
  * G3Item* G3Backend::item ( g3index id )
- *
- * param: g3index (numeric item id)
- * returns: G3Item* (pointer to the associated item object)
- * description:
- * accepts and returns a previously registered item matching the id or attemots to retrieve it
- * a retrieved item will be registered and integrated in to the local item hierarchy
+ * @brief Provides an item inside the backends item hierarchy
+ * @param id numeric item id
+ * @return   pointer to the associated item object
+ * Accepts and returns a previously registered item matching the id or attempts
+ * to retrieve it. A retrieved item will be registered and integrated in to the
+ * local item hierarchy. 
+ * @see G3Backend
+ * @author Christian Reiner
  */
 G3Item* G3Backend::item ( g3index id )
 {
@@ -365,13 +406,14 @@ G3Item* G3Backend::item ( g3index id )
   return item;
 } // G3Backend::item
 
-/**
+/*!
  * QHash<g3index,G3Item*> G3Backend::members ( g3index id )
- *
- * param: g3index (numeric item id)
- * returns: QHash<g3index,G3Item*> (hash of pointers to items by their id)
- * description:
- * consults a given item and requests the list of member items inside that item
+ * @brief Provides a list of member items of an item inside a backends item hierarchy
+ * @param id numeric item id
+ * @return   hash of pointers to items by their id
+ * Consults a given item and requests the list of member items inside that item
+ * @see G3Backend
+ * @author Christian Reiner
  */
 QHash<g3index,G3Item*> G3Backend::members ( g3index id )
 {
@@ -380,13 +422,14 @@ QHash<g3index,G3Item*> G3Backend::members ( g3index id )
   itemById(id)->members ( );
 } // G3Backend::members
 
-/**
+/*!
  * QHash<g3index,G3Item*> G3Backend::members ( G3Item* item )
- *
- * param: G3Item* (pointer to an item object)
- * returns: QHash<g3index,G3Item*> (hash of pointers to items by their id)
- * description:
- * consults a given item and requests the list of member items inside that item
+ * @brief Provides a list of member items of an item inside a backends item hierarchy
+ * @param item pointer to an item object
+ * @return     hash of pointers to items by their id
+ * Consults a given item and requests the list of member items inside that item
+ * @see G3Backend
+ * @author Christian Reiner
  */
 QHash<g3index,G3Item*> G3Backend::members ( G3Item* item )
 {
@@ -397,12 +440,13 @@ QHash<g3index,G3Item*> G3Backend::members ( G3Item* item )
 
 //==========
 
-/**
+/*!
  * int G3Backend::countItems  ( )
- *
- * returns: int (number of known (currently registered) items associated with this backend)
- * description:
- * mainly for debugging / logging purposes
+ * @brief Number of items that exist inside a backends item hierarchy
+ * @return number of currently known items associated with this backend
+ * Mainly for debugging / logging purposes
+ * @see G3Backend
+ * @author Christian Reiner
  */
 int G3Backend::countItems  ( )
 {
@@ -412,15 +456,16 @@ int G3Backend::countItems  ( )
 
 //==========
 
-/**
+/*!
  * bool G3Backend::login ( AuthInfo& credentials )
- *
- * param: AuthInfo& credentials ( authentiction credentials )
- * returns: bool (authentication succeeded / failed)
- * description:
- * performs a G3 specific authentication request
- * goal is to get back the 'remote access key' that is used by the G§ REST API as a kind of long-term-session-keys
- * upon success that key is stored inside the authentication credential as 'digestInfo'
+ * @brief Login to a remote Gallery3 system represented by the backend
+ * @param credentials authentiction credentials
+ * @return            TRUE if authentication succeeded, FALSE otherwise
+ * Performs a G3 specific authentication request. 
+ * Goal is to get back the 'remote access key' that is used by the G§ REST API as a kind of long-term-session-keys. 
+ * Upon success that key is stored inside the authentication credential as 'digestInfo'. 
+ * @see G3Backend
+ * @author Christian Reiner
  */
 bool G3Backend::login ( AuthInfo& credentials )
 {
@@ -428,13 +473,14 @@ bool G3Backend::login ( AuthInfo& credentials )
   return G3Request::g3Login ( this, credentials );
 } // G3Request::g3RemoteAccessKey
 
-/**
+/*!
  * void G3Backend::pushItem ( G3Item* item )
- *
- * param: G3Item* (pointer to an item object)
- * description:
- * registeres a given item inside its associated backend
- * note that the backend only holds an unordered list of items, not a hierarchy
+ * @brief Pushes a given item into the backends item hierarchy
+ * @param item pointer to an item object
+ * Registeres a given item inside its associated backend. 
+ * Note that the backend only holds an unordered list of items, not a hierarchy. 
+ * @see G3Backend
+ * @author Christian Reiner
  */
 void G3Backend::pushItem ( G3Item* item )
 {
@@ -442,14 +488,15 @@ void G3Backend::pushItem ( G3Item* item )
   m->items.insert ( item->id(), item );
 } // G3Backend::pushItem
 
-/**
+/*!
  * G3Item* G3Backend::popItem ( g3index id )
- *
- * param: g3index (numeric item id)
- * returns: G3Item* (pointer to the item holding the given id)
- * description:
- * deregisteres an existing item from its associated backend and returns a pointer to it
- * note that this does not delete the item object nor does it remove it from the items hierarchy
+ * @brief Pops an item from the backends item hierarchy
+ * @param id numeric item id
+ * @returns  pointer to the item holding the given id)
+ * Deregisteres an existing item from its associated backend and returns a pointer to it. 
+ * Note that this does not delete the item object nor does it remove it from the items hierarchy. 
+ * @see G3Backend
+ * @author Christian Reiner
  */
 G3Item* G3Backend::popItem ( g3index id )
 {
@@ -459,13 +506,14 @@ G3Item* G3Backend::popItem ( g3index id )
   throw Exception ( Error(ERR_INTERNAL), i18n("attempt to remove non-existing item with id '%1'").arg(id) );
 } // G3Backend::popItem
 
-/**
+/*!
  * void G3Backend::removeItem ( G3Item* item )
- *
- * param: G3Item* (pointer to item object)
- * description:
- * deregisteres a given item from its associated backend and deletes the object
- * note that this includes the removal from the items hierarchy
+ * @brief removes an item from the backends item hierarchy
+ * @param item pointer to item object
+ * Deregisteres a given item from its associated backend and deletes the object. 
+ * Note that this includes the removal from the items hierarchy. 
+ * @see G3Backend
+ * @author Christian Reiner
  */
 void G3Backend::removeItem ( G3Item* item )
 {
@@ -488,15 +536,16 @@ void G3Backend::removeItem ( G3Item* item )
   }
 } // G3Backend::removeItem
 
-/**
+/*!
  * G3Item* const G3Backend::updateItem ( G3Item* item, const QHash<QString,QString>& attributes )
- *
- * param: G3Item* (pointer to item object)
- * param: const QHash<QString,QString>& (list of altered item attributes)
- * returns: G3Item* (pointer to updated item object)
- * description:
- * updates an existing item on the remote server side by altering some of its attributes
- * note that this list might include the parent item, so in fact it can move the item inside the hierarchy
+ * @brief Updates any attributes of an item inside the remote Gallery3 system represented by the backend
+ * @param item       pointer to item object
+ * @param attributes list of altered item attributes
+ * @return           pointer to updated item object
+ * Updates an existing item on the remote server side by altering some of its attributes. 
+ * Note that this list might include the parent item, so in fact it can move the item inside the hierarchy. 
+ * @see G3Backend
+ * @author Christian Reiner
  */
 G3Item* const G3Backend::updateItem ( G3Item* item, const QHash<QString,QString>& attributes )
 {
@@ -525,17 +574,18 @@ G3Item* const G3Backend::updateItem ( G3Item* item, const QHash<QString,QString>
   return item;
 } // G3Backend::updateItem
 
-/**
+/*!
  * G3Item* const G3Backend::createItem  ( G3Item* parent, const QString& name, const G3File* const file )
- *
- * param: G3Item* parent (pointer to item object)
- * param: const QString& name (readable name the item is created as)
- * param: G3File* file (pointer to a G3File describing a file to be uploaded)
- * returns: G3Item* (pointer to created item object)
- * description:
- * creates an item inside the remote gallery system, be it an album, a photo or a movie
- * this creation consists of the node created, some attributes for its description and
- * in a local file in case of a photo or movie item
+ * @brief Creates a new item inside the remote Gallery3 system represented by the backend
+ * @param parent parent (pointer to item object
+ * @param name   readable name the item is created as
+ * @param file   pointer to a G3File describing a file to be uploaded
+ * @return       pointer to created item object
+ * Creates an item inside the remote gallery system, be it an album, a photo or a movie. 
+ * This creation consists of the node created, some attributes for its description and. 
+ * In a local file in case of a photo or movie item. 
+ * @see G3Backend
+ * @author Christian Reiner
  */
 G3Item* const G3Backend::createItem  ( G3Item* parent, const QString& name, const G3File* const file )
 {
@@ -570,6 +620,14 @@ G3Item* const G3Backend::createItem  ( G3Item* parent, const QString& name, cons
   return item;
 } // G3Backend::createItem
 
+/*!
+ * void G3Backend::fetchFile ( G3Item* item )
+ * @brief Retrieves an unresized file represented by an item inside the remote Gallery3 system represented by the backend
+ * @param item item holding the requested file
+ * Retrieves the file represented by the given item inside the remote Gallery3 system. 
+ * @see G3Backend
+ * @author Christian Reiner
+ */
 void G3Backend::fetchFile ( G3Item* item )
 {
   KDebug::Block block ( "G3Backend::fetchFile" );
@@ -577,6 +635,14 @@ void G3Backend::fetchFile ( G3Item* item )
   G3Request::g3FetchObject ( this, item->fileUrl(TRUE) );
 } // G3Backend::fetchFile
 
+/*!
+ * void G3Backend::fetchResize ( G3Item* item )
+ * @brief Retrieves a resized file represented by an item inside the remote Gallery3 system represented by the backend
+ * @param item item holding the requested resize file
+ * Retrieves a resize represented by the given item inside the remote Gallery3 system. 
+ * @see G3Backend
+ * @author Christian Reiner
+ */
 void G3Backend::fetchResize ( G3Item* item )
 {
   KDebug::Block block ( "G3Backend::fetchResize" );
@@ -584,6 +650,14 @@ void G3Backend::fetchResize ( G3Item* item )
   G3Request::g3FetchObject ( this, item->resizeUrl(TRUE) );
 } // G3Backend::fetchResize
 
+/*!
+ * void G3Backend::fetchThumb ( G3Item* item )
+ * @brief Retrieves a thumbnailed file represented by an item inside the remote Gallery3 system represented by the backend
+ * @param item item holding the requested thumbnail file
+ * Retrieves a thumbnail represented by the given item inside the remote Gallery3 system.
+ * @see G3Backend
+ * @author Christian Reiner
+ */
 void G3Backend::fetchThumb ( G3Item* item )
 {  
   KDebug::Block block ( "G3Backend::fetchThumb" );
@@ -591,6 +665,14 @@ void G3Backend::fetchThumb ( G3Item* item )
   G3Request::g3FetchObject ( this, item->thumbUrl(TRUE) );
 } // G3Backend::fetchThumb
 
+/*!
+ * void G3Backend::fetchCover ( G3Item* item )
+ * @brief Retrieves a thumbnailed file represented by an item inside the remote Gallery3 system represented by the backend
+ * @param item item holding the requested cover thumbnail
+ * Retrieves a cover thumbnail represented by the given item inside the remote Gallery3 system.
+ * @see G3Backend
+ * @author Christian Reiner
+ */
 void G3Backend::fetchCover ( G3Item* item )
 {
   KDebug::Block block ( "G3Backend::fetchCover" );

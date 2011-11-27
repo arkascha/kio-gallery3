@@ -6,6 +6,16 @@
  * $Date: 2011-08-13 13:08:50 +0200 (Sat, 13 Aug 2011) $
  */
 
+/*!
+ * @file
+ * Defines class G3Request
+ * An object of type G3Request represents all aspects of a single request to
+ * the remote Gallery3 system. As such it acts as a translation between logical
+ * requests as defined in the API and the way these are realized by using
+ * http(s) requests against the remote Gallery3 system.
+ * @see G3Request
+ * @author Christian Reiner
+ */
 #ifndef G3_REQUEST_H
 #define G3_REQUEST_H
 
@@ -32,16 +42,19 @@ namespace KIO
     class G3Item;
     class G3File;
 
-    /**
-     * class G3Request
-     * This class implements a request and its evaluation towards a remote gallery3 system.
-     * 
-     * The basic strategy of this class is to map each gallery3-request onto a single kio-request, this way 
-     * re-using the existing http-slave implementations. 
-     * 
-     * Note that the constructor is protected: dont ever attempt to directly create an object of this class,
-     * use the static public methods defined towards the end of the class definition. These offer better
-     * usability in form of a function-call-interface.
+    /*!
+     * @class G3Request
+     * @brief Worker for requests to remote Gallery3 system
+     * Implements a request and its evaluation against a remote Gallery3 system
+     * The basic strategy of this class is to map each gallery3-request onto a
+     * single kio-request, this way re-using the existing http-slave
+     * implementations.
+     * Note that the constructor is protected: dont ever attempt to directly
+     * create an object of this class, use the static public methods defined
+     * towards the end of the class definition. These offer better usability
+     * in form of a function-call-interface.
+     * Use one of the statical methods to generate am object of this class.
+     * @author Christian Reiner
      */
     class G3Request
       : public QObject
@@ -58,7 +71,7 @@ namespace KIO
           const G3File* const    file;     // request upload file
           KUrl                   requestUrl;
           KUrl                   finalUrl;
-          // FIXME: maybe we have to use QSharedPointer here... calling delete on m_job in the descructor often causes a segfault...
+          //! @todo fixme: maybe we have to use QSharedPointer here... calling delete on m_job in the descructor often causes a segfault...
           KIO::TransferJob*      job;
           // to be sent
           QHash<QString,QString> header;   // request header items

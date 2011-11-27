@@ -6,6 +6,13 @@
  * $Date: 2011-09-12 09:35:04 +0200 (Mon, 12 Sep 2011) $
  */
 
+/*!
+ * @file
+ * Implementation of the methods of class KIOGallery3Protocol
+ * @see KIOGallery3Protocol
+ * @author Christian Reiner
+ */
+
 #include <stdlib.h>
 #include <unistd.h>
 #include <KUrl>
@@ -25,15 +32,17 @@
 using namespace KIO;
 using namespace KIO::Gallery3;
 
-/**
+/*!
  * void KIOGallery3Protocol::selectConnection ( const QString& host, g3index port, const QString& user, const QString& pass )
- *
- * param: const QString& host ( host to connect to )
- * param: g3index port ( tcp port to connect to )
- * param: const QString& user ( user to authenticate as )
- * param: const QString& pass ( password to authenticate with )
- * description:
- * accepts the connection details from the controlling slave interface and stores them in a persistant manner
+ * @brief Static method to set active remote connection
+ * @param host host to connect to
+ * @param port tcp port to connect to
+ * @param user user to authenticate as
+ * @param pass password to authenticate with
+ * Accepts the connection details from the controlling slave interface and stores them in a persistant manner
+ * But using this method as a switch we can jump between different remote Galelry3 systems. 
+ * @see KIOGallery3Protocol
+ * @author Christian Reiner
  */
 void KIOGallery3Protocol::selectConnection ( const QString& host, qint16 port, const QString& user, const QString& pass )
 {
@@ -45,15 +54,18 @@ void KIOGallery3Protocol::selectConnection ( const QString& host, qint16 port, c
   m->connection.pass = pass;
 } // KIOGallery3Protocol::selectConnection
 
-/**
+/*!
  * G3Backend* KIOGallery3Protocol::selectBackend ( const KUrl& targetUrl )
- *
- * param: const KUrl& targetUrl ( requested url )
- * returns: G3Backend* ( existing or freshly created backend associated with the given targetUrl )
- * description:
- * standardizes the given target url to form a clean and reliable base url used to identify the associated backend to used
- * note that a change of the user name (authentication) creates a different url and by this a different backend
- * this is desired, the tree of items might look completely different so we want to create a fresh backend
+ * @brief Select backend responsible for a request
+ * @param targetUrl requested url
+ * @return          existing or freshly created backend associated with the given targetUrl
+ * Standardizes the given target url to form a clean and reliable base url used
+ * to identify the associated backend to used.
+ * Note that a change of the user name (authentication) creates a different url
+ * and by this a different backend. This is desired, the tree of items might
+ * look completely different so we want to create a fresh backend.
+ * @see KIOGallery3Protocol
+ * @author Christian Reiner
  */
 G3Backend* KIOGallery3Protocol::selectBackend ( const KUrl& targetUrl )
 {
@@ -73,6 +85,17 @@ G3Backend* KIOGallery3Protocol::selectBackend ( const KUrl& targetUrl )
   return backend;
 } // KIOGallery3Protocol::selectBackend
 
+/*!
+ * G3Item* KIOGallery3Protocol::itemBase ( const KUrl& itemUrl )
+ * @brief Get the base item object
+ * @param itemUrl item url required to identify the responsible backend
+ * @return        the base item as existing inside the responsible backend
+ * The base item is typically the entry piont for all searches inside the item hierarchy.
+ * It is predefined inside the remote Gallery3, has the numerical id 1 and cannot be altered.
+ * Usually it is invisible as such, it simply acts as a starting point inside the hierarchy.
+ * @see KIOGallery3Protocol
+ * @author Christian Reiner
+ */
 G3Item* KIOGallery3Protocol::itemBase ( const KUrl& itemUrl )
 {
   KDebug::Block block ( "KIOGallery3Protocol::itemBase" );
@@ -81,6 +104,17 @@ G3Item* KIOGallery3Protocol::itemBase ( const KUrl& itemUrl )
   return backend->itemBase ( );
 } // KIOGallery3Protocol::itemBase
 
+/*!
+ * G3Item* KIOGallery3Protocol::itemByUrl ( const KUrl& itemUrl )
+ * @brief Get an item as referenced by its url
+ * @param itemUrl item url required to identify the responsible backend
+ * @return        the requested item object as existing inside the responsible backend
+ * This method offers a convenient way to get an item object inside the local
+ * name based item hierarchy. It automatically selects the responsible backend
+ * and creates all parent items inside the items path as requried.
+ * @see KIOGallery3Protocol
+ * @author Christian Reiner
+ */
 G3Item* KIOGallery3Protocol::itemByUrl ( const KUrl& itemUrl )
 {
   KDebug::Block block ( "KIOGallery3Protocol::itemByUrl" );
@@ -90,6 +124,17 @@ G3Item* KIOGallery3Protocol::itemByUrl ( const KUrl& itemUrl )
   return backend->itemByPath ( path );
 } // KIOGallery3Protocol::itemByUrl
 
+/*!
+ * QList<G3Item*> KIOGallery3Protocol::itemsByUrl ( const KUrl& itemUrl )
+ * @brief Get list of member items of an album referenced by its url
+ * @param itemUrl item url required to identify the responsible backend
+ * @return        complete list of items contained in the requested item
+ * Convenient way to get the whole list of member items that exist inside an
+ * album. automatically selects or constructs the responsible backend and
+ * all parent items inside the albums path as requried.
+ * @see KIOGallery3Protocol
+ * @author Christian Reiner
+ */
 QList<G3Item*> KIOGallery3Protocol::itemsByUrl ( const KUrl& itemUrl )
 {
   KDebug::Block block ( "KIOGallery3Protocol::itemsByUrl" );
@@ -101,10 +146,15 @@ QList<G3Item*> KIOGallery3Protocol::itemsByUrl ( const KUrl& itemUrl )
 
 //==========
 
-/**
+/*!
+ * KIOGallery3Protocol::KIOGallery3Protocol ( const QByteArray &pool, const QByteArray &app, QObject* parent )
+ * @brief Constructor
+ * @param pool
+ * @param app
+ * @param parent
  * The standard constructor, nothing special here.
- * A fresh object is handled to the generic interface class this class derives from.
- * That object is initialized by refreshing it's nodes collection and destroyed again locally in the destructor. 
+ * @see KIOGallery3Protocol
+ * @author Christian Reiner
  */
 KIOGallery3Protocol::KIOGallery3Protocol ( const QByteArray &pool, const QByteArray &app, QObject* parent )
   : QObject     ( parent )
@@ -120,8 +170,12 @@ KIOGallery3Protocol::KIOGallery3Protocol ( const QByteArray &pool, const QByteAr
   catch ( Exception &e ) { error ( e.getCode(), e.getText() ); }
 } // KIOGallery3Protocol::KIOGallery3Protocol
 
-/**
- * The destructor cleans up
+/*!
+ * KIOGallery3Protocol::~KIOGallery3Protocol ( )
+ * @brief: Destructor
+ * Standard descructor, removes all backends registered by this instance.
+ * @see KIOGallery3Protocol
+ * @author Christian Reiner
  */
 KIOGallery3Protocol::~KIOGallery3Protocol ( )
 {
@@ -146,6 +200,29 @@ KIOGallery3Protocol::~KIOGallery3Protocol ( )
 
 //======================
 
+/*!
+ * void KIOGallery3Protocol::slotRequestAuthInfo ( G3Backend* backend, AuthInfo& credentials, int attempt )
+ * @brief Interactive authentication service
+ * @param backend     the backend an authentication is required against
+ * @param credentials the credentials as tehy currently exist to be enhanced
+ * @param attempt     the number of different authentication attempts done so far
+ * This slot offers an authentication service to G3Requests that experience an
+ * error 403: authentication required. This way we can do without a mandatory
+ * authentication when starting and only identify against the remote Gallery3
+ * system if requested to do so. This means that a guest access works if
+ * granted by the remote Gallery3 system.
+ * The slot performs a complete authentication request against the remote
+ * Gallery3 system by itself and modifies the authentication credentials as
+ * taken from the local cache or gathered in previous attempts.
+ * IN case of a successful authentication the Gallery3-typical "remote access
+ * key" is stored inside the credentials as AuthInfo::digestInfo. That key acts
+ * as a long term session key for all subsequent requests to the system.
+ * @see KIOGallery3Protocol
+ * @see G3Request
+ * @see G3Request::signalRequestAuthInfo
+ * @see G3Request::g3Login
+ * @author Christian Reiner
+ */
 void KIOGallery3Protocol::slotRequestAuthInfo ( G3Backend* backend, AuthInfo& credentials, int attempt )
 {
   KDebug::Block block ( "KIOGallery3Protocol::slotRequestAuthInfo" );
@@ -196,6 +273,21 @@ void KIOGallery3Protocol::slotRequestAuthInfo ( G3Backend* backend, AuthInfo& cr
   throw Exception ( Error(ERR_ABORTED), i18n("Authentication cancelled to '%1'").arg(credentials.url.prettyUrl()) );
 } // KIOGallery3Protocol::slotRequireAuthInfo
 
+/*!
+ * void KIOGallery3Protocol::slotMessageBox ( int& result, SlaveBase::MessageBoxType type, const QString &text, const QString &caption, const QString &buttonYes, const QString &buttonNo )
+ * @brief Interactive message box service
+ * @param result    as defined in KIO::SlaveBase::messageBox
+ * @param types     as defined in KIO::SlaveBase::messageBox
+ * @param text      as defined in KIO::SlaveBase::messageBox
+ * @param caption   as defined in KIO::SlaveBase::messageBox
+ * @param buttonYes as defined in KIO::SlaveBase::messageBox
+ * @param buttonNo  as defined in KIO::SlaveBase::messageBox
+ * Offers an interactive message box to request decisions from the user.
+ * This is only a wrapper that makes the KIO::SlaveBase::messageBox available
+ * for other objects inside this slave. 
+ * @see KIOGallery3Protocol
+ * @author Christian Reiner
+ */
 void KIOGallery3Protocol::slotMessageBox ( int& result, SlaveBase::MessageBoxType type, const QString &text, const QString &caption, const QString &buttonYes, const QString &buttonNo )
 {
   result = messageBox ( type, text, caption, buttonYes, buttonNo );
@@ -204,6 +296,21 @@ void KIOGallery3Protocol::slotMessageBox ( int& result, SlaveBase::MessageBoxTyp
   kDebug() << text << caption << ">>" << result;
 } // KIOGallery3Protocol::slotMessageBox
 
+/*!
+ * void KIOGallery3Protocol::slotMessageBox ( int& result, const QString &text, SlaveBase::MessageBoxType type, const QString &caption, const QString &buttonYes, const QString &buttonNo, const QString &dontAskAgainName )
+ * @brief Interactive message box service
+ * @param result    as defined in KIO::SlaveBase::messageBox
+ * @param types     as defined in KIO::SlaveBase::messageBox
+ * @param text      as defined in KIO::SlaveBase::messageBox
+ * @param caption   as defined in KIO::SlaveBase::messageBox
+ * @param buttonYes as defined in KIO::SlaveBase::messageBox
+ * @param buttonNo  as defined in KIO::SlaveBase::messageBox
+ * Offers an interactive message box to request decisions from the user.
+ * This is only a wrapper that makes the KIO::SlaveBase::messageBox available
+ * for other objects inside this slave.
+ * @see KIOGallery3Protocol
+ * @author Christian Reiner
+ */
 void KIOGallery3Protocol::slotMessageBox ( int& result, const QString &text, SlaveBase::MessageBoxType type, const QString &caption, const QString &buttonYes, const QString &buttonNo, const QString &dontAskAgainName )
 {
   result = messageBox ( text, type, caption, buttonYes, buttonNo, dontAskAgainName );
@@ -212,38 +319,96 @@ void KIOGallery3Protocol::slotMessageBox ( int& result, const QString &text, Sla
   kDebug() << text << caption << ">>" << result << dontAskAgainName;
 } // KIOGallery3Protocol::slotMessageBox
 
+/*!
+ * void KIOGallery3Protocol::slotListUDSEntries ( const UDSEntryList entries )
+ * @brief Publish list of items
+ * @param entries list of UDS entries
+ * Accepts a list of UDSEntries describing items inside the item hierarchy.
+ * Typically used to publish parts of a large set of members inside an album. 
+ * @see KIOGallery3Protocol
+ * @author Christian Reiner
+ */
 void KIOGallery3Protocol::slotListUDSEntries ( const UDSEntryList entries )
 {
   kDebug() << "(<UDSEntries[count]>)" << entries.count();
   listEntries ( entries );
 } // KIOGallery3Protocol::slotListUDSEntries
 
+/*!
+ * void KIOGallery3Protocol::slotListUDSEntry ( const UDSEntry entry )
+ * @brief Publish single item as part of a list
+ * @param entry single UDS entry
+ * Accepts a single UDSEntry describing an item inside the item hierarchy.
+ * Typically used to publish an item being part of the set of members of an album. 
+ * @see KIOGallery3Protocol
+ * @author Christian Reiner
+ */
 void KIOGallery3Protocol::slotListUDSEntry ( const UDSEntry entry )
 {
   kDebug() << "(<UDSEntry>)" << entry.stringValue ( UDSEntry::UDS_NAME );
   listEntry ( entry, FALSE );
 } // KIOGallery3Protocol::slotListUDSEntry
 
+/*!
+ * void KIOGallery3Protocol::slotStatUDSEntry ( const UDSEntry entry )
+ * @brief Publish single item
+ * @param entry single UDS entry
+ * Accepts a single UDSEntry describing an item inside the item hierarchy.
+ * Typically used to stat an item as requested by the calling scope. 
+ * @see KIOGallery3Protocol
+ * @author Christian Reiner
+ */
 void KIOGallery3Protocol::slotStatUDSEntry ( const UDSEntry entry )
 {
   kDebug() << "(<UDSEntry>)" << entry.stringValue ( UDSEntry::UDS_NAME );
   statEntry ( entry );
 } // KIOGallery3Protocol::slotStatUDSEntry
 
+/*!
+ * void KIOGallery3Protocol::slotData ( KIO::Job* job, const QByteArray& payload )
+ * @brief Publish requested data
+ * @param job     identifies the job this data was requested by
+ * @param payload the payload as requested from the job
+ * Accepts and forwards arbitrary data as requested by a job.
+ * Typically used when downloading a file from the remote Gallery3 system. 
+ * @see KIOGallery3Protocol
+ * @author Christian Reiner
+ */
 void KIOGallery3Protocol::slotData ( KIO::Job* job, const QByteArray& payload )
 {
   data ( payload );
 } // KIOGallery3Protocol::slotData
 
+/*!
+ * void KIOGallery3Protocol::slotMimetype ( KIO::Job* job, const QString& type )
+ * @brief Publish mimetype of an item
+ * @param job  identifies the job this data was requested by
+ * @param type the mimetype of an object as requested by the job
+ * Accepts and forwards the mimetype of an object as requested by the calling scope.
+ * @see KIOGallery3Protocol
+ * @author Christian Reiner
+ */
 void KIOGallery3Protocol::slotMimetype ( KIO::Job* job, const QString& type )
 {
   kDebug() << "(<mimetype>)" << type;
   mimeType ( type );
 } // KIOGallery3Protocol::slotMimetype
 
-
 //======================
 
+/*!
+ * void KIOGallery3Protocol::setHost ( const QString& host, g3index port, const QString& user, const QString& pass )
+ * @brief Allows the calling scope to set connection details
+ * @param host host where to contact a remote Gallery3 system
+ * @param port tcp port where to contact a remote Gallery3 system
+ * @param user the username used to contact a remote Gallery3 system
+ * @param pass the pasword used to contact a remote Gallery3 system
+ * Called when the target changes, the remote Gallery3 system.
+ * This might be because a different system is to contacted or because the
+ * authentication credentails change, typically the username.
+ * @see KIOGallery3Protocol
+ * @author Christian Reiner
+ */
 void KIOGallery3Protocol::setHost ( const QString& host, g3index port, const QString& user, const QString& pass )
 {
   KDebug::Block block ( "KIOGallery3Protocol::setHost" );
@@ -255,6 +420,19 @@ void KIOGallery3Protocol::setHost ( const QString& host, g3index port, const QSt
   catch ( Exception &e ) { error( e.getCode(), e.getText() ); }
 } // KIOGallery3Protocol::setHost
 
+/*!
+ * void KIOGallery3Protocol::copy ( const KUrl& src, const KUrl& dest, int permissions, JobFlags flags )
+ * @brief Copies an item
+ * @param src         url of the source item to be copied
+ * @param dest        destiniy url where to copy the item to
+ * @param permissions file permissions as to be set for the copied item
+ * @param flags       flags describing the copy process
+ * Called to copy an item in a direct manner.
+ * Currently not implemented, so we return a predefined error.
+ * This results in the calling scope performing a get&put combination instead. 
+ * @see KIOGallery3Protocol
+ * @author Christian Reiner
+ */
 void KIOGallery3Protocol::copy ( const KUrl& src, const KUrl& dest, int permissions, JobFlags flags )
 {
   KDebug::Block block ( "KIOGallery3Protocol::copy" );
@@ -266,7 +444,14 @@ void KIOGallery3Protocol::copy ( const KUrl& src, const KUrl& dest, int permissi
   catch ( Exception &e ) { error( e.getCode(), e.getText() ); }
 } // KIOGallery3Protocol::copy
 
-/**
+/*!
+ * void KIOGallery3Protocol::del ( const KUrl& targetUrl, bool isfile )
+ * @brief Deletes an item
+ * @param targetUrl url of the item to be deleted
+ * @param isfile    signals if the itemis a photo/movie (file) or an directory (album)
+ * Called to delete an item from within the hierarchy. 
+ * @see KIOGallery3Protocol
+ * @author Christian Reiner
  */
 void KIOGallery3Protocol::del ( const KUrl& targetUrl, bool isfile )
 {
@@ -284,7 +469,14 @@ void KIOGallery3Protocol::del ( const KUrl& targetUrl, bool isfile )
   catch ( Exception &e ) { error( e.getCode(), e.getText() ); }
 } // KIOGallery3Protocol::del
 
-/**
+/*!
+ * void KIOGallery3Protocol::get ( const KUrl& targetUrl )
+ * @brief Get the content of an item
+ * @param targetUrl url of the item holding the file to be retrieved
+ * Called to retrieve the file represented by the referenced item.
+ * The type of file retrieved depends on the type of item referenced. 
+ * @see KIOGallery3Protocol
+ * @author Christian Reiner
  */
 void KIOGallery3Protocol::get ( const KUrl& targetUrl )
 {
@@ -320,8 +512,13 @@ void KIOGallery3Protocol::get ( const KUrl& targetUrl )
   catch ( Exception &e ) { error( e.getCode(), e.getText() ); }
 } // KIOGallery3Protocol::get
 
-/**
- * Lists all entities as present under a given url
+/*!
+ * void KIOGallery3Protocol::listDir ( const KUrl& targetUrl )
+ * @brief Lists the members of an album
+ * @param targetUrl url of the item (album) referenced
+ * Called to list all member items as contained inside referenced item (album).
+ * @see KIOGallery3Protocol
+ * @author Christian Reiner
  */
 void KIOGallery3Protocol::listDir ( const KUrl& targetUrl )
 {
@@ -368,7 +565,14 @@ void KIOGallery3Protocol::listDir ( const KUrl& targetUrl )
   catch ( Exception &e ) { error( e.getCode(), e.getText() ); }
 } // KIOGallery3Protocol::listDir
 
-/**
+/*!
+ * void KIOGallery3Protocol::mimetype ( const KUrl& targetUrl )
+ * @brief Names the mimetype of a referenced item
+ * @param targetUrl url of the referenced item
+ * Called to request the mimetype of the referenced item.
+ * The mimetype depends on the type of item:
+ * @see KIOGallery3Protocol
+ * @author Christian Reiner
  */
 void KIOGallery3Protocol::mimetype ( const KUrl& targetUrl )
 {
@@ -383,7 +587,15 @@ void KIOGallery3Protocol::mimetype ( const KUrl& targetUrl )
   catch ( Exception &e ) { error( e.getCode(), e.getText() ); }
 } // KIOGallery3Protocol::mimetype
 
-/**
+/*!
+ * void KIOGallery3Protocol::mkdir ( const KUrl& targetUrl, int permissions )
+ * @brief Creates a new directory (album)
+ * @param targetUrl   url of the item (album) to be created
+ * @param permissions file permissions to be set for the created item
+ * Called to create a new album item inside the hierarchy.
+ * Also used when moving or copying trees of items. 
+ * @see KIOGallery3Protocol
+ * @author Christian Reiner
  */
 void KIOGallery3Protocol::mkdir ( const KUrl& targetUrl, int permissions )
 {
@@ -402,7 +614,16 @@ void KIOGallery3Protocol::mkdir ( const KUrl& targetUrl, int permissions )
   catch ( Exception &e ) { error( e.getCode(), e.getText() ); }
 } // KIOGallery3Protocol::mkdir
 
-/**
+/*!
+ * void KIOGallery3Protocol::put ( const KUrl& targetUrl, int permissions, KIO::JobFlags flags )
+ * @brief Creates a new item according to additional data provided
+ * @param targetUrl   url of item to be created inside the hierarchy
+ * @param permissions file permissions to be set for the created item
+ * @param flags       flags controlling the creation action
+ * Called to create a new item inside the remote Gallery3 system.
+ * Also uploads a file provided by the calling scope in case of photos and movies. 
+ * @see KIOGallery3Protocol
+ * @author Christian Reiner
  */
 void KIOGallery3Protocol::put ( const KUrl& targetUrl, int permissions, KIO::JobFlags flags )
 {
@@ -447,6 +668,16 @@ void KIOGallery3Protocol::put ( const KUrl& targetUrl, int permissions, KIO::Job
   catch ( Exception &e ) { error( e.getCode(), e.getText() ); }
 } // KIOGallery3Protocol::put
 
+/*!
+ * void KIOGallery3Protocol::rename ( const KUrl& srcUrl, const KUrl& destUrl, KIO::JobFlags flags )
+ * @brief Rename / move an item
+ * @param srcUrl  url of the item to be renamed/moved
+ * @param destUrl url describing where the item should be renamed/moved to
+ * @param flags   flags controlling the action
+ * Called to rename / move an item inside the items hierarchy. 
+ * @see KIOGallery3Protocol
+ * @author Christian Reiner
+ */
 void KIOGallery3Protocol::rename ( const KUrl& srcUrl, const KUrl& destUrl, KIO::JobFlags flags )
 {
   KDebug::Block block ( "KIOGallery3Protocol::rename" );
@@ -483,7 +714,14 @@ void KIOGallery3Protocol::rename ( const KUrl& srcUrl, const KUrl& destUrl, KIO:
   catch ( Exception &e ) { error( e.getCode(), e.getText() ); }
 } // KIOGallery3Protocol::rename
 
-/**
+/*!
+ * void KIOGallery3Protocol::stat ( const KUrl& targetUrl )
+ * @brief Gives information about an existing item
+ * @param targetUrl url of the item referenced
+ * Called to request information describing the referenced item.
+ * Typically called to prepare the visualization of the item. 
+ * @see KIOGallery3Protocol
+ * @author Christian Reiner
  */
 void KIOGallery3Protocol::stat ( const KUrl& targetUrl )
 {
@@ -518,9 +756,19 @@ void KIOGallery3Protocol::stat ( const KUrl& targetUrl )
   catch ( Exception &e ) { error( e.getCode(), e.getText() ); }
 } // KIOGallery3Protocol::stat
 
-/**
+/*!
+ * void KIOGallery3Protocol::symlink ( const QString& target, const KUrl& dest, KIO::JobFlags flags )
+ * @brief Creates a symlink to an existing item
+ * @param target the name of the symlink to be created
+ * @param dest   url of the item to be symlinked
+ * @param flags  flags controlling the action
+ * Called to create a symlink pointing to an item inside the hierarchy.
+ * @todo do-something!
  * (sorry, not really a clue how this works currently)
- * TODO FIXME do-something!
+ * there actually is something like a link in G3, but only provided by an additional module
+ * might make sense to have a try with this...
+ * @see KIOGallery3Protocol
+ * @author Christian Reiner
  */
 void KIOGallery3Protocol::symlink ( const QString& target, const KUrl& dest, KIO::JobFlags flags )
 {
@@ -533,9 +781,21 @@ void KIOGallery3Protocol::symlink ( const QString& target, const KUrl& dest, KIO
   catch ( Exception &e ) { error( e.getCode(), e.getText() ); }
 } // KIOGallery3Protocol::symlink
 
+/*!
+ * void KIOGallery3Protocol::special ( const QByteArray& data )
+ * @brief Extends the set of methods of the slave
+ * @param data arbitrary data required to perform a certain action
+ * Called to perform a 'special' action, an extention of the standard actions defined for kio slaves.
+ * in future this will be used to perform G3 specific actions like reordering of items, changing
+ * item attributes beside name and position and so on.
+ * The structure of the data is implementation specific, thus it is up to the implementing
+ * slave to define it and to the calling scope to know about that :-)
+ * @see KIOGallery3Protocol
+ * @author Christian Reiner
+ */
 void KIOGallery3Protocol::special ( const QByteArray& data )
 {
-// TODO: use this in combination with a service menu to control all aspects of an item: description and so on, maybe even the order of items (priority) ?
+//! @todo: use this in combination with a service menu to control all aspects of an item: description and so on, maybe even the order of items (priority) ?
 /*
 Used for any command that is specific to this slave (protocol) Examples are : HTTP POST, mount and unmount (kio_file)
 Parameters:

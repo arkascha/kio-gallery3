@@ -6,6 +6,13 @@
  * $Date: 2011-08-13 23:12:52 +0200 (Sat, 13 Aug 2011) $
  */
 
+/*!
+ * @file
+ * Defines a generic kio protocol.
+ * To be extended by a specific derivation. 
+ * @author Christian Reiner
+ */
+
 #ifndef KIO_PROTOCOL_H
 #define KIO_PROTOCOL_H
 
@@ -21,9 +28,12 @@ namespace KIO
   {
     class G3Frontend;
 
-    /**
-    * This is an abstract base common to all specialized kio-gallery3 protocols.
-    */
+    /*!
+     * @class KIOProtocol
+     * @brief Generic kio protocol class
+     * This is an abstract base class common to all specialized kio-gallery3 protocols.
+     * @author Christian Reiner
+     */
     class KIOProtocol
       : public SlaveBase
     {

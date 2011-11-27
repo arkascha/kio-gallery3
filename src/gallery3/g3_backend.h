@@ -6,6 +6,13 @@
  * $Date: 2011-09-12 09:35:04 +0200 (Mon, 12 Sep 2011) $
  */
 
+/*!
+ * @file
+ * Defines class G3Backend
+ * @see G3Backend
+ * @author Christian Reiner
+ */
+
 #ifndef G3_BACKEND_H
 #define G3_BACKEND_H
 
@@ -21,15 +28,15 @@ namespace KIO
     class G3Item;
     class G3File;
 
-    /**
-     * class G3Backend
-     *
+    /*!
+     * @class G3Backend
+     * @brief Represents a remote Gallery3 system locally
      * This class serves as a local mirror of a remote gallery3 system and offers two levels: 
      * - it maps local requests to the gallery3 data onto the remote gallery3 API installation
      * - it keeps a local cache of items to improve performance by reducing the total number of requests required
-     *
      * Note that one single backend can only communicate and stand for one distinct remote gallery3 system.
      * When the slace addresses more than a single such system several backends are created automatically. 
+     * @author Christian Reiner
      */
     class G3Backend
       : public QObject

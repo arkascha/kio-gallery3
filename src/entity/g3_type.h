@@ -6,6 +6,16 @@
  * $Date: 2011-09-12 09:35:04 +0200 (Mon, 12 Sep 2011) $
  */
 
+/*!
+ * @file
+ * Defines class G3Type, describing the type of an item inside the remote
+ * Gallery3 system.
+ * The class is a 'header only library', no methods are defined in an
+ * additional .cpp file, so no linkage is required.
+ * @see G3Type
+ * @author Christian Reiner
+ */
+
 #ifndef ENTITY_G3_TYPE_H
 #define ENTITY_G3_TYPE_H
 
@@ -22,12 +32,14 @@ namespace KIO
   namespace Gallery3
   {
 
-    /**
-     * class G3Type
+    /*!
+     * @class G3Type
+     * @brief Convenience class that describes an items technical type
      * Implements an "intelligent type definition" that connects both worlds understanding of a 'type':
      * - c++ style type in form of an enumeration and projection on an integer to be used in switch statements
      * - gallery3 style type in form of strings describing the meaning, content and usage of an item
      * This is a header-only implementation, no source or object file has to be be considered.
+     * @author Christian Reiner
      */
     class G3Type
     {

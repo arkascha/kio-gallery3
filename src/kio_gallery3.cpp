@@ -6,6 +6,12 @@
  * $Date: 2011-08-13 14:42:57 +0200 (Sat, 13 Aug 2011) $
  */
 
+/*!
+ * @file
+ * Base file that implements the kio protocols 'gallery3' and 'gallery3s'.
+ * @author Christian Reiner
+ */
+
 #include <stdlib.h>
 #include <unistd.h>
 

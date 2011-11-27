@@ -6,6 +6,17 @@
  * $Date: 2011-09-12 09:35:04 +0200 (Mon, 12 Sep 2011) $
  */
 
+/*!
+ * @file
+ * This is a header-only-library, so no separate .cpp file exists, had to be
+ * compiled or linked. Instead it is enough to include this header for usage.
+ * We try to give exceptions a somewhat automatical behaviour:
+ * - readable debug output
+ * - evaluable error code for reactions
+ * - intuitive generation (throw)
+ * @author Christian Reiner
+ */
+
 #ifndef UTILITY_EXCEPTION_H
 #define UTILITY_EXCEPTION_H
 
@@ -19,10 +30,13 @@ namespace KIO
   namespace Gallery3
   {
 
-    /**
-    * Convenience wrapper for standard exception
-    * this class serves as a header-only library (no object file to be linked)
-    */
+    /*!
+     * @class Exception
+     * @brief Convenience wrapper around standard exception
+     * This class serves as a header-only library (no object file to be linked)
+     * It offers a convenient exception class with automatic transation and logging. 
+     * @author Christian Reiner
+     */
     class Exception
       : public QtConcurrent::Exception
     {

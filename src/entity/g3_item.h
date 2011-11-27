@@ -6,6 +6,15 @@
  * $Date: 2011-09-12 09:35:04 +0200 (Mon, 12 Sep 2011) $
  */
 
+/*!
+ * @file
+ * Defines class G3Item and the all classes derived from that
+ * Such an item mirrors an item contained inside the remote Gallery3 system
+ * in the local hierarchical object structure
+ * @see G3Item
+ * @author Christian Reiner
+ */
+
 #ifndef ENTITY_G3_ITEM_H
 #define ENTITY_G3_ITEM_H
 
@@ -22,14 +31,20 @@ namespace KIO
   namespace Gallery3
   {
     class G3Backend;
-    /**
+    /*!
+    * @class G3Item
+    * 
     * This class describes all aspects of an 'item', as defined by the gallery3 API.
-    *
-    * The class has somewhat passive character: all data is treated more or less constant
+    * It has somewhat passive character: all data is treated more or less constant
     * - the private members hold basic information as detected, requested or decided upon
     * - all private members are published via direct access methods (read only)
     * - in addition a number of convenience constructions are offered as methods as well
     *   these are generated based only on the constant settings stored in the members mentioned above
+    * 
+    * @see G3AlbumItem
+    * @see G3PhotoItemG3MovieItem
+    * @see G3TagItem
+    * @see G3CommentItem
     */
     class G3Item
       : public QObject
@@ -104,37 +119,57 @@ namespace KIO
 
 //==========
 
-    class MovieEntity
+    /*!
+     * @class G3AlbumItem
+     * Specialized item representing an album in the remote Gallery3 system
+     */
+    class G3AlbumItem
       : public G3Item
     {
       public:
-        MovieEntity ( G3Backend* const backend, const QVariantMap& attributes );
-    }; // class MovieEntity
+        G3AlbumItem ( G3Backend* const backend, const QVariantMap& attributes );
+    }; // class G3AlbumItem
 
-    class AlbumEntity
+    /*!
+     * @class G3MovieItem
+     * Specialized item representing a movie in the remote Gallery3 system
+     */
+    class G3MovieItem
       : public G3Item
     {
       public:
-        AlbumEntity ( G3Backend* const backend, const QVariantMap& attributes );
-    }; // class AlbumEntity
+        G3MovieItem ( G3Backend* const backend, const QVariantMap& attributes );
+    }; // class G3MovieItem
 
-    class PhotoEntity: public G3Item
+    /*!
+     * @class G3PhotoItem
+     * Specialized item representing a photo in the remote Gallery3 system
+     */
+    class G3PhotoItem: public G3Item
     {
       public:
-        PhotoEntity ( G3Backend* const backend, const QVariantMap& attributes );
-    }; // class PhotoEntity
+        G3PhotoItem ( G3Backend* const backend, const QVariantMap& attributes );
+    }; // class G3PhotoItem
 
-    class TagEntity: public G3Item
+    /*!
+     * @class G3TagItem
+     * Specialized item representing a tag in the remote Gallery3 system
+     */
+    class G3TagItem: public G3Item
     {
       public:
-        TagEntity ( G3Backend* const backend, const QVariantMap& attributes );
-    }; // class TagEntity
+        G3TagItem ( G3Backend* const backend, const QVariantMap& attributes );
+    }; // class G3TagItem
 
-    class CommentEntity: public G3Item
+    /*!
+     * @class G3CommentItem
+     * Specialized item representing a comment in the remote Gallery3 system
+     */
+    class G3CommentItem: public G3Item
     {
       public:
-        CommentEntity ( G3Backend* const backend, const QVariantMap& attributes );
-    }; // class CommentEntity
+        G3CommentItem ( G3Backend* const backend, const QVariantMap& attributes );
+    }; // class G3CommentItem
 
   } // namespace Gallery3
 } // namespace KIO

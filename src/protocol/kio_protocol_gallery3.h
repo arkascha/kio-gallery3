@@ -6,6 +6,12 @@
  * $Date: 2011-09-12 09:35:04 +0200 (Mon, 12 Sep 2011) $
  */
 
+/*!
+ * @file
+ * Definfition of the KDE protocols 'gallery3(s)' in form of a kio slave.
+ * @author Christian Reiner
+ */
+
 #ifndef KIO_PROTOCOL_GALLERY3_H
 #define KIO_PROTOCOL_GALLERY3_H
 
@@ -26,8 +32,14 @@ namespace KIO
     class G3Backend;
     class G3Item;
     
-    /**
-     * class KIOGallery3Protocol
+    /*!
+     * @class KIOGallery3Protocol
+     * @brief KIO Protocol 'gallery3'
+     * This class defines the gallery3 specific aspects of the kde slave protocol.
+     * Derived from the more general class KIOProtocol it only adds specific behaviour. 
+     * @author Christian Reiner
+     * @see KIOProtocol
+     * @see KIOGallery3Protocol::Member
     */
     class KIOGallery3Protocol
       : public QObject
