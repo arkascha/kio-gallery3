@@ -46,10 +46,10 @@ namespace KIO
         const QString        m_filepath;
       public:
         inline G3File ( const QString& filename, const KMimeType::Ptr& mimetype, const QString& filepath )
-                      : m_filename(filename), m_mimetype(mimetype), m_filepath(filepath) { };
-        inline const QString&       filename() const { return m_filename; };
-        inline const KMimeType::Ptr mimetype() const { return m_mimetype; };
-        inline const QString&       filepath() const { return m_filepath; };
+                      : m_filename(filename), m_mimetype(mimetype), m_filepath(filepath) { }
+        inline const QString&       filename() const { return m_filename; }
+        inline const KMimeType::Ptr mimetype() const { return m_mimetype; }
+        inline const QString&       filepath() const { return m_filepath; }
     }; // class G3File
   } // namespace Gallery3
 } // namespace KIO

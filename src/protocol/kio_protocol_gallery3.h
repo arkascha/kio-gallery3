@@ -50,7 +50,7 @@ namespace KIO
         class Members
         {
           public:
-            inline Members ( ) : backends(QHash<QString,G3Backend*>()) { };
+            inline Members ( ) : backends(QHash<QString,G3Backend*>()) { }
             struct
             {
               QString host;
@@ -69,7 +69,7 @@ namespace KIO
         G3Item*        itemByUrl        ( const KUrl& itemUrl );
         QList<G3Item*> itemsByUrl       ( const KUrl& itemUrl );
       public:
-        inline const QString protocol ( ) { return QString("gallery3"); };
+        inline const QString protocol ( ) { return QString("gallery3"); }
         KIOGallery3Protocol ( const QByteArray &pool, const QByteArray &app, QObject* parent=0 );
         virtual ~KIOGallery3Protocol();
       public slots:

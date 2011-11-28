@@ -107,8 +107,8 @@ namespace KIO
         QList<G3Item*> toItems        ( );
         g3index        toItemId       ( QVariant& entry );
         QList<g3index> toItemIds      ( );
-        inline G3Item* toItem         ( ) { return toItem(m->result); };
-        inline g3index toItemId       ( ) { return toItemId(m->result); };
+        inline G3Item* toItem         ( ) { return toItem(m->result); }
+        inline g3index toItemId       ( ) { return toItemId(m->result); }
       signals:
         void signalRequestAuthInfo ( G3Backend* backend, AuthInfo& credentials, int attempt );
         void signalMessageBox      ( int& result, SlaveBase::MessageBoxType type, const QString &text, const QString &caption=QString(), const QString &buttonYes=i18n("&Yes"), const QString &buttonNo=i18n("&No") );

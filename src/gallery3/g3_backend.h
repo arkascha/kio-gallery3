@@ -44,7 +44,7 @@ namespace KIO
       class Members
       {
         public:
-        inline Members ( const KUrl& g3Url ) : baseUrl(g3Url) { };
+        inline Members ( const KUrl& g3Url ) : baseUrl(g3Url) { }
         AuthInfo               credentials;
         const KUrl             baseUrl;
         KUrl                   restUrl;
@@ -62,9 +62,9 @@ namespace KIO
         const UDSEntryList                   toUDSEntryList ( );
         const QString                        toPrintout     ( ) const;
         inline AuthInfo&                     credentials ( )       { return m->credentials; }
-        inline const KUrl&                   baseUrl     ( ) const { return m->baseUrl; };
-        inline const KUrl&                   restUrl     ( ) const { return m->restUrl; };
-        inline const QHash<g3index,G3Item*>& items       ( ) const { return m->items;    };
+        inline const KUrl&                   baseUrl     ( ) const { return m->baseUrl;     }
+        inline const KUrl&                   restUrl     ( ) const { return m->restUrl;     }
+        inline const QHash<g3index,G3Item*>& items       ( ) const { return m->items;       }
         G3Item*                              item       ( g3index id );
         G3Item*                              itemBase   ( );
         G3Item*                              itemById   ( g3index id );

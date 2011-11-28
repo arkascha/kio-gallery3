@@ -52,7 +52,7 @@ namespace KIO
       class Members
       {
         public:
-        inline Members ( const G3Type type, G3Backend* const backend, const QVariantMap& attributes) : type(type), backend(backend), attributes(attributes) { };
+        inline Members ( const G3Type type, G3Backend* const backend, const QVariantMap& attributes) : type(type), backend(backend), attributes(attributes) { }
         const G3Type           type;
         G3Backend* const       backend;
         g3index                id;
@@ -61,7 +61,7 @@ namespace KIO
         G3Item*                parent;
         QHash<g3index,G3Item*> members;
         QVariantMap            attributes;
-      }; // struct Membes
+      }; // class Members
       Q_OBJECT
       private:
         Members* const m;
@@ -73,22 +73,22 @@ namespace KIO
       signals:
         void signalUDSEntry ( const UDSEntry& entry ) const;
       public:
-        inline const G3Type         type     ( ) const { return m->type; };
-        inline const g3index        id       ( ) const { return m->id; };
-        inline const QString        name     ( ) const { return m->name; };
-        inline const KMimeType::Ptr mimetype ( ) const { return m->mimetype; };
-        inline int                  size            ( bool strict=FALSE ) const { return (G3Type::ALBUM==m->type.toInt()) ? 0L : attributeMapToken(QLatin1String("entity"),QLatin1String("file_size"),QVariant::Int).toInt(); };
-        inline bool                 canEdit         ( bool strict=FALSE ) const { return attributeMapToken ( QLatin1String("entity"), QLatin1String("can_edit"), QVariant::Bool, strict ).toBool(); };
-        inline const KUrl           restUrl         ( bool strict=FALSE ) const { return KUrl ( attributeToken    (                          QLatin1String("url"),               QVariant::String, strict ).toString() ); };
-        inline const KUrl           coverUrl        ( bool strict=FALSE ) const { return KUrl ( attributeMapToken ( QLatin1String("entity"), QLatin1String("album_cover"),       QVariant::String, strict ).toString() ); };
-        inline const KUrl           webUrl          ( bool strict=FALSE ) const { return KUrl ( attributeMapToken ( QLatin1String("entity"), QLatin1String("web_url"),           QVariant::String, strict ).toString() ); };
-        inline const KUrl           webUrlPublic    ( bool strict=FALSE ) const { return KUrl ( attributeMapToken ( QLatin1String("entity"), QLatin1String("web_url_public"),    QVariant::String, strict ).toString() ); };
-        inline const KUrl           fileUrl         ( bool strict=FALSE ) const { return KUrl ( attributeMapToken ( QLatin1String("entity"), QLatin1String("file_url"),          QVariant::String, strict ).toString() ); };
-        inline const KUrl           fileUrlPublic   ( bool strict=FALSE ) const { return KUrl ( attributeMapToken ( QLatin1String("entity"), QLatin1String("file_url_public"),   QVariant::String, strict ).toString() ); };
-        inline const KUrl           resizeUrl       ( bool strict=FALSE ) const { return KUrl ( attributeMapToken ( QLatin1String("entity"), QLatin1String("resize_url"),        QVariant::String, strict ).toString() ); };
-        inline const KUrl           resizeUrlPublic ( bool strict=FALSE ) const { return KUrl ( attributeMapToken ( QLatin1String("entity"), QLatin1String("resize_url_public"), QVariant::String, strict ).toString() ); };
-        inline const KUrl           thumbUrl        ( bool strict=FALSE ) const { return KUrl ( attributeMapToken ( QLatin1String("entity"), QLatin1String("thumb_url"),         QVariant::String, strict ).toString() ); };
-        inline const KUrl           thumbUrlPublic  ( bool strict=FALSE ) const { return KUrl ( attributeMapToken ( QLatin1String("entity"), QLatin1String("thumb_url_public"),  QVariant::String, strict ).toString() ); };
+        inline const G3Type         type     ( ) const { return m->type; }
+        inline const g3index        id       ( ) const { return m->id; }
+        inline const QString        name     ( ) const { return m->name; }
+        inline const KMimeType::Ptr mimetype ( ) const { return m->mimetype; }
+        inline int                  size            ( bool strict=FALSE ) const { return (G3Type::ALBUM==m->type.toInt()) ? 0L : attributeMapToken(QLatin1String("entity"),QLatin1String("file_size"),QVariant::Int).toInt(); }
+        inline bool                 canEdit         ( bool strict=FALSE ) const { return attributeMapToken ( QLatin1String("entity"), QLatin1String("can_edit"), QVariant::Bool, strict ).toBool(); }
+        inline const KUrl           restUrl         ( bool strict=FALSE ) const { return KUrl ( attributeToken    (                          QLatin1String("url"),               QVariant::String, strict ).toString() ); }
+        inline const KUrl           coverUrl        ( bool strict=FALSE ) const { return KUrl ( attributeMapToken ( QLatin1String("entity"), QLatin1String("album_cover"),       QVariant::String, strict ).toString() ); }
+        inline const KUrl           webUrl          ( bool strict=FALSE ) const { return KUrl ( attributeMapToken ( QLatin1String("entity"), QLatin1String("web_url"),           QVariant::String, strict ).toString() ); }
+        inline const KUrl           webUrlPublic    ( bool strict=FALSE ) const { return KUrl ( attributeMapToken ( QLatin1String("entity"), QLatin1String("web_url_public"),    QVariant::String, strict ).toString() ); }
+        inline const KUrl           fileUrl         ( bool strict=FALSE ) const { return KUrl ( attributeMapToken ( QLatin1String("entity"), QLatin1String("file_url"),          QVariant::String, strict ).toString() ); }
+        inline const KUrl           fileUrlPublic   ( bool strict=FALSE ) const { return KUrl ( attributeMapToken ( QLatin1String("entity"), QLatin1String("file_url_public"),   QVariant::String, strict ).toString() ); }
+        inline const KUrl           resizeUrl       ( bool strict=FALSE ) const { return KUrl ( attributeMapToken ( QLatin1String("entity"), QLatin1String("resize_url"),        QVariant::String, strict ).toString() ); }
+        inline const KUrl           resizeUrlPublic ( bool strict=FALSE ) const { return KUrl ( attributeMapToken ( QLatin1String("entity"), QLatin1String("resize_url_public"), QVariant::String, strict ).toString() ); }
+        inline const KUrl           thumbUrl        ( bool strict=FALSE ) const { return KUrl ( attributeMapToken ( QLatin1String("entity"), QLatin1String("thumb_url"),         QVariant::String, strict ).toString() ); }
+        inline const KUrl           thumbUrlPublic  ( bool strict=FALSE ) const { return KUrl ( attributeMapToken ( QLatin1String("entity"), QLatin1String("thumb_url_public"),  QVariant::String, strict ).toString() ); }
         QStringList            path              ( ) const;
         G3Item*                parent            ( ) const;
         G3Item*                member            ( const QString& name );
