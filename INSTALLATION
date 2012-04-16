@@ -5,9 +5,18 @@ but this should not happen, as it is official and stable, other programs rely
 on it as well.
 
 Requirements: 
-KDE>=4.7
-Qt4
-QJson
+* KDE>=4.7
+* QJson
+* Qt4
+(The package names depend on the distribution you use.)
+
+Build requirements:
+* KDE development
+* QJson development
+* Qt4 development
+* cmake
+* gcc-c++
+(The package names depend on the distribution you use.)
 
 Installation from a binary package: 
 If you have a precompiled package matching your system (architecture and
